@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Get, Injectable } from '@nestjs/common';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleEnum } from './role.enum';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ApiResponse } from '@nestjs/swagger';
 
 @Injectable()
 export class RoleService {
@@ -28,5 +29,10 @@ export class RoleService {
         return this.prisma.role.create({
             data: { name },
         });
+    }
+
+    // Fetch all roles
+    async getAllRoles() {
+        return this.prisma.role.findMany();
     }
 }
