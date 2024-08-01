@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -50,5 +50,15 @@ export class RegisterController {
     })
     async updateUser(@Body() updateUserDto: UpdateUserDto) {
         return this.registerService.updateUser(updateUserDto);
+    }
+    
+    //Deleting user
+    @Delete(':id')
+    @ApiResponse({
+        status: 200,
+        description: 'User deleted successfully',
+    })
+    async deleteUser(@Param('id', ParseIntPipe) id: number) {
+        return this.registerService.deleteUser(id);
     }
 }
