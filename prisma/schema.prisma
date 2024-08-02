@@ -22,7 +22,7 @@ model User {
   role      Role     @relation(fields: [roleId], references: [id])
   orders    Order[]
   isSeller  Boolean  @default(false) // Flag to check if the user is a seller
-  seller    Seller?  // Add this line to define the relation with Seller
+  seller    Seller? 
 }
 
 // Define Seller model
