@@ -12,6 +12,9 @@ export class CreateUserDto {
     @IsNotEmpty()
     password: string;
 
+    @IsString()
+    email: string;
+
     @ApiProperty({ example: 2, description: 'Role ID for the user', required: false })
     @IsOptional()
     @IsInt()

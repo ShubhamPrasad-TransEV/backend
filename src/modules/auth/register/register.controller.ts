@@ -29,7 +29,8 @@ export class RegisterController {
                 summary: 'New user example',
                 value: {
                     username: 'newuser',
-                    password: 'securepassword'
+                    password: 'securepassword',
+                    email: 'HkNfZ@example.com',
                 },
             },
         },

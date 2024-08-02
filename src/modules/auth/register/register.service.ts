@@ -3,14 +3,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt'
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class RegisterService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly prisma: PrismaService , private readonly emailService: EmailService) { }
 
     //Register a new user
     async register(createUserDto: CreateUserDto) {
-        const { username, password } = createUserDto;
+        const { username, password, email } = createUserDto;
 
         //Check if the user already exists
         const existingUser = await this.prisma.user.findUnique({
@@ -25,9 +26,20 @@ export class RegisterService {
         const user = await this.prisma.user.create({
             data:{
                 username,
+                email,
                 password: hashedPassword,
             },
         });
+        // Send welcome email
+    const subject = 'Welcome to Our Application!';
+    const text = `Hello ${username}, welcome to our application.`;
+    const html = `<strong>Hello ${username}</strong>, welcome to our application.`;
+
+    await this.emailService.sendMail(
+        user.email,
+        'Welcome to Our Service',
+        'Thank you for registering!'
+    );
         return user;
     }
 

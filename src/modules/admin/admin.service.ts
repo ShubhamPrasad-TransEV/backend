@@ -8,11 +8,11 @@ export class AdminService {
     constructor(private readonly prisma: PrismaService) { }
 
     async createAdmin(createAdminDto: CreateAdminDto) {
-        const { username, password, role } = createAdminDto;
+        const { username, password, role, email } = createAdminDto;
 
         // Check if the username already exists
         const existingUser = await this.prisma.user.findUnique({
-            where: { username },
+            where: { username , email },
         });
 
         if (existingUser) {
@@ -38,6 +38,7 @@ export class AdminService {
             data: {
                 username,
                 password,
+                email,
                 roleId: adminRole.id,
             },
         });
@@ -46,6 +47,7 @@ export class AdminService {
         await this.prisma.seller.create({
             data: {
                 userId: user.id,
+                email: user.email,
             },
         });
 

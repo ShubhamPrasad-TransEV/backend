@@ -9,6 +9,9 @@ export class CreateAdminDto {
   @IsString()
   password: string;
 
+  @IsString()
+  email: string;
+
   @IsEnum(RoleEnum)
   role: RoleEnum = RoleEnum.ADMIN; // Default to Admin role
 }
