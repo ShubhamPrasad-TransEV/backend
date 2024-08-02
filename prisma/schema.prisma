@@ -44,13 +44,16 @@ model Role {
 
 // Define Product model
 model Product {
-  id          Int       @id @default(autoincrement())
-  name        String
-  price       Float
-  sellerId    Int
-  seller      Seller    @relation(fields: [sellerId], references: [id])
-  orderItems  OrderItem[]
+    id          Int       @id @default(autoincrement())
+    name        String
+    price       Float
+    description String
+    sellerId    Int
+    seller      Seller    @relation(fields: [sellerId], references: [id])
+    orderItems  OrderItem[]
+    images      Image[]
 }
+
 
 // Define Order model
 model Order {
@@ -67,4 +70,13 @@ model OrderItem {
   order     Order    @relation(fields: [orderId], references: [id])
   productId Int
   product   Product  @relation(fields: [productId], references: [id])
+}
+
+
+//Define Image model
+model Image {
+    id        Int      @id @default(autoincrement())
+    data      Bytes    // Stores binary data
+    productId Int
+    product   Product  @relation(fields: [productId], references: [id])
 }
