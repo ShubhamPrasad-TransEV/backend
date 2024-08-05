@@ -17,6 +17,7 @@ export class AdminController {
                 value: {
                     username: 'adminuser',
                     password: 'securepassword',
+                    email: 'adminuser@gmail.com',
                     role: 'Admin',
                 },
             },

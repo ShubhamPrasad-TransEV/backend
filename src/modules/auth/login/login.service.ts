@@ -18,7 +18,7 @@ export class LoginService {
             include: { role: true },
         });
 
-        Logger.log(`Fetched user: ${JSON.stringify(user)}`, 'LoginService');
+        Logger.log(`Fetchedddddddddd user: ${JSON.stringify(user)}`, 'LoginService');
         
         if (user && await bcrypt.compare(password, user.password)) {
             Logger.log('Password matched', 'LoginService');

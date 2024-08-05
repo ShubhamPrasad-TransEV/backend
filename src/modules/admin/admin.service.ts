@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { RoleEnum } from '../role/role.enum';
+import * as bcrypt from 'bcrypt';
+
 
 @Injectable()
 export class AdminService {
@@ -33,11 +35,13 @@ export class AdminService {
             throw new Error('Admin role not found');
         }
 
+        const hashedPassword = await bcrypt.hash(password , 10);
+
         // Create the user with admin role
         const user = await this.prisma.user.create({
             data: {
                 username,
-                password,
+                password:hashedPassword,
                 email,
                 roleId: adminRole.id,
             },
