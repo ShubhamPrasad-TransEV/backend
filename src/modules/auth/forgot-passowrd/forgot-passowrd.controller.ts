@@ -11,7 +11,11 @@ export class ForgotPasswordController {
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset request created' })
+  @ApiResponse({ status: 200, 
+ description: 'Password reset request created',
+ schema: {
+example: { message: 'OTP sent successfully' },
+}, })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async forgotPassword(
     @Body() requestPasswordResetDto: RequestPasswordResetDto

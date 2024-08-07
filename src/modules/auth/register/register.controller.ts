@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -62,4 +62,13 @@ export class RegisterController {
     async deleteUser(@Param('id', ParseIntPipe) id: number) {
         return this.registerService.deleteUser(id);
     }
+
+    @Get(':id')
+    async getProfile(@Param('id') id: string) {
+        const userId = parseInt(id, 10); // Ensure id is an integer
+  if (isNaN(userId)) {
+    throw new BadRequestException('Invalid user ID');
+  }
+  return this.registerService.findOne(userId);
+}
 }

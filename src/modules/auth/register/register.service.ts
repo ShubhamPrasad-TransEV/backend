@@ -7,6 +7,7 @@ import { EmailService } from 'src/email/email.service';
 
 @Injectable()
 export class RegisterService {
+    [x: string]: any;
     constructor(private readonly prisma: PrismaService , private readonly emailService: EmailService) { }
 
     //Register a new user
@@ -40,6 +41,19 @@ export class RegisterService {
         'Welcome to Our Service',
         'Thank you for registering!'
     );
+        return user;
+    }
+
+    async findOne(id:number) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                id: id,
+            },
+        });
+        if (!user) {
+            throw new NotFoundException('User not found');
+          }
+
         return user;
     }
 
