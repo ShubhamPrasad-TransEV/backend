@@ -5,6 +5,11 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService
     extends PrismaClient
     implements OnModuleInit, OnModuleDestroy {
+    updatePassword: any;
+  findByEmail: any;
+  saveResetToken: any;
+  findByResetToken: any;
+  clearResetToken: any;
     async onModuleInit() {
         await this.$connect();
     }

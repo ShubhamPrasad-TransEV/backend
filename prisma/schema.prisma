@@ -24,6 +24,7 @@ model User {
   orders    Order[]
   isSeller  Boolean  @default(false) // Flag to check if the user is a seller
   seller    Seller? 
+  resets    PasswordReset[] 
 }
 
 // Define Seller model
@@ -79,4 +80,13 @@ model Image {
     data      Bytes    // Stores binary data
     productId Int
     product   Product  @relation(fields: [productId], references: [id])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  otp       String
+  userId    Int
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+  @@index([otp])
 }
