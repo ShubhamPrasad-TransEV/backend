@@ -7,7 +7,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('Users')
 @Controller('user')
 export class RegisterController {
-    constructor(private readonly registerService: RegisterService) {}
+    constructor(private readonly registerService: RegisterService) { }
 
     //Fetch users
     @Get('all')
@@ -39,7 +39,7 @@ export class RegisterController {
         return this.registerService.register(createUserDto);
     }
 
-    //Update user - Details
+    // Update user details
     @Patch('update')
     @ApiBody({
         description: 'User update payload',
@@ -49,10 +49,14 @@ export class RegisterController {
         status: 200,
         description: 'Update user details',
     })
+    @ApiResponse({
+        status: 404,
+        description: 'User not found',
+    })
     async updateUser(@Body() updateUserDto: UpdateUserDto) {
         return this.registerService.updateUser(updateUserDto);
     }
-    
+
     //Deleting user
     @Delete(':id')
     @ApiResponse({

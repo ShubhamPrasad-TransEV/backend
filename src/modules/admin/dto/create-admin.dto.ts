@@ -1,17 +1,39 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { RoleEnum } from 'src/modules/role/role.enum';
 
 
 export class CreateAdminDto {
   @IsString()
+  @IsNotEmpty()
   username: string;
 
-  @IsString()
-  password: string;
-
-  @IsString()
+  @IsEmail()
   email: string;
 
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
   @IsEnum(RoleEnum)
-  role: RoleEnum = RoleEnum.ADMIN; // Default to Admin role
+  role: RoleEnum = RoleEnum.ADMIN;
+
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  contactPerson?: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
 }

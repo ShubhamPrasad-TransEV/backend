@@ -13,20 +13,23 @@ export class AdminService {
         const { username, password, role, email } = createAdminDto;
 
         // Check if the username already exists
-        const existingUser = await this.prisma.user.findUnique({
-            where: { username , email },
+        const existingUser = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { username },
+                    { email }
+                ]
+            },
         });
 
         if (existingUser) {
             throw new Error('Username already exists');
         }
 
-        // Ensure the role is ADMIN
         if (role !== RoleEnum.ADMIN) {
             throw new Error('Invalid role provided');
         }
 
-        // Find the admin role
         const adminRole = await this.prisma.role.findUnique({
             where: { name: RoleEnum.ADMIN },
         });
@@ -35,23 +38,21 @@ export class AdminService {
             throw new Error('Admin role not found');
         }
 
-        const hashedPassword = await bcrypt.hash(password , 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create the user with admin role
+        // Create the user with admin role and seller-specific fields if needed
         const user = await this.prisma.user.create({
             data: {
                 username,
-                password:hashedPassword,
+                password: hashedPassword,
                 email,
                 roleId: adminRole.id,
-            },
-        });
-
-        // Create a Seller record since admins are also sellers
-        await this.prisma.seller.create({
-            data: {
-                userId: user.id,
-                email: user.email,
+                isSeller: true, 
+                companyName: createAdminDto.companyName,
+                description: createAdminDto.description,
+                contactPerson: createAdminDto.contactPerson,
+                phoneNumber: createAdminDto.phoneNumber,
+                address: createAdminDto.address,
             },
         });
 

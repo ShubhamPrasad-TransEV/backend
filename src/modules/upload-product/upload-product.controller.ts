@@ -1,18 +1,18 @@
-import { Body, Controller, Get, Param, Post, Res, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFiles, Res, HttpException, HttpStatus, Body, Param, Get } from '@nestjs/common';
 import { UploadProductService } from './upload-product.service';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { Response } from 'express';
-import { UploadProductDto } from './dto/upload-prod.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { UploadProductDto } from './dto/upload-prod.dto';
 import * as fs from 'fs';
 
 @ApiTags('Products')
 @Controller('upload-product')
 export class UploadProductController {
     constructor(private readonly productService: UploadProductService) { }
-    
+
     @Post()
     @UseInterceptors(FilesInterceptor('images', 10, {
         storage: diskStorage({
@@ -25,17 +25,52 @@ export class UploadProductController {
     }))
     @ApiBody({
         description: 'Product creation payload with file upload',
-        type: UploadProductDto,
+        schema: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', example: 'Product Name' },
+                price: { type: 'string', example: '100' },  // Changed to string for conversion
+                description: { type: 'string', example: 'Product description' },
+                sellerId: { type: 'number', example: 1 },
+                images: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        format: 'binary',
+                    },
+                },
+            },
+        },
+    })
+    @ApiResponse({
+        status: 201,
+        description: 'Product created successfully with images',
     })
     async createProduct(
         @Body() body: UploadProductDto,
-        @UploadedFiles() files: Express.Multer.File[]
+        @UploadedFiles() files: Express.Multer.File[],
+        @Res() res: Response
     ) {
-        // Assuming you have logic to read and convert files to Buffer
-        const images = files.map(file => fs.readFileSync(`./uploads/${file.filename}`));
-        return this.productService.createProduct({
+        if (!files || files.length === 0) {
+            throw new HttpException('No files uploaded', HttpStatus.BAD_REQUEST);
+        }
+
+        // Convert files to base64 strings
+        const imageBase64Strings = files.map(file => {
+            const fileBuffer = fs.readFileSync(`./uploads/${file.filename}`);
+            return fileBuffer.toString('base64');
+        });
+
+        const productData = {
             ...body,
-            images,
+            images: imageBase64Strings,
+            sellerId: body.sellerId,
+        };
+
+        const createdProduct = await this.productService.createProduct(productData);
+        res.status(HttpStatus.CREATED).json({
+            message: 'Product created successfully',
+            product: createdProduct,
         });
     }
 
@@ -44,10 +79,9 @@ export class UploadProductController {
         return this.productService.getProductById(id);
     }
 
-    @Get('image/:id')
-    async getImage(@Param('id') id: number, @Res() res: Response) {
-        const imageData = await this.productService.getImageById(id);
-        res.setHeader('Content-Type', 'image/jpeg');  // Adjust based on image type
-        res.send(imageData);
+    @Get('image/:filename')
+    async getImage(@Param('filename') filename: string, @Res() res: Response) {
+        const imagePath = `./uploads/${filename}`;
+        res.sendFile(imagePath, { root: '.' });
     }
 }

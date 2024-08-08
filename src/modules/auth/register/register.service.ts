@@ -67,22 +67,32 @@ export class RegisterService {
     }
     // Update user details
     async updateUser(updateUserDto: UpdateUserDto) {
-        const { id, username, roleId } = updateUserDto;
-        // Find and update the user
+        const { id, username, roleId, companyName, description, contactPerson, phoneNumber, address } = updateUserDto;
+
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user) {
             throw new NotFoundException('User not found');
         }
+
+        const dataToUpdate: any = {
+            username: username ?? undefined,
+            roleId: roleId ?? undefined,
+            isSeller: roleId === 3 ? true : undefined,
+            companyName: companyName ?? undefined,
+            description: description ?? undefined,
+            contactPerson: contactPerson ?? undefined,
+            phoneNumber: phoneNumber ?? undefined,
+            address: address ?? undefined,
+        };
+
         const updatedUser = await this.prisma.user.update({
             where: { id },
-            data: {
-                username: username ?? undefined,
-                roleId: roleId ?? undefined,
-                isSeller: roleId === 3 ? true : undefined,
-            },
+            data: dataToUpdate,
         });
+
         return updatedUser;
     }
+
 
     // Delete a user by ID
     async deleteUser(userId: number) {

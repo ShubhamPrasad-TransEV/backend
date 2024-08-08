@@ -4,8 +4,8 @@ export class UploadProductDto {
     @IsString()
     name: string;
 
-    @IsNumber()
-    price: number;
+    @IsString()
+    price: string;  // Price as a string to handle conversion
 
     @IsString()
     description: string;

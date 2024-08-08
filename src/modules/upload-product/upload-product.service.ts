@@ -1,6 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Buffer } from 'buffer'; // Ensure Buffer is imported
 
 @Injectable()
 export class UploadProductService {
@@ -8,40 +7,49 @@ export class UploadProductService {
 
     async createProduct(data: {
         name: string;
-        price: number;
+        price: string;
         description: string;
         sellerId: number;
-        images: Buffer[];
-    }) {
-        const { images, ...productData } = data;
+        images: string[];
+    }) {  /* If any sellerId is not found, it will NOT throw an error. It has to be checked real sooon.... */
+        const { images, sellerId, ...productData } = data;
         const product = await this.prisma.product.create({
             data: {
                 ...productData,
+                seller: {
+                    connect: {
+                        id: parseInt(sellerId.toString(), 10) 
+                    }
+                },
                 images: {
-                    create: images.map((image) => ({
-                        data: image, // Storing binary data directly
+                    create: images.map((filename) => ({
+                        data: Buffer.from(filename, 'base64'), 
                     })),
                 },
+                price: parseFloat(data.price),
             },
         });
         return product;
     }
-    
+
     async getProductById(id: number) {
-        return this.prisma.product.findUnique({
+        const product = await this.prisma.product.findUnique({
             where: { id },
-            include: { images: true }, // Ensure that images are included
+            include: { images: true },
         });
+        if (!product) {
+            throw new NotFoundException('Product not found');
+        }
+        return product;
     }
-    
+
     async getImageById(id: number) {
         const image = await this.prisma.image.findUnique({
             where: { id },
         });
         if (!image) {
-            throw new Error('Image not found');
+            throw new NotFoundException('Image not found');
         }
-        return image.data; // Returning binary data
+        return image.data;
     }
 }
-
