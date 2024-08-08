@@ -72,7 +72,7 @@ export class UploadProductController {
 
     @Get(':id')
     @ApiResponse({ status: 200, description: 'Product retrieved successfully.' })
-    @ApiResponse({ status: 404, description: 'Product not found.' })
+    @ApiResponse({ status: 404, description: 'Product not found..' })
     async getProduct(@Param('id') id: number) {
         Logger.log(`Get product by ID: ${id}`, 'UploadProductController');
         return this.productService.getProductById(id);
