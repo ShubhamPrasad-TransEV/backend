@@ -5,7 +5,7 @@ export class UploadProductDto {
     name: string;
 
     @IsString()
-    price: string;  // Price as a string to handle conversion
+    price: string;  
 
     @IsString()
     description: string;
@@ -14,6 +14,6 @@ export class UploadProductDto {
     sellerId: number;
 
     @IsArray()
-    @IsString({ each: true }) // Validate each item in the array as a string
-    images: string[]; // Images as base64-encoded strings
+    @IsString({ each: true }) 
+    images: string[]; 
 }

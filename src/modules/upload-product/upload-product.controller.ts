@@ -1,6 +1,6 @@
-import { Controller, Post, UseInterceptors, UploadedFiles, Res, HttpException, HttpStatus, Body, Param, Get } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFiles, Res, HttpException, HttpStatus, Body, Param, Get, Logger } from '@nestjs/common';
 import { UploadProductService } from './upload-product.service';
-import { ApiBody, ApiTags, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { Response } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -54,19 +54,15 @@ export class UploadProductController {
         if (!files || files.length === 0) {
             throw new HttpException('No files uploaded', HttpStatus.BAD_REQUEST);
         }
-
-        // Convert files to base64 strings
         const imageBase64Strings = files.map(file => {
             const fileBuffer = fs.readFileSync(`./uploads/${file.filename}`);
             return fileBuffer.toString('base64');
         });
-
         const productData = {
             ...body,
             images: imageBase64Strings,
             sellerId: body.sellerId,
         };
-
         const createdProduct = await this.productService.createProduct(productData);
         res.status(HttpStatus.CREATED).json({
             message: 'Product created successfully',
@@ -75,13 +71,11 @@ export class UploadProductController {
     }
 
     @Get(':id')
+    @ApiResponse({ status: 200, description: 'Product retrieved successfully.' })
+    @ApiResponse({ status: 404, description: 'Product not found.' })
     async getProduct(@Param('id') id: number) {
+        Logger.log(`Get product by ID: ${id}`, 'UploadProductController');
         return this.productService.getProductById(id);
     }
 
-    @Get('image/:filename')
-    async getImage(@Param('filename') filename: string, @Res() res: Response) {
-        const imagePath = `./uploads/${filename}`;
-        res.sendFile(imagePath, { root: '.' });
-    }
 }

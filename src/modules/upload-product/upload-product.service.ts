@@ -34,22 +34,12 @@ export class UploadProductService {
 
     async getProductById(id: number) {
         const product = await this.prisma.product.findUnique({
-            where: { id },
+            where: { id : parseInt(id.toString() , 10) },
             include: { images: true },
         });
         if (!product) {
             throw new NotFoundException('Product not found');
         }
         return product;
-    }
-
-    async getImageById(id: number) {
-        const image = await this.prisma.image.findUnique({
-            where: { id },
-        });
-        if (!image) {
-            throw new NotFoundException('Image not found');
-        }
-        return image.data;
     }
 }
