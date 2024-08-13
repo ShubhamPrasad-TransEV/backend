@@ -1,4 +1,4 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get , Param , Query , UploadedFiles, UseInterceptors, Body, BadRequestException, NotFoundException } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -35,4 +35,19 @@ export class ProductsController {
 
     return this.productsService.createProduct(createProductDto, imageUrls);
   }
+
+  @Get()
+  async getAllProducts() {
+    return this.productsService.findAll();
+  }
+
+  @Get(':id')
+  async getProductById(@Param('id') id: string) {
+    const product = await this.productsService.findOne(id);
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+    return product;
+  }
 }
+
