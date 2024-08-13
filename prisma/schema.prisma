@@ -19,6 +19,7 @@ model User {
   isSeller Boolean         @default(false)
   resets   PasswordReset[]
 
+
   // Seller-specific fields
   companyName   String?
   description   String?

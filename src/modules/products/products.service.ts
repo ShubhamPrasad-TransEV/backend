@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -7,17 +7,42 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async validateUserRole(userId) {
+    console.log(typeof userId)
+    const uid= parseInt(userId)
+    const user = await this.prisma.user.findUnique({
+      where: { id:uid },
+      select: { role: true },
+    });
+  
+    if (!user) {
+      throw new BadRequestException(`User with ID ${userId} does not exist`);
+    }
+  
+    if (user.role.name !== 'Admin' && user.role.name !== 'Seller') {
+      throw new ForbiddenException(`User with ID ${userId} is not authorized to upload products`);
+    }
+  }
+  
+
   async createProduct(createProductDto: CreateProductDto, imageUrls: string[]) {
+    // Convert userId to an integer
+    const userId = parseInt(createProductDto.userId.toString());
+  
+    // Validate user role with the integer userId
+    await this.validateUserRole(userId);
+  
+    // Create the product with the integer userId
     return this.prisma.product.create({
       data: {
         name: createProductDto.name,
-        price: parseFloat(createProductDto.price.toString()), // Ensure price is a Float
+        price: parseFloat(createProductDto.price.toString()),
         description: createProductDto.description,
-        userId: parseInt(createProductDto.userId.toString(), 10), // Ensure userId is an Int
+        userId: userId, // Pass the integer userId here
         images: {
           create: imageUrls.map(url => ({
             filename: url,
-            data: Buffer.alloc(0), // You might not need this if not storing actual file data
+            data: Buffer.alloc(0), // Placeholder for file data if needed
           })),
         },
       },
