@@ -93,6 +93,32 @@ export class RegisterService {
         return updatedUser;
     }
 
+    async getAllSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: {
+                    name: 'Seller', // Assuming 'Seller' is the role name in your database
+                },
+            },
+            include: {
+                role: true, // Include role information if needed
+            },
+        });
+    }
+
+    async getUsers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: {
+                    name: 'User', // Assuming 'Seller' is the role name in your database
+                },
+            },
+            include: {
+                role: true, // Include role information if needed
+            },
+        });
+    }
+
 
     // Delete a user by ID
     async deleteUser(userId: number) {

@@ -36,4 +36,6 @@ export class AdminController {
     async createAdmin(@Body() createAdminDto: CreateAdminDto) {
         return this.adminService.createAdmin(createAdminDto);
     }
+
+    
 }

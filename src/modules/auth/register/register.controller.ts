@@ -19,6 +19,26 @@ export class RegisterController {
         return this.registerService.getAllUsers();
     }
 
+     // Fetch all sellers
+     @Get('sellers')
+     @ApiResponse({
+         status: 200,
+         description: 'Fetch all sellers',
+     })
+     async getAllSellers() {
+         return this.registerService.getAllSellers();
+     }
+
+     @Get('users')
+     @ApiResponse({
+         status: 200,
+         description: 'Fetch all users',
+     })
+     async getUsers() {
+         return this.registerService.getUsers();
+     }
+ 
+
     //Register a new user
     @Post('register')
     @ApiBody({
@@ -75,4 +95,5 @@ export class RegisterController {
   }
   return this.registerService.findOne(userId);
 }
+
 }
