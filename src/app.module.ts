@@ -6,8 +6,8 @@ import { AppService } from './app.service';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { UploadProductModule } from './modules/upload-product/upload-product.module';
 import { EmailService } from './email/email.service';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -17,8 +17,9 @@ import { EmailService } from './email/email.service';
     PrismaModule , 
     RoleModule , 
     AdminModule , 
-    UploadProductModule ,
-    AuthModule ],
+    AuthModule ,
+    ProductsModule
+ ],
   controllers: [AppController],
   providers: [AppService, EmailService],
 })
