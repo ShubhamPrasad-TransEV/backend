@@ -19,6 +19,8 @@ model User {
   isSeller  Boolean         @default(false)
   resets    PasswordReset[]
   cartItems CartItem[]
+   name        String?         // Optional field for the user's name
+  phone String?         // Optional field for the user's phone number
 
   // Seller-specific fields
   companyName   String?

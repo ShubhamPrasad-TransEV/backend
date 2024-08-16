@@ -12,7 +12,7 @@ export class RegisterService {
 
     //Register a new user
     async register(createUserDto: CreateUserDto) {
-        const { username, password, email } = createUserDto;
+        const { name,username, password, email, phoneNumber } = createUserDto;
 
         //Check if the user already exists
         const existingUser = await this.prisma.user.findUnique({
@@ -26,9 +26,11 @@ export class RegisterService {
         //Create the user
         const user = await this.prisma.user.create({
             data:{
+                name,
                 username,
                 email,
                 password: hashedPassword,
+                phoneNumber
             },
         });
         // Send welcome email
