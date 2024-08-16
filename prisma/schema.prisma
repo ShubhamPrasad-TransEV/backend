@@ -9,16 +9,16 @@ datasource db {
 
 // Define User model
 model User {
-  id       Int             @id @default(autoincrement())
-  username String          @unique
-  email    String          @unique
-  password String
-  roleId   Int             @default(2)
-  role     Role            @relation(fields: [roleId], references: [id])
-  orders   Order[]
-  isSeller Boolean         @default(false)
-  resets   PasswordReset[]
-
+  id        Int             @id @default(autoincrement())
+  username  String          @unique
+  email     String          @unique
+  password  String
+  roleId    Int             @default(2)
+  role      Role            @relation(fields: [roleId], references: [id])
+  orders    Order[]
+  isSeller  Boolean         @default(false)
+  resets    PasswordReset[]
+  cartItems CartItem[]
 
   // Seller-specific fields
   companyName   String?
@@ -56,6 +56,7 @@ model Product {
   Seller      Seller?     @relation(fields: [sellerId], references: [id])
   sellerId    Int?
   OrderItem   OrderItem[]
+  cartItems   CartItem[]
 }
 
 // Define Order model
@@ -86,6 +87,17 @@ model Image {
   productId Int
   // Define the relation from Image to Product
   product   Product @relation(fields: [productId], references: [id])
+}
+
+//define cart item
+model CartItem {
+  id        Int @id @default(autoincrement())
+  userId    Int
+  productId Int
+  quantity  Int @default(1)
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 }
 
 // Define PasswordReset model
