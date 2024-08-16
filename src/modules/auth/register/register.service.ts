@@ -107,18 +107,20 @@ export class RegisterService {
             },
         });
     }
-
-    async getUsers() {
-        return this.prisma.user.findMany({
-            where: {
-                role: {
-                    name: 'User', // Assuming 'Seller' is the role name in your database
-                },
-            },
+    // Get a seller by ID
+    async getSellerById(id: number) {
+        const seller = await this.prisma.user.findUnique({
+            where: { id },
             include: {
                 role: true, // Include role information if needed
             },
         });
+
+        if (!seller || seller.role.name !== 'Seller') {
+            throw new NotFoundException('Seller not found');
+        }
+
+        return seller;
     }
 
 
@@ -137,5 +139,20 @@ export class RegisterService {
         });
 
         return { message: 'User deleted successfully' };
+    }
+    async deleteSeller (sellerId: number) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: sellerId },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        await this.prisma.user.delete({
+            where: { id: sellerId },
+        });
+
+        return { message: 'Seller deleted successfully' };
     }
 }

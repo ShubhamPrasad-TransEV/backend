@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -27,6 +27,23 @@ export class RegisterController {
      })
      async getAllSellers() {
          return this.registerService.getAllSellers();
+     }
+     @Get('sellers/:id')
+     @ApiResponse({
+       status: 200,
+       description: 'Fetch seller by ID',
+       type: CreateUserDto,
+     })
+     @ApiResponse({
+       status: 404,
+       description: 'Seller not found',
+     })
+     async getSellerById(@Param('id', ParseIntPipe) id: number) {
+       const seller = await this.registerService.getSellerById(id);
+       if (!seller) {
+         throw new NotFoundException(`Seller with ID ${id} not found`);
+       }
+       return seller;
      }
 
      @Get('users')
@@ -87,6 +104,22 @@ export class RegisterController {
     })
     async deleteUser(@Param('id', ParseIntPipe) id: number) {
         return this.registerService.deleteUser(id);
+    } // Delete a seller by ID
+    @Delete('sellers/:id')
+    @ApiResponse({
+        status: 200,
+        description: 'Seller deleted successfully',
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Seller not found',
+    })
+    async deleteSeller(@Param('id', ParseIntPipe) id: number) {
+        const result = await this.registerService.deleteSeller(id);
+        if (!result) {
+            throw new NotFoundException(`Seller with ID ${id} not found`);
+        }
+        return { message: 'Seller deleted successfully' };
     }
 
     @Get(':id')
