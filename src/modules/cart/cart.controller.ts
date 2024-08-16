@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Post, Get, Param,Delete, ParseIntPipe } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -34,5 +34,21 @@ export class CartController {
   @Get(':userId')
   async getCart(@Param('userId', ParseIntPipe) userId: number) {
     return this.cartService.getCart(userId);
+  }
+  @Delete(':userId/:productId')
+  @ApiResponse({
+    status: 200,
+    description: 'Item removed from cart successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Item not found in cart',
+  })
+  async removeFromCart(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Param('productId', ParseIntPipe) productId: number,
+  ) {
+    await this.cartService.removeFromCart(userId, productId);
+    return { message: 'Item removed from cart successfully' };
   }
 }

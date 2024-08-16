@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 
@@ -46,6 +46,28 @@ export class CartService {
       },
       include: {
         product: true, // Include product information if needed
+      },
+    });
+  }
+
+  // cart.service.ts
+  async removeFromCart(userId: number, productId: number): Promise<void> {
+    // Check if the cart item exists for the user
+    const cartItem = await this.prisma.cartItem.findFirst({
+      where: {
+        userId,
+        productId,
+      },
+    });
+
+    if (!cartItem) {
+      throw new NotFoundException('Item not found in the cart');
+    }
+
+    // Remove the item from the cart
+    await this.prisma.cartItem.delete({
+      where: {
+        id: cartItem.id,
       },
     });
   }

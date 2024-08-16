@@ -22,6 +22,10 @@ export class CreateUserDto {
     @IsInt()
     roleId?: number;
 
+    // @ApiProperty({ example: '+1234567890', description: 'Phone number of the user', required: false })
+    // @IsPhoneNumber(null) // You can specify a country code if needed
+    // phone?: string;
+
     @ApiProperty({ example: '+1234567890', description: 'Phone number of the user', required: false })
     @IsOptional()
     @IsPhoneNumber(null) // You can specify a country code if needed

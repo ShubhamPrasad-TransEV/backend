@@ -20,13 +20,12 @@ model User {
   resets    PasswordReset[]
   cartItems CartItem[]
    name        String?         // Optional field for the user's name
-  phone String?         // Optional field for the user's phone number
+  phoneNumber   String?
 
   // Seller-specific fields
   companyName   String?
   description   String?
   contactPerson String?
-  phoneNumber   String?
   address       String?
 
   // Define the relation from User to Product

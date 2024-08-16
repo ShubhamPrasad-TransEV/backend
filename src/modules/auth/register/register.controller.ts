@@ -52,7 +52,7 @@ export class RegisterController {
                     username: 'newuser',
                     password: 'securepassword',
                     email: 'HkNfZ@example.com',
-                    phone: 876543210
+                    phoneNumber: '876543210'
                 },
             },
         },

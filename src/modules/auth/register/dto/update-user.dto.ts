@@ -38,10 +38,10 @@ export class UpdateUserDto {
     @IsString()
     contactPerson?: string;
 
-    @ApiProperty({ example: '1234567890', description: 'Updated phone number of the seller', required: false })
-    @IsOptional()
-    @IsString()
-    phoneNumber?: string;
+    // @ApiProperty({ example: '1234567890', description: 'Updated phone number of the seller', required: false })
+    // @IsOptional()
+    // @IsString()
+    // phoneNumber?: string;
 
     @ApiProperty({ example: '123 Main St', description: 'Updated address of the seller', required: false })
     @IsOptional()

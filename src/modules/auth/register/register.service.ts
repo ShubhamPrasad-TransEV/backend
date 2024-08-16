@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt'
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailService } from 'src/email/email.service';
+import { Console } from 'console';
 
 @Injectable()
 export class RegisterService {
@@ -13,7 +14,7 @@ export class RegisterService {
     //Register a new user
     async register(createUserDto: CreateUserDto) {
         const { name,username, password, email, phoneNumber } = createUserDto;
-
+        console.log(phoneNumber);
         //Check if the user already exists
         const existingUser = await this.prisma.user.findUnique({
             where: { username },
@@ -69,7 +70,7 @@ export class RegisterService {
     }
     // Update user details
     async updateUser(updateUserDto: UpdateUserDto) {
-        const { id, username, roleId, companyName, description, contactPerson, phoneNumber, address } = updateUserDto;
+        const { id, username, roleId, companyName, description, contactPerson, address } = updateUserDto;
 
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user) {
@@ -83,7 +84,6 @@ export class RegisterService {
             companyName: companyName ?? undefined,
             description: description ?? undefined,
             contactPerson: contactPerson ?? undefined,
-            phoneNumber: phoneNumber ?? undefined,
             address: address ?? undefined,
         };
 
