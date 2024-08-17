@@ -70,7 +70,7 @@ export class RegisterService {
     }
     // Update user details
     async updateUser(updateUserDto: UpdateUserDto) {
-        const { id, username, roleId, companyName, description, contactPerson, address } = updateUserDto;
+        const { id, username, roleId, companyName, description, contactPerson, address ,  phoneNumber} = updateUserDto;
 
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user) {
@@ -85,6 +85,7 @@ export class RegisterService {
             description: description ?? undefined,
             contactPerson: contactPerson ?? undefined,
             address: address ?? undefined,
+            phoneNumber: phoneNumber ?? undefined,
         };
 
         const updatedUser = await this.prisma.user.update({
