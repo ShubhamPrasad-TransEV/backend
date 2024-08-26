@@ -1,4 +1,17 @@
-import { Controller, Post, Get , Param , Query , UploadedFiles, UseInterceptors, Body, BadRequestException, NotFoundException, Patch, Delete } from '@nestjs/common';
+import { 
+  Controller, 
+  Post, 
+  Get, 
+  Param, 
+  Patch, 
+  Delete, 
+  Query, 
+  UploadedFiles, 
+  UseInterceptors, 
+  Body, 
+  BadRequestException, 
+  NotFoundException 
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -20,7 +33,6 @@ export class ProductsController {
       throw new BadRequestException('No files uploaded');
     }
 
-    // Save files to the server
     const uploadDir = path.join(process.cwd(), 'public/uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
@@ -34,7 +46,14 @@ export class ProductsController {
       }),
     );
 
-    return this.productsService.createProduct(createProductDto, imageUrls);
+    try {
+      return await this.productsService.createProduct(createProductDto, imageUrls);
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to create product');
+    }
   }
 
   @Get()
@@ -44,31 +63,41 @@ export class ProductsController {
 
   @Get(':id')
   async getProductById(@Param('id') id: string) {
-    const product = await this.productsService.findOne(id);
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    try {
+      return await this.productsService.findOne(id);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to retrieve product with ID ${id}`);
     }
-    return product;
   }
+
   @Patch(':id')
   async updateProduct(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
-    const updatedProduct = await this.productsService.update(id, updateProductDto);
-    if (!updatedProduct) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    try {
+      return await this.productsService.update(id, updateProductDto);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to update product with ID ${id}`);
     }
-    return updatedProduct;
   }
 
   @Delete(':id')
   async deleteProduct(@Param('id') id: string) {
-    const result = await this.productsService.remove(id);
-    if (!result) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    try {
+      await this.productsService.remove(id);
+      return { message: `Product with ID ${id} has been deleted` };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(`Failed to delete product with ID ${id}`);
     }
-    return { message: `Product with ID ${id} has been deleted` };
   }
 }
-
