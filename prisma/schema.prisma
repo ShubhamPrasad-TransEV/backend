@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,78 +9,106 @@ datasource db {
 
 // Define User model
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
+  id        Int             @id @default(autoincrement())
+  username  String          @unique
+  email     String          @unique
   password  String
-  roleId    Int      @default(2)
-  role      Role     @relation(fields: [roleId], references: [id])
+  roleId    Int             @default(2)
+  role      Role            @relation(fields: [roleId], references: [id])
   orders    Order[]
-  isSeller  Boolean  @default(false)
-  resets    PasswordReset[] 
+  isSeller  Boolean         @default(false)
+  resets    PasswordReset[]
+  cartItems CartItem[]
+   name        String?         // Optional field for the user's name
+  phoneNumber   String?
 
-  //Seller specific fields
-  companyName String?
-  description String?
+  // Seller-specific fields
+  companyName   String?
+  description   String?
   contactPerson String?
-  phoneNumber String?
-  address     String?
+  address       String?
 
-  products      Product[] @relation("UserProducts")
+  // Define the relation from User to Product
+  products Product[] @relation("UserProducts")
+}
+
+// Define seller schema
+model Seller {
+  id       Int       @id @default(autoincrement())
+  products Product[]
 }
 
 // Define Role model
 model Role {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  users     User[]
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  users User[]
 }
 
 // Define Product model
 model Product {
-    id          Int       @id @default(autoincrement())
-    name        String
-    price       String
-    description String
-    userId    Int
-    seller      User      @relation(fields: [id], references: [id] , name: "UserProducts")
-    orderItems  OrderItem[]
-    images      Image[]
+  id          Int         @id @default(autoincrement())
+  name        String
+  price       Float
+  description String
+  userId      Int
+  user        User        @relation("UserProducts", fields: [userId], references: [id])
+  images      Image[]
+  Seller      Seller?     @relation(fields: [sellerId], references: [id])
+  sellerId    Int?
+  OrderItem   OrderItem[]
+  cartItems   CartItem[]
 }
-
 
 // Define Order model
 model Order {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  // Define the relation from Order to User
+  user       User        @relation(fields: [userId], references: [id])
   orderItems OrderItem[]
 }
 
 // Define OrderItem model
 model OrderItem {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id])
+  // Define the relation from OrderItem to Order
+  order     Order   @relation(fields: [orderId], references: [id])
   productId Int
-  product   Product  @relation(fields: [productId], references: [id])
+  // Define the relation from OrderItem to Product
+  product   Product @relation(fields: [productId], references: [id])
 }
 
-
-//Define Image model
+// Define Image model
 model Image {
-    id        Int      @id @default(autoincrement())
-    data      Bytes 
-    filename String @unique
-    product   Product  @relation(fields: [productId], references: [id])
-    productId Int
+  id        Int     @id @default(autoincrement())
+  filename  String
+  data      Bytes
+  productId Int
+  // Define the relation from Image to Product
+  product   Product @relation(fields: [productId], references: [id])
 }
 
+//define cart item
+model CartItem {
+  id        Int @id @default(autoincrement())
+  userId    Int
+  productId Int
+  quantity  Int @default(1)
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// Define PasswordReset model
 model PasswordReset {
   id        Int      @id @default(autoincrement())
   otp       String
   userId    Int
   expiresAt DateTime
+  // Define the relation from PasswordReset to User
   user      User     @relation(fields: [userId], references: [id])
+
   @@index([otp])
 }

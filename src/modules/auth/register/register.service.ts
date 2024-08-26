@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt'
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailService } from 'src/email/email.service';
+import { Console } from 'console';
 
 @Injectable()
 export class RegisterService {
@@ -12,8 +13,8 @@ export class RegisterService {
 
     //Register a new user
     async register(createUserDto: CreateUserDto) {
-        const { username, password, email } = createUserDto;
-
+        const { name,username, password, email, phoneNumber } = createUserDto;
+        console.log(phoneNumber);
         //Check if the user already exists
         const existingUser = await this.prisma.user.findUnique({
             where: { username },
@@ -26,9 +27,11 @@ export class RegisterService {
         //Create the user
         const user = await this.prisma.user.create({
             data:{
+                name,
                 username,
                 email,
                 password: hashedPassword,
+                phoneNumber
             },
         });
         // Send welcome email
@@ -67,7 +70,7 @@ export class RegisterService {
     }
     // Update user details
     async updateUser(updateUserDto: UpdateUserDto) {
-        const { id, username, roleId, companyName, description, contactPerson, phoneNumber, address } = updateUserDto;
+        const { id, username, roleId, companyName, description, contactPerson, address ,  phoneNumber} = updateUserDto;
 
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user) {
@@ -81,8 +84,8 @@ export class RegisterService {
             companyName: companyName ?? undefined,
             description: description ?? undefined,
             contactPerson: contactPerson ?? undefined,
-            phoneNumber: phoneNumber ?? undefined,
             address: address ?? undefined,
+            phoneNumber: phoneNumber ?? undefined,
         };
 
         const updatedUser = await this.prisma.user.update({
@@ -91,6 +94,34 @@ export class RegisterService {
         });
 
         return updatedUser;
+    }
+
+    async getAllSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: {
+                    name: 'Seller', // Assuming 'Seller' is the role name in your database
+                },
+            },
+            include: {
+                role: true, // Include role information if needed
+            },
+        });
+    }
+    // Get a seller by ID
+    async getSellerById(id: number) {
+        const seller = await this.prisma.user.findUnique({
+            where: { id },
+            include: {
+                role: true, // Include role information if needed
+            },
+        });
+
+        if (!seller || seller.role.name !== 'Seller') {
+            throw new NotFoundException('Seller not found');
+        }
+
+        return seller;
     }
 
 
@@ -109,5 +140,20 @@ export class RegisterService {
         });
 
         return { message: 'User deleted successfully' };
+    }
+    async deleteSeller (sellerId: number) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: sellerId },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        await this.prisma.user.delete({
+            where: { id: sellerId },
+        });
+
+        return { message: 'Seller deleted successfully' };
     }
 }
