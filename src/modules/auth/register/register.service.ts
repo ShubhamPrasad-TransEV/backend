@@ -13,7 +13,7 @@ export class RegisterService {
 
     //Register a new user
     async register(createUserDto: CreateUserDto) {
-        const { name,username, password, email, phoneNumber } = createUserDto;
+        const { name,username, password, email, phoneNumber, } = createUserDto;
         console.log(phoneNumber);
         //Check if the user already exists
         const existingUser = await this.prisma.user.findUnique({
@@ -31,7 +31,8 @@ export class RegisterService {
                 username,
                 email,
                 password: hashedPassword,
-                phoneNumber
+                phoneNumber,
+                
             },
         });
         // Send welcome email

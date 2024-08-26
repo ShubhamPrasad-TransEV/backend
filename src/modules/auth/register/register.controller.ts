@@ -52,7 +52,7 @@ export class RegisterController {
          description: 'Fetch all users',
      })
      async getUsers() {
-         return this.registerService.getUsers();
+         return this.registerService.getAllUsers();
      }
  
 
