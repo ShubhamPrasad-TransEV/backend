@@ -1,6 +1,4 @@
-// src/products/dto/update-product.dto.ts
-
-import { IsString, IsOptional, IsNumber, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsArray } from 'class-validator';
 
 export class UpdateProductDto {
   @IsOptional()
@@ -8,15 +6,14 @@ export class UpdateProductDto {
   name?: string;
 
   @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
   @IsNumber()
   price?: number;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  images?: string[];
+  images?: { filename: string; data: Buffer }[]; 
 }

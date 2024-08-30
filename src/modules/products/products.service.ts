@@ -55,21 +55,21 @@ export class ProductsService {
     }
   }
 
-  async createProduct(createProductDto: CreateProductDto, imageUrls: string[]) {
+  async createProduct(createProductDto: CreateProductDto, imageBuffers: { filename: string; data: Buffer }[]) {
     const userId = parseInt(createProductDto.userId?.toString());
-
+  
     if (isNaN(userId)) {
       throw new BadRequestException('User ID must be a valid number');
     }
-
+  
     await this.validateUserRole(userId);
-
+  
     const price = parseFloat(createProductDto.price?.toString());
-
+  
     if (isNaN(price)) {
       throw new BadRequestException('Price must be a valid number');
     }
-
+  
     return this.prisma.product.create({
       data: {
         name: createProductDto.name,
@@ -77,48 +77,50 @@ export class ProductsService {
         description: createProductDto.description,
         userId,
         images: {
-          create: imageUrls.map(url => ({
-            filename: url,
-            data: Buffer.alloc(0),
+          create: imageBuffers.map(buffer => ({
+            filename: buffer.filename,
+            data: buffer.data,
           })),
         },
       },
     });
   }
+  
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     const productId = parseInt(id, 10);
     if (isNaN(productId)) {
       throw new BadRequestException('Product ID must be a valid number');
     }
-
+  
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
-
+  
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
-
+  
     const price = updateProductDto.price ? parseFloat(updateProductDto.price.toString()) : undefined;
-
+  
     return this.prisma.product.update({
       where: { id: productId },
       data: {
         ...updateProductDto,
         price,
         images: updateProductDto.images ? {
-            updateMany: {
-              where: { productId },
-              data: updateProductDto.images.map((url) => ({
-                filename: url,
-                data: Buffer.alloc(0),
-              })),
-            },
-          } : undefined,
+          updateMany: {
+            where: { productId },
+            data: updateProductDto.images.map((img) => ({
+              filename: img.filename,
+              data: img.data,  // Update the image data buffer
+            })),
+          },
+        } : undefined,
       },
     });
   }
+  
 
   async remove(id: string) {
     const product = await this.prisma.product.findUnique({

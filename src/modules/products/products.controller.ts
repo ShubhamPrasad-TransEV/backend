@@ -4,8 +4,7 @@ import {
   Get, 
   Param, 
   Patch, 
-  Delete, 
-  Query, 
+  Delete,
   UploadedFiles, 
   UseInterceptors, 
   Body, 
@@ -24,37 +23,30 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post('upload')
-  @UseInterceptors(FilesInterceptor('images'))
-  async uploadProduct(
-    @Body() createProductDto: CreateProductDto,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('No files uploaded');
-    }
-
-    const uploadDir = path.join(process.cwd(), 'public/uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const imageUrls = await Promise.all(
-      files.map(file => {
-        const filePath = path.join(uploadDir, file.originalname);
-        fs.writeFileSync(filePath, file.buffer);
-        return `/uploads/${file.originalname}`;
-      }),
-    );
-
-    try {
-      return await this.productsService.createProduct(createProductDto, imageUrls);
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException('Failed to create product');
-    }
+@UseInterceptors(FilesInterceptor('images'))
+async uploadProduct(
+  @Body() createProductDto: CreateProductDto,
+  @UploadedFiles() files: Express.Multer.File[],
+) {
+  if (!files || files.length === 0) {
+    throw new BadRequestException('No files uploaded');
   }
+
+  try {
+    const imageBuffers = files.map(file => ({
+      filename: file.originalname,
+      data: file.buffer,
+    }));
+
+    return await this.productsService.createProduct(createProductDto, imageBuffers);
+  } catch (error) {
+    if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new BadRequestException('Failed to create product');
+  }
+}
+
 
   @Get()
   async getAllProducts() {
@@ -62,16 +54,28 @@ export class ProductsController {
   }
 
   @Get(':id')
-  async getProductById(@Param('id') id: string) {
-    try {
-      return await this.productsService.findOne(id);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new BadRequestException(`Failed to retrieve product with ID ${id}`);
+async getProductById(@Param('id') id: string) {
+  try {
+    const product = await this.productsService.findOne(id);
+    
+    // Optionally format the image data as base64 for easier frontend consumption
+    const images = product.images.map(image => ({
+      ...image,
+      data: image.data.toString('base64'),
+    }));
+
+    return {
+      ...product,
+      images,
+    };
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
     }
+    throw new BadRequestException(`Failed to retrieve product with ID ${id}`);
   }
+}
+
 
   @Patch(':id')
   async updateProduct(

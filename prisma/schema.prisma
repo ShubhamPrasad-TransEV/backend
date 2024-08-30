@@ -84,11 +84,11 @@ model OrderItem {
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  data      Bytes
+  data      Bytes   // Storing the image data as bytes
   productId Int
-  // Define the relation from Image to Product
   product   Product @relation(fields: [productId], references: [id])
 }
+
 
 //define cart item
 model CartItem {
