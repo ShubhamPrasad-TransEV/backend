@@ -1,8 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, ParseIntPipe, NotFoundException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Admin')
 @Controller('admin')
 export class AdminController {
     constructor(private readonly adminService: AdminService) {}
@@ -18,6 +19,7 @@ export class AdminController {
                     username: 'adminuser',
                     password: 'securepassword',
                     email: 'adminuser@gmail.com',
+                    name:'Puja Das',
                     role: 'Admin',
                     companyName: 'Tech Corp',
                     description: 'A leading tech company',
@@ -37,5 +39,21 @@ export class AdminController {
         return this.adminService.createAdmin(createAdminDto);
     }
 
-    
+    @Get(':id')
+    @ApiResponse({
+        status: 200,
+        description: 'Fetch admin by ID',
+        type: CreateAdminDto,
+    })
+    @ApiResponse({
+        status: 404,
+        description: 'Admin not found',
+    })
+    async getAdminById(@Param('id', ParseIntPipe) id: number) {
+        const admin = await this.adminService.getAdminById(id);
+        if (!admin) {
+            throw new NotFoundException(`Admin with ID ${id} not found`);
+        }
+        return admin;
+    }
 }
