@@ -26,3 +26,4 @@ export class CreateProductDto {
   @IsOptional()
   imageFiles?: Express.Multer.File[];
 }
+

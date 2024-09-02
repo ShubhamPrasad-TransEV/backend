@@ -17,3 +17,6 @@ export class UpdateProductDto {
   @IsArray()
   images?: { filename: string; data: Buffer }[]; 
 }
+
+
+

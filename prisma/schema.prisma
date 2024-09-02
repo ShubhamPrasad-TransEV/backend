@@ -60,6 +60,7 @@ model Product {
   cartItems   CartItem[]
 }
 
+
 // Define Order model
 model Order {
   id         Int         @id @default(autoincrement())
@@ -100,6 +101,25 @@ model CartItem {
   user    User    @relation(fields: [userId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 }
+// schema.prisma
+model Category {
+  id          Int         @id @default(autoincrement())
+  name        String
+  parentId    Int?        // Optional field for parent categories
+  parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryHierarchy")
+}
+
+
+
+
+
+
+
+
+
+
+
 
 // Define PasswordReset model
 model PasswordReset {
@@ -112,3 +132,4 @@ model PasswordReset {
 
   @@index([otp])
 }
+
