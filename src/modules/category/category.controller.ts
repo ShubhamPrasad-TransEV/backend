@@ -30,6 +30,9 @@ export class CategoriesController {
     return this.categoriesService.getCategoryById(Number(id));
   }
 
+   
+   
+
   // Get a category by name
   @Get('name/:name')
   async getCategoryByName(@Param('name') name: string) {
