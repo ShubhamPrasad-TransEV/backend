@@ -22,6 +22,26 @@ export class CreateProductDto {
   @IsNotEmpty()
   userId: number;
 
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  sellingPrice: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  discountPrice: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  category: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  subCategory: number;
+
   @ApiProperty({ type: 'array', items: { type: 'string' } })
   @IsOptional()
   imageFiles?: Express.Multer.File[];
