@@ -13,7 +13,7 @@ export class CreateCategoryDto {
 }
 
 export class CreateSubcategoryDto {
-  @ApiProperty({ example: 'Mobile Phones', description: 'Name of the subcategory' })
+  @ApiProperty({ example: 'Shirt', description: 'Name of the subcategory' })
   @IsString()
   name: string;
 

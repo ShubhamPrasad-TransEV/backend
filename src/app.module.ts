@@ -10,6 +10,7 @@ import { EmailService } from './email/email.service';
 import { ProductsModule } from './modules/products/products.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/category/category.module';
+ 
 
 @Module({
   imports: [
@@ -22,7 +23,9 @@ import { CategoriesModule } from './modules/category/category.module';
     AuthModule ,
     ProductsModule,
     CartModule,
-    CategoriesModule
+    CategoriesModule,
+    
+
  ],
   controllers: [AppController],
   providers: [AppService, EmailService],

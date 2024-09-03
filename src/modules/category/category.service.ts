@@ -69,12 +69,6 @@ export class CategoriesService {
     });
   }
 
-  async getAllSubcategories() {
-    return this.prisma.category.findMany({
-      where: { parentId: { not: null } },
-    });
-  }
-
   async updateCategory(id: number, updateCategoryDto: UpdateCategoryDto) {
     const { name, parentId } = updateCategoryDto;
     return this.prisma.category.update({
@@ -124,5 +118,25 @@ export class CategoriesService {
       where: { id: subcategory.id },
     });
   }
-}
 
+  // New methods to get categories without subcategories
+  async getCategoriesWithoutSubcategories() {
+    return this.prisma.category.findMany({
+      where: { parentId: null }, // Fetch only root categories without subcategories
+    });
+  }
+
+  async getCategoryByIdWithoutSubcategories(id: number) {
+    return this.prisma.category.findUnique({
+      where: { id },
+      // Do not include subcategories
+    });
+  }
+
+  async getCategoryByNameWithoutSubcategories(name: string) {
+    return this.prisma.category.findFirst({
+      where: { name },
+      // Do not include subcategories
+    });
+  }
+}
