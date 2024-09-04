@@ -1,3 +1,4 @@
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto, CreateSubcategoryDto, UpdateCategoryDto } from './dto/create-category.dto';
@@ -69,6 +70,12 @@ export class CategoriesService {
     });
   }
 
+  async getSubcategoryByName(name: string) {
+    return this.prisma.category.findFirst({
+      where: { name, NOT: { parentId: null } }, // Ensure it's a subcategory
+    });
+  }
+
   async updateCategory(id: number, updateCategoryDto: UpdateCategoryDto) {
     const { name, parentId } = updateCategoryDto;
     return this.prisma.category.update({
@@ -83,7 +90,7 @@ export class CategoriesService {
   async updateSubcategory(subcategoryName: string, updateCategoryDto: UpdateCategoryDto) {
     const { name, parentId } = updateCategoryDto;
     const subcategory = await this.prisma.category.findFirst({
-      where: { name: subcategoryName },
+      where: { name, NOT: { parentId: null } }, // Ensure it's a subcategory
     });
 
     if (!subcategory) {
@@ -107,7 +114,7 @@ export class CategoriesService {
 
   async deleteSubcategory(subcategoryName: string) {
     const subcategory = await this.prisma.category.findFirst({
-      where: { name: subcategoryName },
+      where: { name: subcategoryName, NOT: { parentId: null } }, // Ensure it's a subcategory
     });
 
     if (!subcategory) {

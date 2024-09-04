@@ -124,3 +124,5 @@ model PasswordReset {
   @@index([otp])
 }
 
+
+
