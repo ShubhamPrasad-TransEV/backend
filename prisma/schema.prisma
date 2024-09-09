@@ -27,6 +27,8 @@ model User {
   description   String?
   contactPerson String?
   address       String?
+   
+  
 
   // Define the relation from User to Product
   products Product[] @relation("UserProducts")
@@ -36,6 +38,7 @@ model User {
 model Seller {
   id       Int       @id @default(autoincrement())
   products Product[]
+  notifications Notification[]
 }
 
 // Define Role model
@@ -60,7 +63,6 @@ model Product {
   cartItems   CartItem[]
 }
 
-
 // Define Order model
 model Order {
   id         Int         @id @default(autoincrement())
@@ -79,18 +81,17 @@ model OrderItem {
   productId Int
   // Define the relation from OrderItem to Product
   product   Product @relation(fields: [productId], references: [id])
- 
 }
 
 // Define Image model
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  data      Bytes   // Storing the image data as bytes
+  data      Bytes
   productId Int
+  // Define the relation from Image to Product
   product   Product @relation(fields: [productId], references: [id])
 }
-
 
 //define cart item
 model CartItem {
@@ -103,15 +104,6 @@ model CartItem {
   product Product @relation(fields: [productId], references: [id])
 }
 
-model Category {
-  id          Int         @id @default(autoincrement())
-  name        String
-  parentId    Int?        // Optional field for parent categories
-  parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  subcategories Category[] @relation("CategoryHierarchy")
-}
-
-
 // Define PasswordReset model
 model PasswordReset {
   id        Int      @id @default(autoincrement())
@@ -123,6 +115,25 @@ model PasswordReset {
 
   @@index([otp])
 }
+model Category {
+  id       Int         @id @default(autoincrement())
+  name     String
+  parentId Int?        // Optional field for parent categories
+  parent   Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  subcategories Category[] @relation("CategoryHierarchy")
 
+  @@index([parentId], name: "Category_parentId_idx")
+  @@map("Category")
+}
+model Notification {
+  id        Int      @id @default(autoincrement())
+  sellerId  Int
+  message   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+  
+  // Optionally, you might want to relate it to a Seller model
+  seller    Seller   @relation(fields: [sellerId], references: [id])
+}
 
 

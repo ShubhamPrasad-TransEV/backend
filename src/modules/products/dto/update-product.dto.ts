@@ -1,9 +1,9 @@
-import { IsOptional, IsString, IsNumber, IsArray } from 'class-validator';
-
+import { IsString, IsOptional, IsNumber, IsArray } from 'class-validator';
 export class UpdateProductDto {
   @IsOptional()
   @IsString()
   name?: string;
+
 
   @IsOptional()
   @IsNumber()
@@ -16,6 +16,4 @@ export class UpdateProductDto {
   @IsOptional()
   @IsArray()
   images?: { filename: string; data: Buffer }[]; 
-}
-
-
+ }

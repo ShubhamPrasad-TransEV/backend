@@ -10,6 +10,9 @@ import { EmailService } from './email/email.service';
 import { ProductsModule } from './modules/products/products.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/category/category.module';
+import { NotificationModule } from './modules/notification/notification.module';
+
+
  
 
 @Module({
@@ -24,6 +27,9 @@ import { CategoriesModule } from './modules/category/category.module';
     ProductsModule,
     CartModule,
     CategoriesModule,
+    NotificationModule
+   
+    
     
 
  ],
