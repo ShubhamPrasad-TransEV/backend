@@ -7,37 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Define User model
 model User {
-  id        Int             @id @default(autoincrement())
-  username  String          @unique
-  email     String          @unique
-  password  String
-  roleId    Int             @default(2)
-  role      Role            @relation(fields: [roleId], references: [id])
-  orders    Order[]
-  isSeller  Boolean         @default(false)
-  resets    PasswordReset[]
-  cartItems CartItem[]
-   name        String?         // Optional field for the user's name
-  phoneNumber   String?
-
-  // Seller-specific fields
-  companyName   String?
-  description   String?
-  contactPerson String?
-  address       String?
-   
-  
-
-  // Define the relation from User to Product
-  products Product[] @relation("UserProducts")
+  id                Int      @id @default(autoincrement())
+  name              String
+  username          String   @unique
+  email             String   @unique
+  password          String
+  phoneNumber       String?
+  isSeller          Boolean  @default(false)
+  companyName       String?
+  description       String?
+  contactPerson     String?
+  address           String?
+  roleId            Int?
+  storeName         String?
+  storeAddress      String?
+  storeEmail        String?
+  storePhoneNumber  String?
+  aboutUs           String?
+  logo              String?
+  role              Role?    @relation(fields: [roleId], references: [id])
+  orders            Order[]
+  resets            PasswordReset[]
+  cartItems         CartItem[]
+  products          Product[] @relation("UserProducts")
 }
 
 // Define seller schema
 model Seller {
-  id       Int       @id @default(autoincrement())
-  products Product[]
+  id            Int            @id @default(autoincrement())
+  products      Product[]
   notifications Notification[]
 }
 
@@ -93,7 +92,7 @@ model Image {
   product   Product @relation(fields: [productId], references: [id])
 }
 
-//define cart item
+// Define CartItem model
 model CartItem {
   id        Int @id @default(autoincrement())
   userId    Int
@@ -115,6 +114,7 @@ model PasswordReset {
 
   @@index([otp])
 }
+
 model Category {
   id       Int         @id @default(autoincrement())
   name     String
@@ -125,15 +125,24 @@ model Category {
   @@index([parentId], name: "Category_parentId_idx")
   @@map("Category")
 }
+
 model Notification {
   id        Int      @id @default(autoincrement())
   sellerId  Int
   message   String
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
-  
   // Optionally, you might want to relate it to a Seller model
   seller    Seller   @relation(fields: [sellerId], references: [id])
 }
-
-
+model Store {
+  id            Int      @id @default(autoincrement())
+  name          String
+  logo          String?  // Optional field for the logo filename
+  address       String
+  email         String   @unique
+  phoneNumber   String
+  aboutUs       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

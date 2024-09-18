@@ -15,14 +15,14 @@ export class LoginService {
     async validateUser(username: string, password: string): Promise<any> {
         const user = await this.prisma.user.findUnique({
             where: { username },
-            include: { role: true },
+            include: { role: true },  // Include role in the query
         });
 
-        Logger.log(`Fetchedddddddddd user: ${JSON.stringify(user)}`, 'LoginService');
+        Logger.log(`Fetched user: ${JSON.stringify(user)}`, 'LoginService');
         
         if (user && await bcrypt.compare(password, user.password)) {
             Logger.log('Password matched', 'LoginService');
-            const { password, ...result } = user;
+            const { password, ...result } = user;  // Exclude password from the result
             return result;
         } else {
             Logger.log('Invalid username or password', 'LoginService');
@@ -36,9 +36,19 @@ export class LoginService {
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
-        const payload = { username: user.username, sub: user.id, role: user.role.name };
+
+        // Log the user details for debugging
+        Logger.log(`User logged in: ${JSON.stringify(user)}`, 'LoginService');
+
+        // Check if the user has a role and handle the case where it's null
+        const roleName = user.role ? user.role.name : 'defaultRole';  // Default to a role if null
+
+        const payload = { username: user.username, sub: user.id, role: roleName };
+
+        Logger.log(`JWT Payload: ${JSON.stringify(payload)}`, 'LoginService');
+
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: this.jwtService.sign(payload),  // Generate JWT token
         };
     }
 }

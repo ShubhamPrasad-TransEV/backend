@@ -1,66 +1,47 @@
-import { Controller, Get, Post, Body, Param, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Body, NotFoundException } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
-import { NotFoundException, BadRequestException } from '@nestjs/common'; // Add this line
 
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Get('sellers/:id')
-  async getNotifications(@Param('id') id: string) {
-    const sellerId = parseInt(id, 10);
+  @Post('create')
+  async create(@Body() createNotificationDto: CreateNotificationDto) {
+    return this.notificationService.createNotification(createNotificationDto);
+  }
+
+  @Get(':id')
+  async getById(@Param('id') id: string) {
     try {
-      const result = await this.notificationService.getNotifications(sellerId);
-      return result;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.NOT_FOUND,
-            message: error.message,
-          },
-          HttpStatus.NOT_FOUND,
-        );
-      } else {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-            message: 'An unexpected error occurred.',
-          },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      // Convert id to number before passing to service
+      const notificationId = parseInt(id, 10);
+
+      if (isNaN(notificationId)) {
+        throw new NotFoundException(`Invalid notification ID ${id}`);
       }
+
+      return await this.notificationService.getNotificationById(notificationId);
+    } catch (error) {
+      console.error(error.message); // Debugging line
+      throw new NotFoundException(`Notification with ID ${id} not found`);
     }
   }
 
-  @Post('sellers/:id')
-  async createNotification(
-    @Param('id') id: string,
-    @Body() createNotificationDto: CreateNotificationDto
-  ) {
-    createNotificationDto.sellerId = parseInt(id, 10);
+  @Delete(':id')
+  async deleteById(@Param('id') id: string) {
     try {
-      const result = await this.notificationService.createNotification(createNotificationDto);
-      return result;
-    } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.BAD_REQUEST,
-            message: error.message,
-          },
-          HttpStatus.BAD_REQUEST,
-        );
-      } else {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-            message: 'An unexpected error occurred.',
-          },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
+      // Convert id to number before passing to service
+      const notificationId = parseInt(id, 10);
+
+      if (isNaN(notificationId)) {
+        throw new NotFoundException(`Invalid notification ID ${id}`);
       }
+
+      return await this.notificationService.deleteNotificationById(notificationId);
+    } catch (error) {
+      console.error(error.message); // Debugging line
+      throw new NotFoundException(`Notification with ID ${id} not found`);
     }
   }
 }

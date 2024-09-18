@@ -11,6 +11,13 @@ export class PrismaService
   findByResetToken: any;
   clearResetToken: any;
   customPasswordReset: any;
+    private _store: any;
+    public get store(): any {
+        return this._store;
+    }
+    public set store(value: any) {
+        this._store = value;
+    }
     async onModuleInit() {
         await this.$connect();
     }

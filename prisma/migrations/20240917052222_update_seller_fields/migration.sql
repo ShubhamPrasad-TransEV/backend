@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE `seller` ADD COLUMN `aboutUs` VARCHAR(191) NULL,
+    ADD COLUMN `logo` VARCHAR(191) NULL,
+    ADD COLUMN `storeAddress` VARCHAR(191) NULL,
+    ADD COLUMN `storeEmail` VARCHAR(191) NULL,
+    ADD COLUMN `storeName` VARCHAR(191) NULL,
+    ADD COLUMN `storePhoneNumber` VARCHAR(191) NULL;

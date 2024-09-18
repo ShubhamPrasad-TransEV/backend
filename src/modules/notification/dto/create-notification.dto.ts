@@ -1,11 +1,4 @@
-import { IsNotEmpty, IsString, IsInt } from 'class-validator';
-
 export class CreateNotificationDto {
-  @IsInt()
-  @IsNotEmpty()
-  sellerId: number;
-
-  @IsString()
-  @IsNotEmpty()
-  message: string;
+  readonly id: number; // This is for the seller, admin, or user ID
+  readonly message: string;
 }

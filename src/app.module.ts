@@ -11,6 +11,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/category/category.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { StoreModule } from './modules/Store/store.module';
 
 
  
@@ -27,7 +28,8 @@ import { NotificationModule } from './modules/notification/notification.module';
     ProductsModule,
     CartModule,
     CategoriesModule,
-    NotificationModule
+    NotificationModule,
+    StoreModule
    
     
     

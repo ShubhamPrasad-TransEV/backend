@@ -3,108 +3,60 @@ import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateSellerDto } from './dto/update-seller.dto'; // Import the new DTO
 
 @ApiTags('Users')
 @Controller('user')
 export class RegisterController {
     constructor(private readonly registerService: RegisterService) { }
 
-    //Fetch users
-    @Get('all')
+    // Fetch all sellers
+    @Get('sellers')
     @ApiResponse({
         status: 200,
-        description: 'Fetch all users with their roles',
+        description: 'Fetch all sellers',
     })
-    async getAllUsers() {
-        return this.registerService.getAllUsers();
+    async getAllSellers() {
+        return this.registerService.getAllSellers();
     }
 
-     // Fetch all sellers
-     @Get('sellers')
-     @ApiResponse({
-         status: 200,
-         description: 'Fetch all sellers',
-     })
-     async getAllSellers() {
-         return this.registerService.getAllSellers();
-     }
-     @Get('sellers/:id')
-     @ApiResponse({
-       status: 200,
-       description: 'Fetch seller by ID',
-       type: CreateUserDto,
-     })
-     @ApiResponse({
-       status: 404,
-       description: 'Seller not found',
-     })
-     async getSellerById(@Param('id', ParseIntPipe) id: number) {
-       const seller = await this.registerService.getSellerById(id);
-       if (!seller) {
-         throw new NotFoundException(`Seller with ID ${id} not found`);
-       }
-       return seller;
-     }
-
-     @Get('users')
-     @ApiResponse({
-         status: 200,
-         description: 'Fetch all users',
-     })
-     async getUsers() {
-         return this.registerService.getAllUsers();
-     }
- 
-
-    //Register a new user
-    @Post('register')
-    @ApiBody({
-        description: 'User registration payload',
-        type: CreateUserDto,
-        examples: {
-            example1: {
-                summary: 'New user example',
-                value: {
-                    name: 'esha ghosal',
-                    username: 'newuser',
-                    password: 'securepassword',
-                    email: 'HkNfZ@example.com',
-                    phoneNumber: '876543210'
-                },
-            },
-        },
-    })
-    async register(@Body() createUserDto: CreateUserDto) {
-        return this.registerService.register(createUserDto);
-    }
-
-    // Update user details
-    @Patch('update')
-    @ApiBody({
-        description: 'User update payload',
-        type: UpdateUserDto,
-    })
+    // Fetch seller by ID
+    @Get('sellers/:id')
     @ApiResponse({
         status: 200,
-        description: 'Update user details',
+        description: 'Fetch seller by ID',
     })
     @ApiResponse({
         status: 404,
-        description: 'User not found',
+        description: 'Seller not found',
     })
-    async updateUser(@Body() updateUserDto: UpdateUserDto) {
-        return this.registerService.updateUser(updateUserDto);
+    async getSellerById(@Param('id', ParseIntPipe) id: number) {
+        const seller = await this.registerService.getSellerById(id);
+        if (!seller) {
+            throw new NotFoundException(`Seller with ID ${id} not found`);
+        }
+        return seller;
     }
 
-    //Deleting user
-    @Delete(':id')
+    // Update seller details
+    @Patch('sellers/update')
+    @ApiBody({
+        description: 'Update seller payload',
+        type: UpdateSellerDto,
+    })
     @ApiResponse({
         status: 200,
-        description: 'User deleted successfully',
+        description: 'Update seller details',
     })
-    async deleteUser(@Param('id', ParseIntPipe) id: number) {
-        return this.registerService.deleteUser(id);
-    } // Delete a seller by ID
+    @ApiResponse({
+        status: 404,
+        description: 'Seller not found',
+    })
+    async updateSeller(@Body() updateSellerDto: UpdateSellerDto) {
+        return this.registerService.updateSeller(updateSellerDto);
+    }
+
+    // Delete a seller by ID
     @Delete('sellers/:id')
     @ApiResponse({
         status: 200,
@@ -121,14 +73,4 @@ export class RegisterController {
         }
         return { message: 'Seller deleted successfully' };
     }
-
-    @Get(':id')
-    async getProfile(@Param('id') id: string) {
-        const userId = parseInt(id, 10); // Ensure id is an integer
-  if (isNaN(userId)) {
-    throw new BadRequestException('Invalid user ID');
-  }
-  return this.registerService.findOne(userId);
-}
-
 }
