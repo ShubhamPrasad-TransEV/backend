@@ -146,3 +146,12 @@ model Store {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+// schema.prisma
+model AdminSettings {
+  id         Int    @id @default(autoincrement())
+  siteName   String
+  siteLogo   String
+  siteAddress String
+  siteEmail  String
+  storePhone String
+}
