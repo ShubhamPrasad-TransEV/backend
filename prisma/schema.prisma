@@ -155,3 +155,16 @@ model AdminSettings {
   siteEmail  String
   storePhone String
 }
+model OperationalSettings {
+  id                      Int     @id @default(autoincrement())
+  timeZone                String
+  currency                String
+  taxRate                 Float
+  freeShippingThreshold   Float
+  orderProcessingTime     Int
+  facebook                String? @default("")
+  instagram               String? @default("")
+  twitter                 String? @default("")
+  minimumOrderAmount      Float
+  backupFrequency         String? @default("")
+}

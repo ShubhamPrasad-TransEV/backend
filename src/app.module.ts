@@ -13,6 +13,7 @@ import { CategoriesModule } from './modules/category/category.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { StoreModule } from './modules/store/store.module';
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module'; // New module for admin settings
+import { OperationalSettingsModule } from './modules/operational-settings/operational-settings.module'; // Import OperationalSettingsModule
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AdminSettingsModule } from './modules/admin-settings/admin-settings.mod
     NotificationModule,
     StoreModule,
     AdminSettingsModule, // Added AdminSettingsModule
+    OperationalSettingsModule, // Added OperationalSettingsModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
