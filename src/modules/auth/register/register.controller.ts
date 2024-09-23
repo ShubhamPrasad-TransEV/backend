@@ -144,42 +144,25 @@ export class RegisterController {
     }
 
     // Update seller details
-    @Patch('sellers/update')
-    @ApiBody({
-        description: 'Update seller payload',
-        type: UpdateSellerDto,
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Seller details updated successfully',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Seller not found',
-    })
-    async updateSeller(@Body() updateSellerDto: UpdateSellerDto) {
-        const seller = await this.registerService.updateSeller(updateSellerDto);
-        if (!seller) {
-            throw new NotFoundException('Seller not found');
-        }
-        return seller;
+@Patch('sellers/update')
+@ApiBody({
+    description: 'Update seller payload',
+    type: UpdateSellerDto,
+})
+@ApiResponse({
+    status: 200,
+    description: 'Seller details updated successfully',
+})
+@ApiResponse({
+    status: 404,
+    description: 'Seller not found',
+})
+async updateSeller(@Body() updateSellerDto: UpdateSellerDto) {
+    const seller = await this.registerService.updateSeller(updateSellerDto);
+    if (!seller) {
+        throw new NotFoundException('Seller not found');
     }
+    return seller;
+}
 
-    // Delete seller by ID
-    @Delete('sellers/:id')
-    @ApiResponse({
-        status: 200,
-        description: 'Seller deleted successfully',
-    })
-    @ApiResponse({
-        status: 404,
-        description: 'Seller not found',
-    })
-    async deleteSeller(@Param('id', ParseIntPipe) id: number) {
-        const result = await this.registerService.deleteSeller(id);
-        if (!result) {
-            throw new NotFoundException(`Seller with ID ${id} not found`);
-        }
-        return { message: 'Seller deleted successfully' };
-    }
 }

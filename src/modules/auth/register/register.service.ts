@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -160,18 +160,22 @@ export class RegisterService {
 
     // Update seller details
     async updateSeller(updateSellerDto: UpdateSellerDto) {
-        const { id, storeName, storeAddress, storeEmail, storePhoneNumber, aboutUs, logo } = updateSellerDto;
+        const { id, aboutUs, logo } = updateSellerDto;
     
-        const seller = await this.prisma.user.findUnique({ where: { id } });
+        // Check if id is provided
+        if (!id) {
+            throw new BadRequestException('Seller ID is required');
+        }
+    
+        const seller = await this.prisma.user.findUnique({
+            where: { id },
+        });
+    
         if (!seller || !seller.isSeller) {
             throw new NotFoundException('Seller not found');
         }
     
         const dataToUpdate: any = {
-            storeName: storeName ?? undefined,
-            storeAddress: storeAddress ?? undefined,
-            storeEmail: storeEmail ?? undefined,
-            storePhoneNumber: storePhoneNumber ?? undefined,
             aboutUs: aboutUs ?? undefined,
             logo: logo ?? undefined,
         };
@@ -183,5 +187,6 @@ export class RegisterService {
     
         return updatedSeller;
     }
+
     
 }
