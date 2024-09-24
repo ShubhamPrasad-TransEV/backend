@@ -69,6 +69,25 @@ export class NotificationService {
     return notification;
   }
 
+  async getNotificationsBySellerId(sellerId: number) {
+    // Ensure sellerId is valid
+    if (isNaN(sellerId)) {
+      throw new NotFoundException(`Invalid seller ID ${sellerId}`);
+    }
+
+    // Fetch notifications based on the sellerId
+    const notifications = await this.prisma.notification.findMany({
+      where: { sellerId: sellerId },
+    });
+
+    // If no notifications are found
+    if (!notifications || notifications.length === 0) {
+      throw new NotFoundException(`No notifications found for seller with ID ${sellerId}`);
+    }
+
+    return notifications;
+  }
+
   async deleteNotificationById(id: number) {
     const notification = await this.prisma.notification.findUnique({
       where: { id: id },

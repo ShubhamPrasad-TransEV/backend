@@ -28,6 +28,23 @@ export class NotificationController {
     }
   }
 
+  @Get('seller/:sellerId')
+  async getBySellerId(@Param('sellerId') sellerId: string) {
+    try {
+      // Convert sellerId to number before passing to service
+      const id = parseInt(sellerId, 10);
+
+      if (isNaN(id)) {
+        throw new NotFoundException(`Invalid seller ID ${sellerId}`);
+      }
+
+      return await this.notificationService.getNotificationsBySellerId(id);
+    } catch (error) {
+      console.error(error.message); // Debugging line
+      throw new NotFoundException(`Notifications for seller with ID ${sellerId} not found`);
+    }
+  }
+
   @Delete(':id')
   async deleteById(@Param('id') id: string) {
     try {
