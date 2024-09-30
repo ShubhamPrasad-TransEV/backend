@@ -44,7 +44,8 @@ model Admins {
   id            Int            @id @default(autoincrement()) // Autoincrementing primary key
   adminId       Int // This will reference the User model where roleId = 1
   admin         User           @relation(fields: [adminId], references: [id], onDelete: Cascade) // Foreign key relationship to User
-  AdminSettings AdminSettings?
+  adminSettings        AdminSettings[]
+  operationalSettings  OperationalSettings[]
 
   @@unique([adminId]) // Ensure that a user can only appear once in the Admins table
 }
@@ -172,15 +173,17 @@ model AdminSettings {
 }
 
 model OperationalSettings {
-  id                    Int     @id @default(autoincrement())
-  timeZone              String
-  currency              String
-  taxRate               Float
-  freeShippingThreshold Float
-  orderProcessingTime   Int
-  facebook              String? @default("")
-  instagram             String? @default("")
-  twitter               String? @default("")
-  minimumOrderAmount    Float
-  backupFrequency       String? @default("")
+  id                      Int     @id @default(autoincrement())
+  adminId                 Int     @unique // This ensures each admin can have only one operational settings entry
+  admin                   Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
+  timeZone                String
+  currency                String
+  taxRate                 Float
+  freeShippingThreshold   Float
+  orderProcessingTime     Int
+  facebook                String? @default("")
+  instagram               String? @default("")
+  twitter                 String? @default("")
+  minimumOrderAmount      Float
+  backupFrequency         String? @default("")
 }

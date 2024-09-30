@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Min, IsInt } from 'class-validator';
 
 export class OperationalSettingsDto {
+  @ApiProperty({
+    description: 'The ID of the admin to whom these settings belong',
+    example: 1,
+    type: Number,
+  })
+  @IsInt({ message: 'Admin ID must be a number' })
+  readonly adminId: number;
+
   @ApiProperty({
     description: 'Unique identifier for the operational settings',
     example: 1,

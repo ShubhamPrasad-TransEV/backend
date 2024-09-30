@@ -1,39 +1,51 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Param,
-  ParseIntPipe, 
-} from '@nestjs/common';
-import { OperationalSettingsDto } from './dto/operational-settings.dto';
+import { Controller, Get, Post, Patch, Body, Param, NotFoundException, BadRequestException } from '@nestjs/common';
 import { OperationalSettingsService } from './operational-settings.service';
+import { OperationalSettingsDto } from './dto/operational-settings.dto';
 
 @Controller('admin/operational-settings')
-export class OperationalSettingsAdminController {
+export class OperationalSettingsController {
   constructor(private readonly operationalSettingsService: OperationalSettingsService) {}
 
-
-
-@Get(':id')
-async getOperationalSettings(@Param('id', ParseIntPipe) id: number) {
-  return this.operationalSettingsService.findSettingsById(id);
-}
-
-
-
-  @Post()
-  async createOperationalSettings(@Body() operationalSettingsDto: OperationalSettingsDto) {
-    return this.operationalSettingsService.createSettings(operationalSettingsDto);
+  // Get the current operational settings for a specific admin by adminId
+  @Get(':adminId')
+  async getOperationalSettingsByAdminId(@Param('adminId') adminId: string) {
+    const settings = await this.operationalSettingsService.getOperationalSettingsByAdminId(Number(adminId));
+    if (!settings) {
+      throw new NotFoundException(`Operational settings for Admin ID ${adminId} not found`);
+    }
+    return settings;
   }
 
+  // Create new operational settings
+  @Post()
+  async createOperationalSettings(@Body() createOperationalSettingsDto: OperationalSettingsDto) {
+    // Validate that the adminId exists in the Admins table
+    const admin = await this.operationalSettingsService.getAdminByAdminId(createOperationalSettingsDto.adminId);
+    if (!admin) {
+      throw new BadRequestException(`Admin with ID ${createOperationalSettingsDto.adminId} does not exist`);
+    }
 
-  @Patch(':id')
+    // Check if settings already exist for this admin
+    const existingSettings = await this.operationalSettingsService.getOperationalSettingsByAdminId(createOperationalSettingsDto.adminId);
+    if (existingSettings) {
+      throw new BadRequestException('Operational settings for this admin already exist.');
+    }
+
+    return this.operationalSettingsService.createOperationalSettings(createOperationalSettingsDto);
+  }
+
+  // Update existing operational settings by adminId (PATCH)
+  @Patch(':adminId')
   async updateOperationalSettings(
-    @Param('id') id: number, 
-    @Body() operationalSettingsDto: OperationalSettingsDto,
+    @Param('adminId') adminId: string, 
+    @Body() createOperationalSettingsDto: OperationalSettingsDto
   ) {
-    return this.operationalSettingsService.updateSettings(id, operationalSettingsDto);
+    // Ensure settings exist before updating
+    const settings = await this.operationalSettingsService.getOperationalSettingsByAdminId(Number(adminId));
+    if (!settings) {
+      throw new NotFoundException(`Operational settings for Admin ID ${adminId} not found`);
+    }
+
+    return this.operationalSettingsService.updateOperationalSettings(Number(adminId), createOperationalSettingsDto);
   }
 }
