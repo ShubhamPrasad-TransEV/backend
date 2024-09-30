@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { OperationalSettingsAdminController } from '../operational-settings/operational-settings-admin.controller';
+import { OperationalSettingsController } from './operational-settings.controller';
 import { OperationalSettingsService } from './operational-settings.service';
 import { PrismaService } from '../../prisma/prisma.service'; // Adjust the import according to your project structure
 
 @Module({
-  controllers: [OperationalSettingsAdminController],
+  controllers: [OperationalSettingsController],
   providers: [OperationalSettingsService, PrismaService],
 })
 export class OperationalSettingsModule {}

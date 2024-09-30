@@ -10,27 +10,33 @@ export class OperationalSettingsController {
   @Get(':adminId')
   async getOperationalSettingsByAdminId(@Param('adminId') adminId: string) {
     const settings = await this.operationalSettingsService.getOperationalSettingsByAdminId(Number(adminId));
+    
+    // Throw an exception if the settings are not found
     if (!settings) {
       throw new NotFoundException(`Operational settings for Admin ID ${adminId} not found`);
     }
+    
     return settings;
   }
 
   // Create new operational settings
   @Post()
   async createOperationalSettings(@Body() createOperationalSettingsDto: OperationalSettingsDto) {
+    const adminId = createOperationalSettingsDto.adminId;
+
     // Validate that the adminId exists in the Admins table
-    const admin = await this.operationalSettingsService.getAdminByAdminId(createOperationalSettingsDto.adminId);
+    const admin = await this.operationalSettingsService.getAdminByAdminId(adminId);
     if (!admin) {
-      throw new BadRequestException(`Admin with ID ${createOperationalSettingsDto.adminId} does not exist`);
+      throw new BadRequestException(`Admin with ID ${adminId} does not exist`);
     }
 
     // Check if settings already exist for this admin
-    const existingSettings = await this.operationalSettingsService.getOperationalSettingsByAdminId(createOperationalSettingsDto.adminId);
+    const existingSettings = await this.operationalSettingsService.getOperationalSettingsByAdminId(adminId);
     if (existingSettings) {
       throw new BadRequestException('Operational settings for this admin already exist.');
     }
 
+    // Create the settings since they don't exist
     return this.operationalSettingsService.createOperationalSettings(createOperationalSettingsDto);
   }
 
@@ -46,6 +52,7 @@ export class OperationalSettingsController {
       throw new NotFoundException(`Operational settings for Admin ID ${adminId} not found`);
     }
 
+    // Update the settings
     return this.operationalSettingsService.updateOperationalSettings(Number(adminId), createOperationalSettingsDto);
   }
 }
