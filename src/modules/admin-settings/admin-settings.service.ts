@@ -1,47 +1,45 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateAdminSettingsDto } from './dto/admin-settings.dto';
 
 @Injectable()
 export class AdminSettingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  // Fetch the existing settings
-  async getAdminSettings() {
-    return this.prisma.adminSettings.findFirst(); // Assuming only one settings entry exists
+  // Fetch admin settings by adminId
+  async getAdminSettingsByAdminId(adminId: number) {
+    const settings = await this.prisma.adminSettings.findUnique({
+      where: { adminId },
+    });
+    return settings;
   }
 
-  // Fetch admin settings by ID
-  async getAdminSettingsById(id: number) {
-    const settings = await this.prisma.adminSettings.findUnique({
-      where: { id },
+  // Validate if an admin exists by adminId
+  async getAdminByAdminId(adminId: number) {
+    const admin = await this.prisma.admins.findUnique({
+      where: { adminId },
     });
-    if (!settings) {
-      throw new NotFoundException(`Admin settings with ID ${id} not found`);
-    }
-    return settings;
+    return admin;
   }
 
   // Create new admin settings
   async createAdminSettings(data: UpdateAdminSettingsDto) {
-    // Check if any settings already exist to avoid duplication
-    const existingSettings = await this.prisma.adminSettings.findFirst();
-    if (existingSettings) {
-      throw new BadRequestException('Settings already exist, use PATCH to update them.');
-    }
-    return this.prisma.adminSettings.create({ data });
+    // Create a new entry in the AdminSettings table
+    return this.prisma.adminSettings.create({
+      data,
+    });
   }
 
-  // Update admin settings using PATCH (partial update)
-  async updateAdminSettings(id: number, data: UpdateAdminSettingsDto) {
-    const settings = await this.prisma.adminSettings.findUnique({
-      where: { id },
-    });
+  // Update admin settings using PATCH by adminId
+  async updateAdminSettings(adminId: number, data: UpdateAdminSettingsDto) {
+    const settings = await this.getAdminSettingsByAdminId(adminId);
     if (!settings) {
       throw new NotFoundException('No settings found to update.');
     }
+
+    // Perform the update
     return this.prisma.adminSettings.update({
-      where: { id },
+      where: { adminId },
       data,
     });
   }

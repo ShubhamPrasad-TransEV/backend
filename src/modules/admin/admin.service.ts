@@ -8,10 +8,9 @@ import * as bcrypt from 'bcrypt';
 export class AdminService {
     constructor(private readonly prisma: PrismaService) {}
 
-    // Method to create an admin
     async createAdmin(createAdminDto: CreateAdminDto) {
         const { username, password, role, email, name } = createAdminDto;
-
+    
         // Check if the username or email already exists
         const existingUser = await this.prisma.user.findFirst({
             where: {
@@ -21,28 +20,28 @@ export class AdminService {
                 ]
             },
         });
-
+    
         if (existingUser) {
             throw new ConflictException('Username or email already exists');
         }
-
+    
         // Validate role
         if (role !== RoleEnum.ADMIN) {
             throw new BadRequestException('Invalid role provided');
         }
-
+    
         // Find admin role
         const adminRole = await this.prisma.role.findUnique({
             where: { name: RoleEnum.ADMIN },
         });
-
+    
         if (!adminRole) {
             throw new NotFoundException('Admin role not found');
         }
-
+    
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
-
+    
         // Create the user with admin role
         const user = await this.prisma.user.create({
             data: {
@@ -59,7 +58,14 @@ export class AdminService {
                 address: createAdminDto.address,
             },
         });
-
+    
+        // Automatically create an entry in the Admins table
+        await this.prisma.admins.create({
+            data: {
+                adminId: user.id,  // Reference the newly created user
+            },
+        });
+    
         return user;
     }
 

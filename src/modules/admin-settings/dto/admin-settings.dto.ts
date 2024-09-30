@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches, IsEmail } from 'class-validator';
+import { IsString, IsEmail, Matches, IsInt } from 'class-validator';
 
 export class UpdateAdminSettingsDto {
+  @ApiProperty({
+    description: 'The ID of the admin to whom these settings belong',
+    example: 1,
+    type: Number,
+  })
+  @IsInt({ message: 'Admin ID must be a number' })
+  readonly adminId: number;
+
   @ApiProperty({
     description: 'The name of the site',
     example: 'Example Site',

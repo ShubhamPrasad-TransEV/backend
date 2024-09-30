@@ -243,14 +243,14 @@ export class RegisterService {
     // Update user details
     async updateUser(updateUserDto: UpdateUserDto) {
         const { id, username, roleId, companyName, description, contactPerson, address, phoneNumber } = updateUserDto;
-
+    
         // Ensure id is an integer
         const userId = parseInt(id.toString(), 10);
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) {
             throw new NotFoundException('User not found');
         }
-
+    
         const dataToUpdate = {
             username: username ?? undefined,
             roleId: roleId ?? undefined,
@@ -261,12 +261,12 @@ export class RegisterService {
             address: address ?? undefined,
             phoneNumber: phoneNumber ?? undefined,
         };
-
+    
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: dataToUpdate,
         });
-
+    
         return updatedUser;
     }
 

@@ -1,20 +1,23 @@
 -- CreateTable
 CREATE TABLE `User` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `username` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
-    `password` VARCHAR(191) NOT NULL,
-    `roleId` INTEGER NOT NULL DEFAULT 2,
+    `name` VARCHAR(100) NOT NULL,
+    `username` VARCHAR(50) NOT NULL,
+    `email` VARCHAR(100) NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `phoneNumber` VARCHAR(15) NULL,
     `isSeller` BOOLEAN NOT NULL DEFAULT false,
-    `name` VARCHAR(191) NULL,
-    `phoneNumber` VARCHAR(191) NULL,
-    `companyName` VARCHAR(191) NULL,
-    `description` VARCHAR(191) NULL,
-    `contactPerson` VARCHAR(191) NULL,
-    `address` VARCHAR(191) NULL,
+    `companyName` VARCHAR(100) NULL,
+    `description` TEXT NULL,
+    `contactPerson` VARCHAR(100) NULL,
+    `address` TEXT NULL,
+    `roleId` INTEGER NULL,
+    `aboutUs` TEXT NULL,
+    `logo` VARCHAR(255) NULL,
 
     UNIQUE INDEX `User_username_key`(`username`),
     UNIQUE INDEX `User_email_key`(`email`),
+    INDEX `User_username_email_idx`(`username`, `email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -22,6 +25,15 @@ CREATE TABLE `User` (
 CREATE TABLE `Seller` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
 
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Admins` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `adminId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `Admins_adminId_key`(`adminId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -94,8 +106,79 @@ CREATE TABLE `PasswordReset` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Category` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `parentId` INTEGER NULL,
+
+    INDEX `Category_parentId_idx`(`parentId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Notification` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `sellerId` INTEGER NOT NULL,
+    `message` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `read` BOOLEAN NOT NULL DEFAULT false,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Store` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `logo` VARCHAR(191) NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `email` VARCHAR(191) NOT NULL,
+    `phoneNumber` VARCHAR(191) NOT NULL,
+    `aboutUs` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Store_email_key`(`email`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `AdminSettings` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `siteName` VARCHAR(191) NOT NULL,
+    `siteLogo` VARCHAR(191) NOT NULL,
+    `siteAddress` VARCHAR(191) NOT NULL,
+    `siteEmail` VARCHAR(191) NOT NULL,
+    `storePhone` VARCHAR(191) NOT NULL,
+    `adminId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `AdminSettings_adminId_key`(`adminId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `OperationalSettings` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `timeZone` VARCHAR(191) NOT NULL,
+    `currency` VARCHAR(191) NOT NULL,
+    `taxRate` DOUBLE NOT NULL,
+    `freeShippingThreshold` DOUBLE NOT NULL,
+    `orderProcessingTime` INTEGER NOT NULL,
+    `facebook` VARCHAR(191) NULL DEFAULT '',
+    `instagram` VARCHAR(191) NULL DEFAULT '',
+    `twitter` VARCHAR(191) NULL DEFAULT '',
+    `minimumOrderAmount` DOUBLE NOT NULL,
+    `backupFrequency` VARCHAR(191) NULL DEFAULT '',
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Admins` ADD CONSTRAINT `Admins_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Product` ADD CONSTRAINT `Product_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -123,3 +206,12 @@ ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_productId_fkey` FOREIGN KEY (`pr
 
 -- AddForeignKey
 ALTER TABLE `PasswordReset` ADD CONSTRAINT `PasswordReset_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Category` ADD CONSTRAINT `Category_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Notification` ADD CONSTRAINT `Notification_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AdminSettings` ADD CONSTRAINT `AdminSettings_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `Admins`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
