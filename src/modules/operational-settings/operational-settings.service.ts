@@ -11,9 +11,6 @@ export class OperationalSettingsService {
     const settings = await this.prisma.operationalSettings.findUnique({
       where: { adminId },
     });
-    if (!settings) {
-      throw new NotFoundException(`Operational settings for Admin ID ${adminId} not found`);
-    }
     return settings;
   }
 
@@ -22,19 +19,14 @@ export class OperationalSettingsService {
     const admin = await this.prisma.admins.findUnique({
       where: { adminId },
     });
-    if (!admin) {
-      throw new BadRequestException(`Admin with ID ${adminId} does not exist`);
-    }
     return admin;
   }
 
   // Create new operational settings
   async createOperationalSettings(data: OperationalSettingsDto) {
     // Check if operational settings already exist
-    const existingSettings = await this.prisma.operationalSettings.findUnique({
-      where: { adminId: data.adminId },
-    });
-
+    const existingSettings = await this.getOperationalSettingsByAdminId(data.adminId);
+    
     if (existingSettings) {
       throw new BadRequestException('Operational settings for this admin already exist.');
     }
