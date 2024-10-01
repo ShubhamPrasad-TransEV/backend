@@ -32,32 +32,29 @@ model User {
   @@index([username, email])
 }
 
-// Define seller schema
 model Seller {
   id            Int            @id @default(autoincrement())
   products      Product[]
   notifications Notification[]
+  Order         Order[] // Sellers handle multiple orders through their products
 }
 
-// Define Admins model
 model Admins {
-  id            Int            @id @default(autoincrement()) // Autoincrementing primary key
-  adminId       Int // This will reference the User model where roleId = 1
-  admin         User           @relation(fields: [adminId], references: [id], onDelete: Cascade) // Foreign key relationship to User
-  adminSettings        AdminSettings[]
-  operationalSettings  OperationalSettings[]
+  id                  Int                   @id @default(autoincrement()) // Autoincrementing primary key
+  adminId             Int // This will reference the User model where roleId = 1
+  admin               User                  @relation(fields: [adminId], references: [id], onDelete: Cascade) // Foreign key relationship to User
+  adminSettings       AdminSettings[]
+  operationalSettings OperationalSettings[]
 
   @@unique([adminId]) // Ensure that a user can only appear once in the Admins table
 }
 
-// Define Role model
 model Role {
   id    Int    @id @default(autoincrement())
   name  String @unique
   users User[]
 }
 
-// Define Product model
 model Product {
   id          Int         @id @default(autoincrement())
   name        String
@@ -66,43 +63,50 @@ model Product {
   userId      Int
   user        User        @relation("UserProducts", fields: [userId], references: [id])
   images      Image[]
-  Seller      Seller?     @relation(fields: [sellerId], references: [id])
+  seller      Seller?     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
   sellerId    Int?
   OrderItem   OrderItem[]
   cartItems   CartItem[]
 }
 
-// Define Order model
 model Order {
   id         Int         @id @default(autoincrement())
   userId     Int
-  // Define the relation from Order to User
   user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[]
+  orderItems OrderItem[] // Relation to OrderItem model
+
+  shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
+  invoice                String? // Invoice number or reference
+  refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  shippingCost           Float   @default(0.0) // Shipping cost associated with the order
+  orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
+  orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
+  prePayment             Boolean @default(false) // Indicates if pre-payment was made
+  paymentStatus          Boolean @default(false) // Indicates if the order has been fully paid
+  Seller                 Seller? @relation(fields: [sellerId], references: [id])
+  sellerId               Int?
+
+  @@index([userId])
 }
 
-// Define OrderItem model
 model OrderItem {
   id        Int     @id @default(autoincrement())
   orderId   Int
-  // Define the relation from OrderItem to Order
-  order     Order   @relation(fields: [orderId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id]) // Relation to Order
   productId Int
-  // Define the relation from OrderItem to Product
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
+
+  // No need for a seller relation here as the seller can be accessed via the product
 }
 
-// Define Image model
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
   data      Bytes
   productId Int
-  // Define the relation from Image to Product
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
 
-// Define CartItem model
 model CartItem {
   id        Int @id @default(autoincrement())
   userId    Int
@@ -113,13 +117,11 @@ model CartItem {
   product Product @relation(fields: [productId], references: [id])
 }
 
-// Define PasswordReset model
 model PasswordReset {
   id        Int      @id @default(autoincrement())
   otp       String
   userId    Int
   expiresAt DateTime
-  // Define the relation from PasswordReset to User
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([otp])
@@ -142,7 +144,6 @@ model Notification {
   message   String
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
-  // Optionally, you might want to relate it to a Seller model
   seller    Seller   @relation(fields: [sellerId], references: [id])
 }
 
@@ -158,7 +159,6 @@ model Store {
   updatedAt   DateTime @updatedAt
 }
 
-// schema.prisma
 model AdminSettings {
   id          Int    @id @default(autoincrement()) // Autoincrementing primary key
   siteName    String
@@ -168,22 +168,20 @@ model AdminSettings {
   storePhone  String
   adminId     Int    @unique // Foreign key that references the Admins table
   admin       Admins @relation(fields: [adminId], references: [adminId], onDelete: Cascade) // Relationship to Admins
-
-  // @@unique([adminId]) // Ensure each AdminSettings entry references a unique Admin
 }
 
 model OperationalSettings {
-  id                      Int     @id @default(autoincrement())
-  adminId                 Int     @unique // This ensures each admin can have only one operational settings entry
-  admin                   Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
-  timeZone                String
-  currency                String
-  taxRate                 Float
-  freeShippingThreshold   Float
-  orderProcessingTime     Int
-  facebook                String? @default("")
-  instagram               String? @default("")
-  twitter                 String? @default("")
-  minimumOrderAmount      Float
-  backupFrequency         String? @default("")
+  id                    Int     @id @default(autoincrement())
+  adminId               Int     @unique // This ensures each admin can have only one operational settings entry
+  admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
+  timeZone              String
+  currency              String
+  taxRate               Float
+  freeShippingThreshold Float
+  orderProcessingTime   Int
+  facebook              String? @default("")
+  instagram             String? @default("")
+  twitter               String? @default("")
+  minimumOrderAmount    Float
+  backupFrequency       String? @default("")
 }

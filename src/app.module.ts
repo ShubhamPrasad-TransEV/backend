@@ -14,6 +14,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { StoreModule } from './modules/store/store.module';
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module'; // New module for admin settings
 import { OperationalSettingsModule } from './modules/operational-settings/operational-settings.module'; // Import OperationalSettingsModule
+import { OrderModule } from './modules/orders/order.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { OperationalSettingsModule } from './modules/operational-settings/operat
     StoreModule,
     AdminSettingsModule, // Added AdminSettingsModule
     OperationalSettingsModule, // Added OperationalSettingsModule
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
