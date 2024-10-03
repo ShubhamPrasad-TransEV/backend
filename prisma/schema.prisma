@@ -128,19 +128,14 @@ model PasswordReset {
 }
 
 model Category {
-  id            Int        @id @default(autoincrement())
-  name          String
-  parentId      Int? // Optional field for parent categories
-  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  subcategories Category[] @relation("CategoryHierarchy")
-
-  subcategoryId       Int? // Optional field for subcategories of subcategories
-  subcategory         Category?  @relation("SubcategoryHierarchy", fields: [subcategoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  id                  Int        @id @default(autoincrement())
+  name                String     @unique // Ensure name is unique
+  categoryParentId    Int?
+  categoryParent      Category?  @relation("CategoryHierarchy", fields: [categoryParentId], references: [id], onDelete: SetNull)
+  subcategoryParentId Int?
+  subcategoryParent   Category?  @relation("SubcategoryHierarchy", fields: [subcategoryParentId], references: [id], onDelete: SetNull)
+  subcategories       Category[] @relation("CategoryHierarchy")
   nestedSubcategories Category[] @relation("SubcategoryHierarchy")
-
-  @@index([parentId], name: "Category_parentId_idx")
-  @@index([subcategoryId], name: "Category_subcategoryId_idx")
-  @@map("Category")
 }
 
 model Notification {

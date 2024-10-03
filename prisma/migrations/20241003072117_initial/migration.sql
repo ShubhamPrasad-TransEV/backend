@@ -62,7 +62,17 @@ CREATE TABLE `Product` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `shipmentStatus` VARCHAR(191) NOT NULL DEFAULT 'Pending',
+    `invoice` VARCHAR(191) NULL,
+    `refundStatus` VARCHAR(191) NOT NULL DEFAULT 'No Refund',
+    `shippingCost` DOUBLE NOT NULL DEFAULT 0.0,
+    `orderingStatus` VARCHAR(191) NOT NULL DEFAULT 'Pending',
+    `orderFulfillmentStatus` VARCHAR(191) NOT NULL DEFAULT 'Unfulfilled',
+    `prePayment` BOOLEAN NOT NULL DEFAULT false,
+    `paymentStatus` BOOLEAN NOT NULL DEFAULT false,
+    `sellerId` INTEGER NULL,
 
+    INDEX `Order_userId_idx`(`userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -110,9 +120,10 @@ CREATE TABLE `PasswordReset` (
 CREATE TABLE `Category` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
-    `parentId` INTEGER NULL,
+    `categoryParentId` INTEGER NULL,
+    `subcategoryParentId` INTEGER NULL,
 
-    INDEX `Category_parentId_idx`(`parentId`),
+    UNIQUE INDEX `Category_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -160,6 +171,7 @@ CREATE TABLE `AdminSettings` (
 -- CreateTable
 CREATE TABLE `OperationalSettings` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `adminId` INTEGER NOT NULL,
     `timeZone` VARCHAR(191) NOT NULL,
     `currency` VARCHAR(191) NOT NULL,
     `taxRate` DOUBLE NOT NULL,
@@ -171,6 +183,7 @@ CREATE TABLE `OperationalSettings` (
     `minimumOrderAmount` DOUBLE NOT NULL,
     `backupFrequency` VARCHAR(191) NULL DEFAULT '',
 
+    UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -188,6 +201,9 @@ ALTER TABLE `Product` ADD CONSTRAINT `Product_sellerId_fkey` FOREIGN KEY (`selle
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Order` ADD CONSTRAINT `Order_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -208,10 +224,16 @@ ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_productId_fkey` FOREIGN KEY (`pr
 ALTER TABLE `PasswordReset` ADD CONSTRAINT `PasswordReset_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Category` ADD CONSTRAINT `Category_parentId_fkey` FOREIGN KEY (`parentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Category` ADD CONSTRAINT `Category_categoryParentId_fkey` FOREIGN KEY (`categoryParentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Category` ADD CONSTRAINT `Category_subcategoryParentId_fkey` FOREIGN KEY (`subcategoryParentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Notification` ADD CONSTRAINT `Notification_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `AdminSettings` ADD CONSTRAINT `AdminSettings_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `Admins`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `AdminSettings` ADD CONSTRAINT `AdminSettings_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `Admins`(`adminId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `OperationalSettings` ADD CONSTRAINT `OperationalSettings_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `Admins`(`adminId`) ON DELETE CASCADE ON UPDATE CASCADE;

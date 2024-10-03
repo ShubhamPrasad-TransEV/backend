@@ -71,15 +71,19 @@ export class AdminService {
 
     // Method to get an admin by ID
     async getAdminById(id: number) {
-        const admin = await this.prisma.user.findUnique({
-            where: { id },
-            include: { role: true }, // Include role information if needed
+        const admin = await this.prisma.admins.findUnique({
+          where: { adminId: id },  // Querying the Admins table using adminId
+          include: {
+            admin: {
+              include: { role: true },  // Including related User and role information
+            },
+          },
         });
-
-        if (!admin || admin.role.name !== RoleEnum.ADMIN) {
-            throw new NotFoundException(`Admin with ID ${id} not found`);
+      
+        if (!admin || admin.admin.role?.name !== RoleEnum.ADMIN) {
+          throw new NotFoundException(`Admin with ID ${id} not found`);
         }
-
+      
         return admin;
-    }
+      }
 }

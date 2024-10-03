@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsOptional()
@@ -6,10 +6,10 @@ export class UpdateCategoryDto {
   name?: string;
 
   @IsOptional()
-  @IsInt()
-  parentId?: number;
+  @IsString()
+  categoryParentName?: string;  // To update the category parent
 
   @IsOptional()
-  @IsInt()
-  subcategoryId?: number; // Add this to handle updates to nestedSubcategories
+  @IsString()
+  subcategoryParentName?: string;  // To update the subcategory parent
 }
