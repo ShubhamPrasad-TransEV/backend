@@ -162,7 +162,7 @@ model Store {
 model AdminSettings {
   id          Int    @id @default(autoincrement()) // Autoincrementing primary key
   siteName    String
-  siteLogo    String
+  siteLogo    String?
   siteAddress String
   siteEmail   String
   storePhone  String

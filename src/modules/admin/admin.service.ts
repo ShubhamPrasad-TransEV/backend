@@ -66,7 +66,7 @@ export class AdminService {
             },
         });
     
-        return user.id;
+        return user;
     }
 
     // Method to get an admin by ID
