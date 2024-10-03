@@ -223,7 +223,7 @@ export class RegisterService {
         // Send welcome email
         await this.emailService.sendMail(user.email, 'Welcome to Our Service', 'Thank you for registering!');
 
-        return user;
+        return user.id;
     }
 
     // Find a user by ID
