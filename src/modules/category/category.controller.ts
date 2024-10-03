@@ -18,6 +18,12 @@ export class CategoriesController {
     return this.categoriesService.createSubcategory(createSubcategoryDto);
   }
 
+  // Create a new nested subcategory
+  @Post('subcategory/nested')
+  async createNestedSubcategory(@Body() createCategoryDto: CreateCategoryDto) {
+    return this.categoriesService.createNestedSubcategory(createCategoryDto);
+  }
+
   // Get all categories without subcategories
   @Get()
   async getCategories() {
@@ -42,6 +48,12 @@ export class CategoriesController {
     return this.categoriesService.getSubcategoriesByCategoryId(Number(id));
   }
 
+  // Get nested subcategories by subcategory ID
+  @Get('subcategory/:id/nested')
+  async getNestedSubcategoriesBySubcategoryId(@Param('id') id: string) {
+    return this.categoriesService.getNestedSubcategoriesBySubcategoryId(Number(id));
+  }
+
   // Get a subcategory by name
   @Get('subcategory/name/:name')
   async getSubcategoryByName(@Param('name') name: string) {
@@ -60,6 +72,12 @@ export class CategoriesController {
     return this.categoriesService.updateSubcategory(name, updateCategoryDto);
   }
 
+  // Update a nested subcategory by ID
+  @Patch('subcategory/nested/:id')
+  async updateNestedSubcategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+    return this.categoriesService.updateNestedSubcategory(Number(id), updateCategoryDto);
+  }
+
   // Delete a category by ID
   @Delete(':id')
   async deleteCategory(@Param('id') id: string) {
@@ -70,5 +88,11 @@ export class CategoriesController {
   @Delete('subcategory/:name')
   async deleteSubcategory(@Param('name') name: string) {
     return this.categoriesService.deleteSubcategory(name);
+  }
+
+  // Delete a nested subcategory by ID
+  @Delete('subcategory/nested/:id')
+  async deleteNestedSubcategory(@Param('id') id: string) {
+    return this.categoriesService.deleteNestedSubcategory(Number(id));
   }
 }

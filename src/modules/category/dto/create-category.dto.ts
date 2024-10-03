@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsInt } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({ example: 'Men', description: 'Name of the category' })
@@ -9,7 +9,12 @@ export class CreateCategoryDto {
   @ApiProperty({ example: null, description: 'Parent category ID (null for root category)', required: false })
   @IsOptional()
   @IsInt()
-  parentId?: number; // Use number instead of string
+  parentId?: number;
+  
+  @ApiProperty({ example: null, description: 'Subcategory ID (null if no subcategory)', required: false })
+  @IsOptional()
+  @IsInt()
+  subcategoryId?: number; // Add this to handle nestedSubcategories
 }
 
 export class CreateSubcategoryDto {
@@ -31,5 +36,10 @@ export class UpdateCategoryDto {
   @ApiProperty({ example: null, description: 'Parent category ID (null for root category)', required: false })
   @IsOptional()
   @IsInt()
-  parentId?: number; // Use number instead of string
+  parentId?: number;
+
+  @ApiProperty({ example: null, description: 'Subcategory ID (null if no subcategory)', required: false })
+  @IsOptional()
+  @IsInt()
+  subcategoryId?: number; // Add this to handle updates to nestedSubcategories
 }

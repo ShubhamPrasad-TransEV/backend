@@ -134,7 +134,12 @@ model Category {
   parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   subcategories Category[] @relation("CategoryHierarchy")
 
+  subcategoryId       Int? // Optional field for subcategories of subcategories
+  subcategory         Category?  @relation("SubcategoryHierarchy", fields: [subcategoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  nestedSubcategories Category[] @relation("SubcategoryHierarchy")
+
   @@index([parentId], name: "Category_parentId_idx")
+  @@index([subcategoryId], name: "Category_subcategoryId_idx")
   @@map("Category")
 }
 
