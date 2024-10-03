@@ -24,7 +24,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
       }),
     }),
   ],
-  providers: [ForgotPasswordService , PrismaService],
+  providers: [ForgotPasswordService, PrismaService],
   controllers: [ForgotPasswordController],
   exports: [NestMailerModule],
 })

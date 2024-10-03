@@ -7,7 +7,7 @@ export class CreateStoreDto {
 
   @IsOptional()
   @IsString()
-  readonly logo?: string;  
+  readonly logo?: string;
 
   @IsNotEmpty()
   @IsString()

@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Delete, Param, Body, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Param,
+  Body,
+  NotFoundException,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 
@@ -41,7 +49,9 @@ export class NotificationController {
       return await this.notificationService.getNotificationsBySellerId(id);
     } catch (error) {
       console.error(error.message); // Debugging line
-      throw new NotFoundException(`Notifications for seller with ID ${sellerId} not found`);
+      throw new NotFoundException(
+        `Notifications for seller with ID ${sellerId} not found`,
+      );
     }
   }
 
@@ -55,7 +65,9 @@ export class NotificationController {
         throw new NotFoundException(`Invalid notification ID ${id}`);
       }
 
-      return await this.notificationService.deleteNotificationById(notificationId);
+      return await this.notificationService.deleteNotificationById(
+        notificationId,
+      );
     } catch (error) {
       console.error(error.message); // Debugging line
       throw new NotFoundException(`Notification with ID ${id} not found`);

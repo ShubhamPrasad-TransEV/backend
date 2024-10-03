@@ -9,25 +9,36 @@ export class CategoriesService {
 
   // Create or update category/subcategory/nested subcategory using name for parent relationships
   async createCategory(createCategoryDto: CreateCategoryDto) {
-    const { name, categoryParentName, subcategoryParentName } = createCategoryDto;
+    const { name, categoryParentName, subcategoryParentName } =
+      createCategoryDto;
 
     // Fetch the parent category by name (instead of ID)
     let categoryParent = null;
     if (categoryParentName) {
-      categoryParent = await this.prisma.category.findUnique({ where: { name: categoryParentName } });
-      if (!categoryParent) throw new NotFoundException(`Category parent "${categoryParentName}" not found`);
+      categoryParent = await this.prisma.category.findUnique({
+        where: { name: categoryParentName },
+      });
+      if (!categoryParent)
+        throw new NotFoundException(
+          `Category parent "${categoryParentName}" not found`,
+        );
     }
 
     // Fetch the parent subcategory by name (instead of ID)
     let subcategoryParent = null;
     if (subcategoryParentName) {
-      subcategoryParent = await this.prisma.category.findUnique({ where: { name: subcategoryParentName } });
-      if (!subcategoryParent) throw new NotFoundException(`Subcategory parent "${subcategoryParentName}" not found`);
+      subcategoryParent = await this.prisma.category.findUnique({
+        where: { name: subcategoryParentName },
+      });
+      if (!subcategoryParent)
+        throw new NotFoundException(
+          `Subcategory parent "${subcategoryParentName}" not found`,
+        );
     }
 
     // Upsert the category or subcategory based on the parent (using resolved names)
     return this.prisma.category.upsert({
-      where: { name },  // Ensure name is unique
+      where: { name }, // Ensure name is unique
       update: {
         categoryParentId: categoryParent ? categoryParent.id : null,
         subcategoryParentId: subcategoryParent ? subcategoryParent.id : null,
@@ -47,20 +58,30 @@ export class CategoriesService {
     // Fetch the parent category by name if provided
     let categoryParent = null;
     if (categoryParentName) {
-      categoryParent = await this.prisma.category.findUnique({ where: { name: categoryParentName } });
-      if (!categoryParent) throw new NotFoundException(`Category parent "${categoryParentName}" not found`);
+      categoryParent = await this.prisma.category.findUnique({
+        where: { name: categoryParentName },
+      });
+      if (!categoryParent)
+        throw new NotFoundException(
+          `Category parent "${categoryParentName}" not found`,
+        );
     }
 
     // Fetch the parent subcategory by name if provided
     let subcategoryParent = null;
     if (subcategoryParentName) {
-      subcategoryParent = await this.prisma.category.findUnique({ where: { name: subcategoryParentName } });
-      if (!subcategoryParent) throw new NotFoundException(`Subcategory parent "${subcategoryParentName}" not found`);
+      subcategoryParent = await this.prisma.category.findUnique({
+        where: { name: subcategoryParentName },
+      });
+      if (!subcategoryParent)
+        throw new NotFoundException(
+          `Subcategory parent "${subcategoryParentName}" not found`,
+        );
     }
 
     // Update the category or subcategory
     return this.prisma.category.update({
-      where: { name },  // Ensure name is unique
+      where: { name }, // Ensure name is unique
       data: {
         categoryParentId: categoryParent ? categoryParent.id : null,
         subcategoryParentId: subcategoryParent ? subcategoryParent.id : null,
@@ -71,7 +92,7 @@ export class CategoriesService {
   // Get category by name with its subcategories and nested subcategories
   async getCategoryByNameWithSubcategories(name: string) {
     return this.prisma.category.findUnique({
-      where: { name },  // Ensure name is unique in the schema
+      where: { name }, // Ensure name is unique in the schema
       include: {
         subcategories: {
           include: {
@@ -87,20 +108,22 @@ export class CategoriesService {
     return this.prisma.category.findMany({
       where: { name: subcategoryName },
       include: {
-        categoryParent: true,  // Ensure this is a valid relation in your schema
+        categoryParent: true, // Ensure this is a valid relation in your schema
         nestedSubcategories: true,
       },
     });
   }
 
   // Get nested subcategory by name with all subcategories it's under and their categories
-  async getNestedSubcategoryWithParentsAndCategories(nestedSubcategoryName: string) {
+  async getNestedSubcategoryWithParentsAndCategories(
+    nestedSubcategoryName: string,
+  ) {
     return this.prisma.category.findMany({
       where: { name: nestedSubcategoryName },
       include: {
         subcategoryParent: {
           include: {
-            categoryParent: true,  // Ensure this is a valid relation in your schema
+            categoryParent: true, // Ensure this is a valid relation in your schema
           },
         },
       },

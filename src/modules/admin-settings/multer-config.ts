@@ -11,11 +11,11 @@ if (!fs.existsSync(uploadsDir)) {
 // Configure Multer storage for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadsDir);  // Save files to the uploads directory
+    cb(null, uploadsDir); // Save files to the uploads directory
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);  // Save the file with a timestamp and original name
-  }
+    cb(null, Date.now() + '-' + file.originalname); // Save the file with a timestamp and original name
+  },
 });
 
 export const upload = multer({ storage });

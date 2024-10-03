@@ -37,14 +37,16 @@ export class ForgotPasswordService {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Password Reset Request',
-      text: `We received a request to reset your password. Your OTP is: ${otp}. This OTP is valid for 1 hour.`
+      text: `We received a request to reset your password. Your OTP is: ${otp}. This OTP is valid for 1 hour.`,
     });
 
     this.logger.log(`OTP sent to email: ${email}`);
     return { message: 'OTP sent successfully' };
   }
 
-  async verifyOtpAndResetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+  async verifyOtpAndResetPassword(
+    resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
     const { otp, newPassword } = resetPasswordDto;
     this.logger.log(`Verifying OTP: ${otp}`);
 
@@ -75,7 +77,9 @@ export class ForgotPasswordService {
       where: { otp },
     });
 
-    this.logger.log(`Password reset successfully for user ID: ${resetRequest.userId}`);
+    this.logger.log(
+      `Password reset successfully for user ID: ${resetRequest.userId}`,
+    );
     return { message: 'Password reset successfully' };
   }
 }

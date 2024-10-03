@@ -5,8 +5,8 @@ import { EmailModule } from 'src/email/email.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
-    imports: [PrismaModule , EmailModule],
-    controllers: [RegisterController],
-    providers: [RegisterService]
+  imports: [PrismaModule, EmailModule],
+  controllers: [RegisterController],
+  providers: [RegisterService],
 })
 export class RegisterModule {}

@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesService } from './category.service';
@@ -15,7 +23,10 @@ export class CategoriesController {
 
   // Update category or subcategory by name
   @Patch('name/:name')
-  async updateCategory(@Param('name') name: string, @Body() updateCategoryDto: UpdateCategoryDto) {
+  async updateCategory(
+    @Param('name') name: string,
+    @Body() updateCategoryDto: UpdateCategoryDto,
+  ) {
     return this.categoriesService.updateCategory(name, updateCategoryDto);
   }
 
@@ -33,8 +44,12 @@ export class CategoriesController {
 
   // Get nested subcategory by name and return all subcategories it's under and their categories
   @Get('subcategory/nested/name/:name/parents-and-categories')
-  async getNestedSubcategoryWithParentsAndCategories(@Param('name') name: string) {
-    return this.categoriesService.getNestedSubcategoryWithParentsAndCategories(name);
+  async getNestedSubcategoryWithParentsAndCategories(
+    @Param('name') name: string,
+  ) {
+    return this.categoriesService.getNestedSubcategoryWithParentsAndCategories(
+      name,
+    );
   }
 
   // Delete category by name

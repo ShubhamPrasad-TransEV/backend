@@ -63,7 +63,9 @@ export class NotificationService {
 
     if (!notification) {
       console.log(`Notification with ID ${notificationId} not found`); // Debugging line
-      throw new NotFoundException(`Notification with ID ${notificationId} not found`);
+      throw new NotFoundException(
+        `Notification with ID ${notificationId} not found`,
+      );
     }
 
     return notification;
@@ -82,7 +84,9 @@ export class NotificationService {
 
     // If no notifications are found
     if (!notifications || notifications.length === 0) {
-      throw new NotFoundException(`No notifications found for seller with ID ${sellerId}`);
+      throw new NotFoundException(
+        `No notifications found for seller with ID ${sellerId}`,
+      );
     }
 
     return notifications;

@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Get, Param,Delete, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  Delete,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-cart.dto';
 import { ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -12,21 +20,21 @@ export class CartController {
     description: 'Payload for ADMIN creation',
     type: AddToCartDto,
     examples: {
-        example1: {
-            summary: 'Add to cart example',
-            value: {
-                userId : 1,
-                productId :2,
-                quantity: 3
-            },
+      example1: {
+        summary: 'Add to cart example',
+        value: {
+          userId: 1,
+          productId: 2,
+          quantity: 3,
         },
+      },
     },
-})
-@ApiResponse({
+  })
+  @ApiResponse({
     status: 201,
     description: 'Item added to cart successfully',
     type: AddToCartDto,
-})
+  })
   async addToCart(@Body() addToCartDto: AddToCartDto) {
     return this.cartService.addToCart(addToCartDto);
   }

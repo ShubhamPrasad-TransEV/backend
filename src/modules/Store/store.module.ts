@@ -14,7 +14,8 @@ import { extname } from 'path';
         filename: (req, file, cb) => {
           const filename: string = file.originalname.split('.')[0];
           const fileExtName: string = extname(file.originalname);
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, `${filename}-${uniqueSuffix}${fileExtName}`);
         },
       }),

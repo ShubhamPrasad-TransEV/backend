@@ -1,5 +1,14 @@
-import { Controller, Post, Put, Body, Param, UseInterceptors, UploadedFile, NestInterceptor } from '@nestjs/common';
-import { CreateStoreDto} from './dto/create-store.dto';
+import {
+  Controller,
+  Post,
+  Put,
+  Body,
+  Param,
+  UseInterceptors,
+  UploadedFile,
+  NestInterceptor,
+} from '@nestjs/common';
+import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { StoreService } from './store.service';
 import { FileInterceptor } from '@nestjs/platform-express';

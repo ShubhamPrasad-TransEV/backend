@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OperationalSettingsDto } from './dto/operational-settings.dto';
 
@@ -25,10 +29,14 @@ export class OperationalSettingsService {
   // Create new operational settings
   async createOperationalSettings(data: OperationalSettingsDto) {
     // Check if operational settings already exist
-    const existingSettings = await this.getOperationalSettingsByAdminId(data.adminId);
-    
+    const existingSettings = await this.getOperationalSettingsByAdminId(
+      data.adminId,
+    );
+
     if (existingSettings) {
-      throw new BadRequestException('Operational settings for this admin already exist.');
+      throw new BadRequestException(
+        'Operational settings for this admin already exist.',
+      );
     }
 
     // Proceed with settings creation if no settings exist
@@ -38,7 +46,10 @@ export class OperationalSettingsService {
   }
 
   // Update operational settings using PATCH by adminId
-  async updateOperationalSettings(adminId: number, data: OperationalSettingsDto) {
+  async updateOperationalSettings(
+    adminId: number,
+    data: OperationalSettingsDto,
+  ) {
     const settings = await this.getOperationalSettingsByAdminId(adminId);
     if (!settings) {
       throw new NotFoundException('No settings found to update.');

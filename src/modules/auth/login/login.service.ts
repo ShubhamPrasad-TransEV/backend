@@ -7,48 +7,48 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class LoginService {
-    constructor(
-        private readonly prisma: PrismaService,
-        private readonly jwtService: JwtService,
-    ) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async validateUser(username: string, password: string): Promise<any> {
-        const user = await this.prisma.user.findUnique({
-            where: { username },
-            include: { role: true },  // Include role in the query
-        });
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      include: { role: true }, // Include role in the query
+    });
 
-        Logger.log(`Fetched user: ${JSON.stringify(user)}`, 'LoginService');
-        
-        if (user && await bcrypt.compare(password, user.password)) {
-            Logger.log('Password matched', 'LoginService');
-            const { password, ...result } = user;  // Exclude password from the result
-            return result;
-        } else {
-            Logger.log('Invalid username or password', 'LoginService');
-        }
+    Logger.log(`Fetched user: ${JSON.stringify(user)}`, 'LoginService');
 
-        return null;
+    if (user && (await bcrypt.compare(password, user.password))) {
+      Logger.log('Password matched', 'LoginService');
+      const { password, ...result } = user; // Exclude password from the result
+      return result;
+    } else {
+      Logger.log('Invalid username or password', 'LoginService');
     }
 
-    async login(loginDto: LoginDto) {
-        const user = await this.validateUser(loginDto.username, loginDto.password);
-        if (!user) {
-            throw new UnauthorizedException('Invalid credentials');
-        }
+    return null;
+  }
 
-        // Log the user details for debugging
-        Logger.log(`User logged in: ${JSON.stringify(user)}`, 'LoginService');
-
-        // Check if the user has a role and handle the case where it's null
-        const roleName = user.role ? user.role.name : 'defaultRole';  // Default to a role if null
-
-        const payload = { username: user.username, sub: user.id, role: roleName };
-
-        Logger.log(`JWT Payload: ${JSON.stringify(payload)}`, 'LoginService');
-
-        return {
-            access_token: this.jwtService.sign(payload),  // Generate JWT token
-        };
+  async login(loginDto: LoginDto) {
+    const user = await this.validateUser(loginDto.username, loginDto.password);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
+
+    // Log the user details for debugging
+    Logger.log(`User logged in: ${JSON.stringify(user)}`, 'LoginService');
+
+    // Check if the user has a role and handle the case where it's null
+    const roleName = user.role ? user.role.name : 'defaultRole'; // Default to a role if null
+
+    const payload = { username: user.username, sub: user.id, role: roleName };
+
+    Logger.log(`JWT Payload: ${JSON.stringify(payload)}`, 'LoginService');
+
+    return {
+      access_token: this.jwtService.sign(payload), // Generate JWT token
+    };
+  }
 }

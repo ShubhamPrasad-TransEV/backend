@@ -7,7 +7,7 @@ export class UpdateStoreDto {
 
   @IsOptional()
   @IsString()
-  readonly logo?: string;  // Filename of the updated logo
+  readonly logo?: string; // Filename of the updated logo
 
   @IsOptional()
   @IsString()

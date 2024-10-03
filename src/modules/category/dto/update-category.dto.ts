@@ -7,9 +7,9 @@ export class UpdateCategoryDto {
 
   @IsOptional()
   @IsString()
-  categoryParentName?: string;  // To update the category parent
+  categoryParentName?: string; // To update the category parent
 
   @IsOptional()
   @IsString()
-  subcategoryParentName?: string;  // To update the subcategory parent
+  subcategoryParentName?: string; // To update the subcategory parent
 }

@@ -87,7 +87,7 @@ export class ProductsService {
         description: createProductDto.description,
         userId,
         images: {
-          create: imageBuffers.map(buffer => ({
+          create: imageBuffers.map((buffer) => ({
             filename: buffer.filename,
             data: buffer.data,
           })),
@@ -124,7 +124,7 @@ export class ProductsService {
           ? {
               updateMany: {
                 where: { productId },
-                data: updateProductDto.images.map(url => ({
+                data: updateProductDto.images.map((url) => ({
                   filename: url,
                   data: Buffer.alloc(0), // Placeholder for image data; adjust as needed
                 })),
@@ -159,4 +159,3 @@ export class ProductsService {
     });
   }
 }
-
