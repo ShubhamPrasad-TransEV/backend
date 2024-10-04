@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -344,4 +345,74 @@ export class CategoriesService {
       });
     }
   }
-}
+  async createCategoriesFromFile(filePath: string) {
+    const categoryPaths = this.parseTaxonomyFile(filePath);
+
+    // Process each category path
+    for (const categoryPath of categoryPaths) {
+      await this.createCategoriesRecursively(categoryPath);
+    }
+  }
+
+  // Parse taxonomy file and extract category paths
+  private parseTaxonomyFile(filePath: string): string[][] {
+    const fileContents = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContents.split('\n').filter(line => line.trim() !== '');
+
+    const categories = lines.map(line => line.trim().split(' > '));  // Split by ' > ' delimiter
+    return categories;  // Array of category paths (arrays of strings)
+  }
+
+  // Recursive method to create or link categories and their relationships
+  async createCategoriesRecursively(categoryPath: string[]) {
+    const categoryName = categoryPath.pop();  // Get the last category in the path
+    const parentCategoryNames = categoryPath.length > 0 ? categoryPath : null;  // Remaining categories are parents
+
+    // Check if the category already exists
+    let category = await this.prisma.category.findUnique({
+      where: { name: categoryName },
+    });
+
+    if (!category) {
+      // Create missing parent categories recursively
+      let parentCategories = [];
+      if (parentCategoryNames) {
+        parentCategories = await Promise.all(
+          parentCategoryNames.map(async (parentName) => {
+            const parentCategory = await this.createCategoriesRecursively([...categoryPath]);  // Recurse for each parent
+            return parentCategory;
+          })
+        );
+      }
+
+      // Create the new category
+      category = await this.prisma.category.create({
+        data: {
+          name: categoryName,
+          parentCategories: {
+            connect: parentCategories.map((parent) => ({ id: parent.id })),
+          },
+        },
+      });
+    }
+
+    // If parent categories exist, ensure they are linked to the category
+    if (parentCategoryNames) {
+      const parentCategories = await this.prisma.category.findMany({
+        where: { name: { in: parentCategoryNames } },
+      });
+
+      await this.prisma.category.update({
+        where: { id: category.id },
+        data: {
+          parentCategories: {
+            connect: parentCategories.map((parent) => ({ id: parent.id })),
+          },
+        },
+      });
+    }
+
+    return category;
+  }
+}  
+
