@@ -1,6 +1,12 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString,IsInt } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsInt,
+} from 'class-validator';
 import { RoleEnum } from 'src/modules/role/role.enum';
-
 
 export class CreateAdminDto {
   @IsString()
@@ -9,7 +15,6 @@ export class CreateAdminDto {
 
   @IsEmail()
   email: string;
-  
 
   @IsString()
   @IsNotEmpty()
@@ -38,15 +43,11 @@ export class CreateAdminDto {
   @IsString()
   address?: string;
 
-  
   @IsString()
   @IsNotEmpty()
   name: string; // Ensure this is required
 
   @IsInt()
   @IsNotEmpty()
-  id: number;  // ID must be an integer and cannot be empty
-
+  id: number; // ID must be an integer and cannot be empty
 }
-   
-

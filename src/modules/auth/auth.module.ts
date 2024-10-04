@@ -5,7 +5,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { ForgotPassowrdModule } from './forgot-passowrd/forgot-passowrd.module';
 
 @Module({
-  imports: [LoginModule, RegisterModule, ForgotPassowrdModule , PrismaModule ],
-  providers: []
+  imports: [LoginModule, RegisterModule, ForgotPassowrdModule, PrismaModule],
+  providers: [],
 })
 export class AuthModule {}

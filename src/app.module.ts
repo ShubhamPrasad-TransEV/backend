@@ -11,28 +11,29 @@ import { ProductsModule } from './modules/products/products.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoriesModule } from './modules/category/category.module';
 import { NotificationModule } from './modules/notification/notification.module';
-
-
- 
+import { StoreModule } from './modules/store/store.module';
+import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module'; // New module for admin settings
+import { OperationalSettingsModule } from './modules/operational-settings/operational-settings.module'; // Import OperationalSettingsModule
+import { OrderModule } from './modules/orders/order.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
+      isGlobal: true, // Configures the configuration globally
     }),
-    PrismaModule , 
-    RoleModule , 
-    AdminModule , 
-    AuthModule ,
+    PrismaModule,
+    RoleModule,
+    AdminModule,
+    AuthModule,
     ProductsModule,
     CartModule,
     CategoriesModule,
-    NotificationModule
-   
-    
-    
-
- ],
+    NotificationModule,
+    StoreModule,
+    AdminSettingsModule, // Added AdminSettingsModule
+    OperationalSettingsModule, // Added OperationalSettingsModule
+    OrderModule,
+  ],
   controllers: [AppController],
   providers: [AppService, EmailService],
 })

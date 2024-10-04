@@ -6,33 +6,35 @@ import { ApiResponse } from '@nestjs/swagger';
 
 @Injectable()
 export class RoleService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
-    async createRole(createRoleDto: CreateRoleDto) {
-        const { name } = createRoleDto;
+  async createRole(createRoleDto: CreateRoleDto) {
+    const { name } = createRoleDto;
 
-        // Check the role names
-        if (!Object.values(RoleEnum).includes(name)) {
-            throw new Error('Role must be one of the predefined roles (Admin, User, Seller)');
-        }
-
-        // Check if the role already exists
-        const existingRole = await this.prisma.role.findUnique({
-            where: { name: name },             
-        });
-
-        if (existingRole) {
-            throw new Error('Role already exists, Buddyy!!!');
-        }
-
-        // Proceed with new role
-        return this.prisma.role.create({
-            data: { name },
-        });
+    // Check the role names
+    if (!Object.values(RoleEnum).includes(name)) {
+      throw new Error(
+        'Role must be one of the predefined roles (Admin, User, Seller)',
+      );
     }
 
-    // Fetch all roles
-    async getAllRoles() {
-        return this.prisma.role.findMany();
+    // Check if the role already exists
+    const existingRole = await this.prisma.role.findUnique({
+      where: { name: name },
+    });
+
+    if (existingRole) {
+      throw new Error('Role already exists, Buddyy!!!');
     }
+
+    // Proceed with new role
+    return this.prisma.role.create({
+      data: { name },
+    });
+  }
+
+  // Fetch all roles
+  async getAllRoles() {
+    return this.prisma.role.findMany();
+  }
 }

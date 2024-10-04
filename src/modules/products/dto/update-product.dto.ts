@@ -4,7 +4,6 @@ export class UpdateProductDto {
   @IsString()
   name?: string;
 
-
   @IsOptional()
   @IsNumber()
   price?: number;
@@ -15,5 +14,5 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsArray()
-  images?: { filename: string; data: Buffer }[]; 
- }
+  images?: { filename: string; data: Buffer }[];
+}
