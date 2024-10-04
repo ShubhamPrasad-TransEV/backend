@@ -168,7 +168,6 @@ CREATE TABLE `AdminSettings` (
 
 -- CreateTable
 CREATE TABLE `OperationalSettings` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
     `adminId` INTEGER NOT NULL,
     `timeZone` VARCHAR(191) NOT NULL,
     `currency` VARCHAR(191) NOT NULL,
@@ -181,8 +180,7 @@ CREATE TABLE `OperationalSettings` (
     `minimumOrderAmount` DOUBLE NOT NULL,
     `backupFrequency` VARCHAR(191) NULL DEFAULT '',
 
-    UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`),
-    PRIMARY KEY (`id`)
+    UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable

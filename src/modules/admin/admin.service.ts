@@ -81,11 +81,11 @@ export class AdminService {
         },
       },
     });
-  
+
     if (!admin || admin.admin.role?.name !== RoleEnum.ADMIN) {
       throw new NotFoundException(`Admin with ID ${id} not found`);
     }
-  
+
     // Transform the result to match the expected response format
     const result = {
       id: admin.admin.id, // Use admin's user id here
@@ -105,7 +105,7 @@ export class AdminService {
         name: admin.admin.role.name,
       },
     };
-  
+
     return result;
   }
 }

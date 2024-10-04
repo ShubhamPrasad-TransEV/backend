@@ -1,91 +1,50 @@
 import {
-  BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
+  findOne(id: string) {
+    throw new Error('Method not implemented.');
+  }
+  findAll() {
+    throw new Error('Method not implemented.');
+  }
   constructor(private readonly prisma: PrismaService) {}
-
-  async findAll() {
-    return this.prisma.product.findMany({
-      include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
-      },
-    });
-  }
-
-  async findOne(id: string) {
-    const productId = parseInt(id, 10);
-
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
-    const product = await this.prisma.product.findUnique({
-      where: { id: productId },
-      include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
-      },
-    });
-
-    if (!product) {
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    }
-
-    return product;
-  }
-
-  private async validateUserRole(userId: number) {
-    if (!userId) {
-      throw new BadRequestException('User ID is required and must be valid.');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.role.name !== 'Admin' && user.role.name !== 'Seller') {
-      throw new ForbiddenException(
-        `User with ID ${userId} is not authorized to upload products`,
-      );
-    }
-  }
 
   async createProduct(
     createProductDto: CreateProductDto,
     imageBuffers: { filename: string; data: Buffer }[],
   ) {
-    const userId = parseInt(createProductDto.userId?.toString(), 10);
+    const { sellerId, mainCategory, subCategory, nestedSubCategory, images } =
+      createProductDto;
 
-    if (isNaN(userId)) {
-      throw new BadRequestException('User ID must be a valid number');
+    // Check if the user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: sellerId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${sellerId} not found`);
     }
 
-    await this.validateUserRole(userId);
-
-    const price = parseFloat(createProductDto.price?.toString());
-
-    if (isNaN(price)) {
-      throw new BadRequestException('Price must be a valid number');
+    // Ensure user is a seller
+    if (user.roleId !== 3) {
+      throw new BadRequestException(`User with ID ${sellerId} is not a seller`);
     }
 
-    return this.prisma.product.create({
+    // Create the product with images
+    const product = await this.prisma.product.create({
       data: {
-        name: createProductDto.name,
-        price,
-        description: createProductDto.description,
-        userId,
+        mainCategory,
+        subCategory,
+        nestedSubCategory,
+        sellerId, // Ensure this is of type 'number'
         images: {
           create: imageBuffers.map((buffer) => ({
             filename: buffer.filename,

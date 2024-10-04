@@ -36,17 +36,17 @@ model Seller {
   id            Int            @id @default(autoincrement())
   products      Product[]
   notifications Notification[]
-  Order         Order[] // Sellers handle multiple orders through their products
+  orders        Order[]        @relation("SellerOrders")
 }
 
 model Admins {
-  id                  Int                   @id @default(autoincrement()) // Autoincrementing primary key
-  adminId             Int // This will reference the User model where roleId = 1
-  admin               User                  @relation(fields: [adminId], references: [id], onDelete: Cascade) // Foreign key relationship to User
+  id                  Int                   @id @default(autoincrement())
+  adminId             Int
+  admin               User                  @relation(fields: [adminId], references: [id], onDelete: Cascade)
   adminSettings       AdminSettings[]
   operationalSettings OperationalSettings[]
 
-  @@unique([adminId]) // Ensure that a user can only appear once in the Admins table
+  @@unique([adminId])
 }
 
 model Role {
@@ -56,35 +56,37 @@ model Role {
 }
 
 model Product {
-  id          Int         @id @default(autoincrement())
-  name        String
-  price       Float
-  description String
-  userId      Int
-  user        User        @relation("UserProducts", fields: [userId], references: [id])
-  images      Image[]
-  seller      Seller?     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  sellerId    Int?
-  OrderItem   OrderItem[]
-  cartItems   CartItem[]
+  id                  Int         @id @default(autoincrement())
+  mainCategory        String
+  subCategory         String
+  nestedSubCategory   String
+  name                String
+  price               Float
+  description         String
+  userId              Int
+  user                User        @relation("UserProducts", fields: [userId], references: [id])
+  images              Image[]     @relation("ProductImages") // Correct relation to Image
+  sellerId            Int
+  seller              Seller      @relation(fields: [sellerId], references: [id])
+  orderItems          OrderItem[]
+  cartItems           CartItem[]
 }
 
 model Order {
-  id         Int         @id @default(autoincrement())
-  userId     Int
-  user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[] // Relation to OrderItem model
-
-  shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
-  invoice                String? // Invoice number or reference
-  refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
-  shippingCost           Float   @default(0.0) // Shipping cost associated with the order
-  orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
-  orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
-  prePayment             Boolean @default(false) // Indicates if pre-payment was made
-  paymentStatus          Boolean @default(false) // Indicates if the order has been fully paid
-  Seller                 Seller? @relation(fields: [sellerId], references: [id])
+  id                     Int         @id @default(autoincrement())
+  userId                 Int
+  user                   User        @relation(fields: [userId], references: [id])
+  orderItems             OrderItem[]
+  shipmentStatus         String      @default("Pending")
+  invoice                String?
+  refundStatus           String      @default("No Refund")
+  shippingCost           Float       @default(0.0)
+  orderingStatus         String      @default("Pending")
+  orderFulfillmentStatus String      @default("Unfulfilled")
+  prePayment             Boolean     @default(false)
+  paymentStatus          Boolean     @default(false)
   sellerId               Int?
+  Seller                 Seller?     @relation("SellerOrders", fields: [sellerId], references: [id])
 
   @@index([userId])
 }
@@ -92,19 +94,18 @@ model Order {
 model OrderItem {
   id        Int     @id @default(autoincrement())
   orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id]) // Relation to Order
+  order     Order   @relation(fields: [orderId], references: [id])
   productId Int
-  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
-
-  // No need for a seller relation here as the seller can be accessed via the product
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model Image {
-  id        Int     @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   filename  String
+  url       String
   data      Bytes
   productId Int
-  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
+  product   Product @relation("ProductImages", fields: [productId], references: [id]) // Correct relation to Product
 }
 
 model CartItem {
@@ -128,10 +129,14 @@ model PasswordReset {
 }
 
 model Category {
-  id               Int        @id @default(autoincrement())
-  name             String     @unique
-  parentCategories Category[] @relation("CategoryParentChild")
-  childCategories  Category[] @relation("CategoryParentChild")
+  id                  Int        @id @default(autoincrement())
+  name                String     @unique
+  categoryParentId    Int?
+  categoryParent      Category?  @relation("CategoryHierarchy", fields: [categoryParentId], references: [id], onDelete: SetNull)
+  subcategoryParentId Int?
+  subcategoryParent   Category?  @relation("SubcategoryHierarchy", fields: [subcategoryParentId], references: [id], onDelete: SetNull)
+  subcategories       Category[] @relation("CategoryHierarchy")
+  nestedSubcategories Category[] @relation("SubcategoryHierarchy")
 }
 
 model Notification {
@@ -152,22 +157,23 @@ model Store {
   phoneNumber String
   aboutUs     String
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now())
 }
 
 model AdminSettings {
-  id          Int     @id @default(autoincrement()) // Autoincrementing primary key
+  id          Int    @id @default(autoincrement())
   siteName    String
   siteLogo    String?
   siteAddress String
   siteEmail   String
   storePhone  String
-  adminId     Int     @unique // Foreign key that references the Admins table
-  admin       Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade) // Relationship to Admins
+  adminId     Int    @unique
+  admin       Admins @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
 }
 
 model OperationalSettings {
-  adminId               Int     @unique // This ensures each admin can have only one operational settings entry
+  id                    Int     @id @default(autoincrement())
+  adminId               Int     @unique
   admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
   timeZone              String
   currency              String

@@ -4,33 +4,26 @@ import {
   IsOptional,
   IsString,
   IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateProductDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiProperty()
   @IsNumber()
-  @IsNotEmpty()
-  price: number;
+  sellerId: number;
 
-  @ApiProperty()
   @IsString()
-  @IsNotEmpty()
-  description: string;
+  mainCategory: string;
 
-  @ApiProperty()
-  @IsNumber()
-  @IsNotEmpty()
-  userId: number;
+  @IsString()
+  subCategory: string;
 
-  // Optional: If you need to handle image files as part of the DTO, use the following:
-  // Make sure to handle file uploads separately
-  @ApiProperty({ type: 'array', items: { type: 'string' } })
-  @IsOptional()
-  imageFiles?: Express.Multer.File[];
+  @IsString()
+  nestedSubCategory: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImageData)
+  images: ImageData[];
 }
