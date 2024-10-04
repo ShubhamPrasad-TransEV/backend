@@ -66,4 +66,3 @@ export class CategoriesController {
     return this.categoriesService.createCategoriesFromFile(filePath);
   }
 }
-
