@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -7,147 +7,320 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Create or update category/subcategory/nested subcategory using name for parent relationships
+  // Create a category and associate parents and children
   async createCategory(createCategoryDto: CreateCategoryDto) {
-    const { name, categoryParentName, subcategoryParentName } =
-      createCategoryDto;
-
-    // Fetch the parent category by name (instead of ID)
-    let categoryParent = null;
-    if (categoryParentName) {
-      categoryParent = await this.prisma.category.findUnique({
-        where: { name: categoryParentName },
-      });
-      if (!categoryParent)
-        throw new NotFoundException(
-          `Category parent "${categoryParentName}" not found`,
-        );
-    }
-
-    // Fetch the parent subcategory by name (instead of ID)
-    let subcategoryParent = null;
-    if (subcategoryParentName) {
-      subcategoryParent = await this.prisma.category.findUnique({
-        where: { name: subcategoryParentName },
-      });
-      if (!subcategoryParent)
-        throw new NotFoundException(
-          `Subcategory parent "${subcategoryParentName}" not found`,
-        );
-    }
-
-    // Upsert the category or subcategory based on the parent (using resolved names)
-    return this.prisma.category.upsert({
-      where: { name }, // Ensure name is unique
-      update: {
-        categoryParentId: categoryParent ? categoryParent.id : null,
-        subcategoryParentId: subcategoryParent ? subcategoryParent.id : null,
-      },
-      create: {
-        name,
-        categoryParentId: categoryParent ? categoryParent.id : null,
-        subcategoryParentId: subcategoryParent ? subcategoryParent.id : null,
-      },
+    const { name, parentCategoryNames, childCategoryNames } = createCategoryDto;
+  
+    // Check if the category already exists
+    const existingCategory = await this.prisma.category.findUnique({
+      where: { name },
     });
-  }
-
-  // Update category or subcategory by name
-  async updateCategory(name: string, updateCategoryDto: UpdateCategoryDto) {
-    const { categoryParentName, subcategoryParentName } = updateCategoryDto;
-
-    // Fetch the parent category by name if provided
-    let categoryParent = null;
-    if (categoryParentName) {
-      categoryParent = await this.prisma.category.findUnique({
-        where: { name: categoryParentName },
-      });
-      if (!categoryParent)
-        throw new NotFoundException(
-          `Category parent "${categoryParentName}" not found`,
-        );
+  
+    if (existingCategory) {
+      throw new ConflictException(`Category with name "${name}" already exists`);
     }
-
-    // Fetch the parent subcategory by name if provided
-    let subcategoryParent = null;
-    if (subcategoryParentName) {
-      subcategoryParent = await this.prisma.category.findUnique({
-        where: { name: subcategoryParentName },
-      });
-      if (!subcategoryParent)
-        throw new NotFoundException(
-          `Subcategory parent "${subcategoryParentName}" not found`,
-        );
+  
+    // Fetch parent categories by their names
+    const parentCategories = parentCategoryNames
+      ? await this.prisma.category.findMany({
+          where: { name: { in: parentCategoryNames } },
+        })
+      : [];
+  
+    if (parentCategoryNames && parentCategories.length !== parentCategoryNames.length) {
+      throw new NotFoundException(`Some parent categories not found`);
     }
-
-    // Update the category or subcategory
-    return this.prisma.category.update({
-      where: { name }, // Ensure name is unique
+  
+    // Fetch child categories by their names
+    let childCategories = childCategoryNames
+      ? await this.prisma.category.findMany({
+          where: { name: { in: childCategoryNames } },
+        })
+      : [];
+  
+    // Create missing child categories
+    if (childCategoryNames && childCategories.length !== childCategoryNames.length) {
+      const existingChildNames = childCategories.map((category) => category.name);
+      const missingChildNames = childCategoryNames.filter(
+        (name) => !existingChildNames.includes(name)
+      );
+  
+      // Create missing child categories
+      await this.prisma.category.createMany({
+        data: missingChildNames.map((name) => ({
+          name,
+        })),
+      });
+  
+      // Re-fetch all child categories after creating the missing ones
+      childCategories = await this.prisma.category.findMany({
+        where: { name: { in: childCategoryNames } },
+      });
+    }
+  
+    // Create the category with parent and child relations
+    return this.prisma.category.create({
       data: {
-        categoryParentId: categoryParent ? categoryParent.id : null,
-        subcategoryParentId: subcategoryParent ? subcategoryParent.id : null,
-      },
-    });
-  }
-
-  // Get category by name with its subcategories and nested subcategories
-  async getCategoryByNameWithSubcategories(name: string) {
-    return this.prisma.category.findUnique({
-      where: { name }, // Ensure name is unique in the schema
-      include: {
-        subcategories: {
-          include: {
-            nestedSubcategories: true,
-          },
+        name,
+        parentCategories: {
+          connect: parentCategories.map((parent) => ({ id: parent.id })),
+        },
+        childCategories: {
+          connect: childCategories.map((child) => ({ id: child.id })),
         },
       },
     });
   }
 
-  // Get subcategory by name with all categories it's under and its nested subcategories
-  async getSubcategoryWithCategoriesAndNested(subcategoryName: string) {
+  // Update a category and associate parents and children
+  async updateCategory(name: string, updateCategoryDto: UpdateCategoryDto) {
+  const { parentCategoryNames, childCategoryNames } = updateCategoryDto;
+
+  // Check if the category exists
+  const category = await this.prisma.category.findUnique({
+    where: { name },
+  });
+
+  if (!category) {
+    throw new NotFoundException(`Category with name "${name}" not found`);
+  }
+
+  // Fetch parent categories by their names
+  const parentCategories = parentCategoryNames
+    ? await this.prisma.category.findMany({
+        where: { name: { in: parentCategoryNames } },
+      })
+    : [];
+
+  if (parentCategoryNames && parentCategories.length !== parentCategoryNames.length) {
+    throw new NotFoundException(`Some parent categories not found`);
+  }
+
+  // Fetch child categories by their names
+  let childCategories = childCategoryNames
+    ? await this.prisma.category.findMany({
+        where: { name: { in: childCategoryNames } },
+      })
+    : [];
+
+  // Create missing child categories
+  if (childCategoryNames && childCategories.length !== childCategoryNames.length) {
+    const existingChildNames = childCategories.map((category) => category.name);
+    const missingChildNames = childCategoryNames.filter(
+      (name) => !existingChildNames.includes(name)
+    );
+
+    // Create missing child categories
+    await this.prisma.category.createMany({
+      data: missingChildNames.map((name) => ({
+        name,
+      })),
+    });
+
+    // Re-fetch all child categories after creating the missing ones
+    childCategories = await this.prisma.category.findMany({
+      where: { name: { in: childCategoryNames } },
+    });
+  }
+
+  // Update the category with parent and child relations
+  return this.prisma.category.update({
+    where: { name },
+    data: {
+      name: updateCategoryDto.name,
+      parentCategories: {
+        set: parentCategories.map((parent) => ({ id: parent.id })),
+      },
+      childCategories: {
+        set: childCategories.map((child) => ({ id: child.id })),
+      },
+    },
+  });
+}
+
+  // Get all categories with their immediate parents and children
+  async getAllCategoriesWithParentsAndChildren() {
     return this.prisma.category.findMany({
-      where: { name: subcategoryName },
       include: {
-        categoryParent: true, // Ensure this is a valid relation in your schema
-        nestedSubcategories: true,
+        parentCategories: true,
+        childCategories: true,
       },
     });
   }
 
-  // Get nested subcategory by name with all subcategories it's under and their categories
-  async getNestedSubcategoryWithParentsAndCategories(
-    nestedSubcategoryName: string,
-  ) {
-    return this.prisma.category.findMany({
-      where: { name: nestedSubcategoryName },
-      include: {
-        subcategoryParent: {
-          include: {
-            categoryParent: true, // Ensure this is a valid relation in your schema
-          },
-        },
-      },
+  // Get up-tree hierarchy
+  async getUpTreeHierarchy(name: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { name },
+      include: { parentCategories: true },
     });
+
+    if (!category) {
+      throw new NotFoundException(`Category with name "${name}" not found`);
+    }
+
+    return this.getRecursiveParents(category);
   }
 
-  // Delete category by name
+  // Helper function to recursively fetch parent categories
+  private async getRecursiveParents(category) {
+    const parents = await this.prisma.category.findMany({
+      where: { id: { in: category.parentCategories.map((p) => p.id) } },
+      include: { parentCategories: true },
+    });
+
+    if (parents.length === 0) return [category];
+
+    const result = [];
+    for (const parent of parents) {
+      result.push(...(await this.getRecursiveParents(parent)));
+    }
+
+    return result;
+  }
+
+  // Get down-tree hierarchy
+  async getDownTreeHierarchy(name: string) {
+    const category = await this.prisma.category.findUnique({
+      where: { name },
+      include: { childCategories: true },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with name "${name}" not found`);
+    }
+
+    return this.getRecursiveChildren(category);
+  }
+
+  // Helper function to recursively fetch child categories
+  private async getRecursiveChildren(category) {
+    const children = await this.prisma.category.findMany({
+      where: { id: { in: category.childCategories.map((c) => c.id) } },
+      include: { childCategories: true },
+    });
+
+    if (children.length === 0) return [category];
+
+    const result = [];
+    for (const child of children) {
+      result.push(...(await this.getRecursiveChildren(child)));
+    }
+
+    return result;
+  }
+
   async deleteCategory(name: string) {
+    // Fetch the category to delete with its parent and child relations
+    const category = await this.prisma.category.findUnique({
+      where: { name },
+      include: {
+        parentCategories: true,
+        childCategories: true,
+      },
+    });
+  
+    if (!category) {
+      throw new NotFoundException(`Category with name "${name}" not found`);
+    }
+  
+    // Remove the relations to parent categories by disconnecting the parent category IDs
+    await this.prisma.category.update({
+      where: { id: category.id },
+      data: {
+        parentCategories: {
+          disconnect: category.parentCategories.map((parent) => ({ id: parent.id })), // Disconnect from all parent categories using their IDs
+        },
+      },
+    });
+  
+    // Process the child categories recursively (check if they have other parents and delete them if they don't)
+    await this.deleteChildCategoriesRecursively(category.id);
+  
+    // Finally, delete the category itself
     return this.prisma.category.delete({
-      where: { name },
+      where: { id: category.id },
     });
   }
 
-  // Get categories without subcategories (root categories)
-  async getCategoriesWithoutSubcategories() {
-    return this.prisma.category.findMany({
-      where: { categoryParentId: null },
+  // Helper method to recursively delete child categories
+  private async deleteChildCategoriesRecursively(categoryId: number) {
+    // Fetch the category along with its parent and child categories
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+      include: {
+        parentCategories: true, // Include parent categories to disconnect
+        childCategories: true,  // Include child categories to check for deletion
+      },
     });
-  }
-
-  // Get category by name without its subcategories
-  async getCategoryByNameWithoutSubcategories(name: string) {
-    return this.prisma.category.findUnique({
-      where: { name },
+  
+    // If the category doesn't exist, return early
+    if (!category) {
+      return;
+    }
+  
+    // For each child category, check if it has any other parents
+    for (const child of category.childCategories) {
+      const parentCount = await this.prisma.category.count({
+        where: {
+          childCategories: {
+            some: {
+              id: child.id,
+            },
+          },
+        },
+      });
+  
+      // If this child has no other parents, recursively delete it
+      if (parentCount <= 1) {
+        // First, disconnect all parent relations for the child category
+        await this.prisma.category.update({
+          where: { id: child.id },
+          data: {
+            parentCategories: {
+              disconnect: category.parentCategories.map((parent) => ({ id: parent.id })), // Disconnect parent categories using their IDs
+            },
+          },
+        });
+  
+        // Recursively delete the child category
+        await this.deleteChildCategoriesRecursively(child.id);
+  
+        // Finally, check if the child category still exists before deleting it
+        const childCategoryExists = await this.prisma.category.findUnique({
+          where: { id: child.id },
+        });
+  
+        if (childCategoryExists) {
+          // Delete the child category
+          await this.prisma.category.delete({
+            where: { id: child.id },
+          });
+        }
+      } else {
+        // If the child has other parents, just disconnect this specific parent (the current category)
+        await this.prisma.category.update({
+          where: { id: child.id },
+          data: {
+            parentCategories: {
+              disconnect: {
+                id: categoryId, // Disconnect the current category from this child
+              },
+            },
+          },
+        });
+      }
+    }
+  
+    // After processing the child categories, check if the category still exists before deleting it
+    const categoryExists = await this.prisma.category.findUnique({
+      where: { id: categoryId },
     });
+  
+    if (categoryExists) {
+      await this.prisma.category.delete({
+        where: { id: categoryId },
+      });
+    }
   }
 }

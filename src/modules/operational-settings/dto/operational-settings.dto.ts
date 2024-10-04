@@ -18,15 +18,6 @@ export class OperationalSettingsDto {
   readonly adminId: number;
 
   @ApiProperty({
-    description: 'Unique identifier for the operational settings',
-    example: 1,
-    type: Number,
-  })
-  @IsOptional()
-  @IsNumber()
-  readonly id?: number;
-
-  @ApiProperty({
     description: 'The timezone for the operational settings',
     example: 'UTC+0',
     type: String,

@@ -120,8 +120,6 @@ CREATE TABLE `PasswordReset` (
 CREATE TABLE `Category` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
-    `categoryParentId` INTEGER NULL,
-    `subcategoryParentId` INTEGER NULL,
 
     UNIQUE INDEX `Category_name_key`(`name`),
     PRIMARY KEY (`id`)
@@ -158,7 +156,7 @@ CREATE TABLE `Store` (
 CREATE TABLE `AdminSettings` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `siteName` VARCHAR(191) NOT NULL,
-    `siteLogo` VARCHAR(191) NOT NULL,
+    `siteLogo` VARCHAR(191) NULL,
     `siteAddress` VARCHAR(191) NOT NULL,
     `siteEmail` VARCHAR(191) NOT NULL,
     `storePhone` VARCHAR(191) NOT NULL,
@@ -185,6 +183,15 @@ CREATE TABLE `OperationalSettings` (
 
     UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `_CategoryParentChild` (
+    `A` INTEGER NOT NULL,
+    `B` INTEGER NOT NULL,
+
+    UNIQUE INDEX `_CategoryParentChild_AB_unique`(`A`, `B`),
+    INDEX `_CategoryParentChild_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -224,12 +231,6 @@ ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_productId_fkey` FOREIGN KEY (`pr
 ALTER TABLE `PasswordReset` ADD CONSTRAINT `PasswordReset_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Category` ADD CONSTRAINT `Category_categoryParentId_fkey` FOREIGN KEY (`categoryParentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Category` ADD CONSTRAINT `Category_subcategoryParentId_fkey` FOREIGN KEY (`subcategoryParentId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `Notification` ADD CONSTRAINT `Notification_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -237,3 +238,9 @@ ALTER TABLE `AdminSettings` ADD CONSTRAINT `AdminSettings_adminId_fkey` FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE `OperationalSettings` ADD CONSTRAINT `OperationalSettings_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `Admins`(`adminId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_A_fkey` FOREIGN KEY (`A`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_B_fkey` FOREIGN KEY (`B`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

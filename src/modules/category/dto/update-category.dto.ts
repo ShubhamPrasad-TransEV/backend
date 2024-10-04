@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsArray, ArrayNotEmpty } from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsOptional()
@@ -6,10 +6,14 @@ export class UpdateCategoryDto {
   name?: string;
 
   @IsOptional()
-  @IsString()
-  categoryParentName?: string; // To update the category parent
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  parentCategoryNames?: string[]; // List of parent category names
 
   @IsOptional()
-  @IsString()
-  subcategoryParentName?: string; // To update the subcategory parent
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  childCategoryNames?: string[]; // List of child category names
 }

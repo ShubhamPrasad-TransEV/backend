@@ -128,14 +128,10 @@ model PasswordReset {
 }
 
 model Category {
-  id                  Int        @id @default(autoincrement())
-  name                String     @unique // Ensure name is unique
-  categoryParentId    Int?
-  categoryParent      Category?  @relation("CategoryHierarchy", fields: [categoryParentId], references: [id], onDelete: SetNull)
-  subcategoryParentId Int?
-  subcategoryParent   Category?  @relation("SubcategoryHierarchy", fields: [subcategoryParentId], references: [id], onDelete: SetNull)
-  subcategories       Category[] @relation("CategoryHierarchy")
-  nestedSubcategories Category[] @relation("SubcategoryHierarchy")
+  id               Int        @id @default(autoincrement())
+  name             String     @unique
+  parentCategories Category[] @relation("CategoryParentChild")
+  childCategories  Category[] @relation("CategoryParentChild")
 }
 
 model Notification {
@@ -160,18 +156,17 @@ model Store {
 }
 
 model AdminSettings {
-  id          Int    @id @default(autoincrement()) // Autoincrementing primary key
+  id          Int     @id @default(autoincrement()) // Autoincrementing primary key
   siteName    String
   siteLogo    String?
   siteAddress String
   siteEmail   String
   storePhone  String
-  adminId     Int    @unique // Foreign key that references the Admins table
-  admin       Admins @relation(fields: [adminId], references: [adminId], onDelete: Cascade) // Relationship to Admins
+  adminId     Int     @unique // Foreign key that references the Admins table
+  admin       Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade) // Relationship to Admins
 }
 
 model OperationalSettings {
-  id                    Int     @id @default(autoincrement())
   adminId               Int     @unique // This ensures each admin can have only one operational settings entry
   admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
   timeZone              String

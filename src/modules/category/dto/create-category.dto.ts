@@ -1,29 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsArray, ArrayNotEmpty } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
     example: 'Clothing',
-    description: 'Name of the category or subcategory',
+    description: 'Name of the category',
   })
   @IsString()
   name: string;
 
   @ApiProperty({
-    example: "Men's Fashion",
-    description: 'Parent category name',
+    example: ["Men's Fashion"],
+    description: 'List of parent category names, if applicable',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  categoryParentName?: string; // Use this if the parent is a category
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  parentCategoryNames?: string[]; // List of parent category names
 
   @ApiProperty({
-    example: 'Clothing',
-    description: 'Parent subcategory name',
+    example: ['Accessories'],
+    description: 'List of child category names, if applicable',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  subcategoryParentName?: string; // Use this if the parent is a subcategory
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  childCategoryNames?: string[]; // List of child category names
 }
