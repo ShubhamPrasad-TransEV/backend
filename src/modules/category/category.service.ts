@@ -154,59 +154,80 @@ export class CategoriesService {
       where: { name },
       include: { parentCategories: true },
     });
-
+  
     if (!category) {
       throw new NotFoundException(`Category with name "${name}" not found`);
     }
-
+  
     return this.getRecursiveParents(category);
   }
-
-  // Helper function to recursively fetch parent categories
+  
+  // Helper function to recursively fetch parent categories (full hierarchy)
   private async getRecursiveParents(category) {
     const parents = await this.prisma.category.findMany({
       where: { id: { in: category.parentCategories.map((p) => p.id) } },
       include: { parentCategories: true },
     });
-
-    if (parents.length === 0) return [category];
-
-    const result = [];
+  
+    if (parents.length === 0) return {
+      id: category.id,
+      name: category.name,
+      parents: [],
+    };
+  
+    const result = {
+      id: category.id,
+      name: category.name,
+      parents: [],
+    };
+  
+    // Recursively get parents for each parent category
     for (const parent of parents) {
-      result.push(...(await this.getRecursiveParents(parent)));
+      const parentTree = await this.getRecursiveParents(parent);
+      result.parents.push(parentTree); // Append the full parent tree recursively
     }
-
+  
     return result;
   }
-
   // Get down-tree hierarchy
   async getDownTreeHierarchy(name: string) {
     const category = await this.prisma.category.findUnique({
       where: { name },
       include: { childCategories: true },
     });
-
+  
     if (!category) {
       throw new NotFoundException(`Category with name "${name}" not found`);
     }
-
+  
     return this.getRecursiveChildren(category);
   }
-
-  // Helper function to recursively fetch child categories
+  
+  // Helper function to recursively fetch child categories (full hierarchy)
   private async getRecursiveChildren(category) {
     const children = await this.prisma.category.findMany({
       where: { id: { in: category.childCategories.map((c) => c.id) } },
       include: { childCategories: true },
     });
-
-    if (children.length === 0) return [category];
-
-    const result = [];
+  
+    if (children.length === 0) return {
+      id: category.id,
+      name: category.name,
+      children: [],
+    };
+  
+    const result = {
+      id: category.id,
+      name: category.name,
+      children: [],
+    };
+  
+    // Recursively get children for each child category
     for (const child of children) {
-      result.push(...(await this.getRecursiveChildren(child)));
+      const childTree = await this.getRecursiveChildren(child);
+      result.children.push(childTree); // Append the full child tree recursively
     }
-
+  
     return result;
   }
 
