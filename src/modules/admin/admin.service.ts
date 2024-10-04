@@ -81,11 +81,31 @@ export class AdminService {
         },
       },
     });
-
+  
     if (!admin || admin.admin.role?.name !== RoleEnum.ADMIN) {
       throw new NotFoundException(`Admin with ID ${id} not found`);
     }
-
-    return admin;
+  
+    // Transform the result to match the expected response format
+    const result = {
+      id: admin.admin.id, // Use admin's user id here
+      username: admin.admin.username,
+      email: admin.admin.email,
+      password: admin.admin.password,
+      roleId: admin.admin.roleId,
+      isSeller: admin.admin.isSeller,
+      name: admin.admin.name,
+      phoneNumber: admin.admin.phoneNumber,
+      companyName: admin.admin.companyName,
+      description: admin.admin.description,
+      contactPerson: admin.admin.contactPerson,
+      address: admin.admin.address,
+      role: {
+        id: admin.admin.role.id,
+        name: admin.admin.role.name,
+      },
+    };
+  
+    return result;
   }
 }
