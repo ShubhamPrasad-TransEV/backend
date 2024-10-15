@@ -1,4 +1,6 @@
+// update-product.dto.ts
 import { IsString, IsOptional, IsNumber, IsArray } from 'class-validator';
+
 export class UpdateProductDto {
   @IsOptional()
   @IsString()
@@ -9,10 +11,6 @@ export class UpdateProductDto {
   price?: number;
 
   @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
   @IsArray()
-  images?: { filename: string; data: Buffer }[];
+  images?: { filename: string; path: string }[]; // Include path instead of data
 }

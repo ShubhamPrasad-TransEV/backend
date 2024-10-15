@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,7 +14,7 @@ export class ProductsService {
   async findAll() {
     return this.prisma.product.findMany({
       include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
+        images: true, // Include images relation
       },
     });
   }
@@ -30,7 +29,7 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
       include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
+        images: true, // Include images relation
       },
     });
 
@@ -38,44 +37,28 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return product;
-  }
+    // Map the image paths to create a URL for each image
+    const imageUrls = product.images.map((image) => ({
+      filename: image.filename,
+      url: `${process.env.BASE_URL}/products/images/${image.filename}`, // Generate the image URL
+    }));
 
-  private async validateUserRole(userId: number) {
-    if (!userId) {
-      throw new BadRequestException('User ID is required and must be valid.');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.role.name !== 'Admin' && user.role.name !== 'Seller') {
-      throw new ForbiddenException(
-        `User with ID ${userId} is not authorized to upload products`,
-      );
-    }
+    return {
+      ...product,
+      images: imageUrls, // Return the product data along with image URLs
+    };
   }
 
   async createProduct(
     createProductDto: CreateProductDto,
-    imageBuffers: { filename: string; data: Buffer }[],
+    imagePaths: { filename: string; path: string }[],
   ) {
-    const userId = parseInt(createProductDto.userId?.toString(), 10);
-
-    if (isNaN(userId)) {
-      throw new BadRequestException('User ID must be a valid number');
+    const sellerId = parseInt(createProductDto.sellerId?.toString(), 10);
+    if (isNaN(sellerId)) {
+      throw new BadRequestException('Seller ID must be a valid number');
     }
 
-    await this.validateUserRole(userId);
-
     const price = parseFloat(createProductDto.price?.toString());
-
     if (isNaN(price)) {
       throw new BadRequestException('Price must be a valid number');
     }
@@ -84,12 +67,11 @@ export class ProductsService {
       data: {
         name: createProductDto.name,
         price,
-        description: createProductDto.description,
-        userId,
+        sellerId,
         images: {
-          create: imageBuffers.map((buffer) => ({
-            filename: buffer.filename,
-            data: buffer.data,
+          create: imagePaths.map((file) => ({
+            filename: file.filename,
+            path: file.path, // Store the file path on the filesystem
           })),
         },
       },
@@ -98,7 +80,6 @@ export class ProductsService {
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     const productId = parseInt(id, 10);
-
     if (isNaN(productId)) {
       throw new BadRequestException('Product ID must be a valid number');
     }
@@ -122,13 +103,10 @@ export class ProductsService {
         price,
         images: updateProductDto.images
           ? {
-              updateMany: {
-                where: { productId },
-                data: updateProductDto.images.map((url) => ({
-                  filename: url,
-                  data: Buffer.alloc(0), // Placeholder for image data; adjust as needed
-                })),
-              },
+              create: updateProductDto.images.map((file) => ({
+                filename: file.filename,
+                path: file.path, // Update image path instead of binary data
+              })),
             }
           : undefined,
       },
@@ -137,7 +115,6 @@ export class ProductsService {
 
   async remove(id: string) {
     const productId = parseInt(id, 10);
-
     if (isNaN(productId)) {
       throw new BadRequestException('Product ID must be a valid number');
     }
