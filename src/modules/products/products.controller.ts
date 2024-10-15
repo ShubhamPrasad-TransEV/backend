@@ -41,7 +41,10 @@ export class ProductsController {
       path: file.path, // Save file path instead of binary data
     }));
 
-    return await this.productsService.createProduct(createProductDto, imagePaths);
+    return await this.productsService.createProduct(
+      createProductDto,
+      imagePaths,
+    );
   }
 
   @Get(':id')

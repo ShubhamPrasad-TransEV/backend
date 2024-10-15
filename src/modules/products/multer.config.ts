@@ -7,7 +7,7 @@ export const multerConfig = {
   storage: diskStorage({
     // Define the destination directory
     destination: './uploads',
-    
+
     // Define the naming convention for uploaded files
     filename: (req, file, callback) => {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -16,7 +16,7 @@ export const multerConfig = {
       callback(null, fileName);
     },
   }),
-  
+
   // You can add more multer options here (e.g., file size limits)
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB file size limit
