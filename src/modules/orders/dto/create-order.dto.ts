@@ -10,6 +10,33 @@ export class CreateOrderDto {
   userId: number;
 
   @ApiProperty({
+    example: 1,
+    description: 'Seller ID associated with the order',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  sellerId?: number;
+
+  @ApiProperty({
+    example: 'FedEx',
+    description: 'Shipment company handling the order',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  shipmentCompany?: string;
+
+  @ApiProperty({
+    example: 'Pending',
+    description: 'Current shipment request status',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  shipmentRequestStatus?: string;
+
+  @ApiProperty({
     example: 'Pending',
     description: 'Current shipment status',
     required: false,
@@ -35,6 +62,15 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   refundStatus?: string;
+
+  @ApiProperty({
+    example: 'Refund processed on 2024-10-01.',
+    description: 'Details of the refund, if any',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  refundDetails?: string;
 
   @ApiProperty({
     example: 10.5,

@@ -12,8 +12,11 @@ export class OrderService {
     return this.prisma.order.create({
       data: {
         shipmentStatus: createOrderDto.shipmentStatus,
+        shipmentCompany: createOrderDto.shipmentCompany,
+        shipmentRequestStatus: createOrderDto.shipmentRequestStatus,
         invoice: createOrderDto.invoice,
         refundStatus: createOrderDto.refundStatus,
+        refundDetails: createOrderDto.refundDetails,
         shippingCost: createOrderDto.shippingCost,
         orderingStatus: createOrderDto.orderingStatus,
         orderFulfillmentStatus: createOrderDto.orderFulfillmentStatus,
@@ -23,6 +26,7 @@ export class OrderService {
         user: {
           connect: { id: createOrderDto.userId },
         },
+        // OrderItems and sellers are managed through OrderItems, not directly here
       },
     });
   }
@@ -34,7 +38,11 @@ export class OrderService {
         user: true, // Include the user details
         orderItems: {
           include: {
-            product: true, // Include product details in each order item
+            product: {
+              include: {
+                seller: true, // Include seller details via the product in each order item
+              },
+            },
           },
         },
       },
@@ -49,7 +57,11 @@ export class OrderService {
         user: true,
         orderItems: {
           include: {
-            product: true, // Include product details in the order item
+            product: {
+              include: {
+                seller: true, // Include seller details via the product in the order item
+              },
+            },
           },
         },
       },
@@ -62,13 +74,17 @@ export class OrderService {
       where: { id },
       data: {
         shipmentStatus: updateOrderDto.shipmentStatus,
+        shipmentCompany: updateOrderDto.shipmentCompany,
+        shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
         invoice: updateOrderDto.invoice,
         refundStatus: updateOrderDto.refundStatus,
+        refundDetails: updateOrderDto.refundDetails,
         shippingCost: updateOrderDto.shippingCost,
         orderingStatus: updateOrderDto.orderingStatus,
         orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
         prePayment: updateOrderDto.prePayment,
         paymentStatus: updateOrderDto.paymentStatus,
+        // OrderItems and seller-related logic would be managed via OrderItems
       },
     });
   }
