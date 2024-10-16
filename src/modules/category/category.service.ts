@@ -391,6 +391,21 @@ export class CategoriesService {
     return categories; // Array of category paths (arrays of strings)
   }
 
+  async getSubcategories(name: string) {
+    // Find the category by name and include only the child categories
+    const category = await this.prisma.category.findUnique({
+      where: { name },
+      include: { childCategories: true },
+    });
+
+    if (!category) {
+      throw new NotFoundException(`Category with name "${name}" not found`);
+    }
+
+    // Return the names of the immediate subcategories
+    return category.childCategories.map((child) => child.name);
+  }
+
   // Recursive method to create or link categories and their relationships
   async createCategoriesRecursively(categoryPath: string[]) {
     const categoryName = categoryPath.pop(); // Get the last category in the path
