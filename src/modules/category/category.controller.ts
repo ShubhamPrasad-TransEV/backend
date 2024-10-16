@@ -48,6 +48,12 @@ export class CategoriesController {
   async deleteCategory(@Param('name') name: string) {
     return this.categoriesService.deleteCategory(name);
   }
+
+  @Get('subcategories/name/:name')
+  async getSubcategories(@Param('name') name: string) {
+    return this.categoriesService.getSubcategories(name);
+  }
+
   // New endpoint to process the file and create categories
   @Post('import')
   @ApiBody({
