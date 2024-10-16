@@ -18,7 +18,7 @@ model User {
   companyName   String?         @db.VarChar(100)
   contactPerson String?         @db.VarChar(100)
   address       String?         @db.Text
-  roleId        Int?
+  roleId        Int?            @default(2)
   aboutUs       String?         @db.Text
   logo          String?         @db.VarChar(255)
   role          Role?           @relation(fields: [roleId], references: [id])
@@ -90,7 +90,7 @@ model OrderItem {
   id        Int     @id @default(autoincrement())
   orderId   Int
   order     Order   @relation(fields: [orderId], references: [id]) // Relation to Order
-  productId Int
+  productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 
   // No need for a seller relation here as the seller can be accessed via the product
@@ -100,15 +100,15 @@ model Image {
   id        Int     @id @default(autoincrement())
   filename  String
   path      String // File path on the filesystem
-  productId Int
+  productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
 
 model CartItem {
-  id        Int @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   sellerId  Int
-  productId Int
-  quantity  Int @default(1)
+  productId String
+  quantity  Int    @default(1)
 
   user    User    @relation(fields: [sellerId], references: [id])
   product Product @relation(fields: [productId], references: [id])

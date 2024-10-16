@@ -10,7 +10,7 @@ CREATE TABLE `User` (
     `companyName` VARCHAR(100) NULL,
     `contactPerson` VARCHAR(100) NULL,
     `address` TEXT NULL,
-    `roleId` INTEGER NULL,
+    `roleId` INTEGER NULL DEFAULT 2,
     `aboutUs` TEXT NULL,
     `logo` VARCHAR(255) NULL,
 
@@ -47,7 +47,7 @@ CREATE TABLE `Role` (
 
 -- CreateTable
 CREATE TABLE `Product` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `price` DOUBLE NOT NULL,
     `sellerId` INTEGER NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE `Order` (
 CREATE TABLE `OrderItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `orderId` INTEGER NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -90,7 +90,7 @@ CREATE TABLE `Image` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `filename` VARCHAR(191) NOT NULL,
     `path` VARCHAR(191) NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -99,7 +99,7 @@ CREATE TABLE `Image` (
 CREATE TABLE `CartItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `sellerId` INTEGER NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
     `quantity` INTEGER NOT NULL DEFAULT 1,
 
     PRIMARY KEY (`id`)

@@ -20,16 +20,11 @@ export class ProductsService {
   }
 
   async findOne(id: string) {
-    const productId = parseInt(id, 10);
-
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
+    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
       include: {
-        images: true, // Include images relation
+        images: true, // Include images relation to ensure TypeScript knows about it
       },
     });
 
@@ -37,15 +32,15 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    // Map the image paths to create a URL for each image
+    // Map the image paths to create URLs for each image
     const imageUrls = product.images.map((image) => ({
       filename: image.filename,
-      url: `${process.env.BASE_URL}/products/images/${image.filename}`, // Generate the image URL
+      url: `${process.env.BASE_URL}/products/images/${image.filename}`,
     }));
 
     return {
       ...product,
-      images: imageUrls, // Return the product data along with image URLs
+      images: imageUrls,
     };
   }
 
@@ -53,59 +48,68 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const sellerId = parseInt(createProductDto.sellerId?.toString(), 10);
-    if (isNaN(sellerId)) {
+    const { sellerId, name, price } = createProductDto;
+  
+    // Convert sellerId to a number and validate
+    const parsedSellerId = Number(sellerId);
+    if (isNaN(parsedSellerId)) {
       throw new BadRequestException('Seller ID must be a valid number');
     }
-
-    const price = parseFloat(createProductDto.price?.toString());
-    if (isNaN(price)) {
+  
+    // Convert price to a number (float) and validate
+    const parsedPrice = parseFloat(price.toString());
+    if (isNaN(parsedPrice)) {
       throw new BadRequestException('Price must be a valid number');
     }
-
+  
     return this.prisma.product.create({
       data: {
-        name: createProductDto.name,
-        price,
-        sellerId,
+        name,
+        price: parsedPrice,
+        sellerId: parsedSellerId,
         images: {
           create: imagePaths.map((file) => ({
             filename: file.filename,
-            path: file.path, // Store the file path on the filesystem
+            path: file.path,
           })),
         },
       },
     });
   }
+  
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const productId = parseInt(id, 10);
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
+    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
+      include: {
+        images: true, // Ensure images are included in the product
+      },
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const price = updateProductDto.price
-      ? parseFloat(updateProductDto.price.toString())
-      : undefined;
+    const { price, images, ...rest } = updateProductDto;
+
+    // Handle image updates (delete and recreate for simplicity)
+    if (images) {
+      await this.prisma.image.deleteMany({
+        where: { productId: id },
+      });
+    }
 
     return this.prisma.product.update({
-      where: { id: productId },
+      where: { id },
       data: {
-        ...updateProductDto,
+        ...rest,
         price,
-        images: updateProductDto.images
+        images: images
           ? {
-              create: updateProductDto.images.map((file) => ({
+              create: images.map((file) => ({
                 filename: file.filename,
-                path: file.path, // Update image path instead of binary data
+                path: file.path,
               })),
             }
           : undefined,
@@ -114,13 +118,9 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    const productId = parseInt(id, 10);
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
+    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
     });
 
     if (!product) {
@@ -128,11 +128,11 @@ export class ProductsService {
     }
 
     await this.prisma.image.deleteMany({
-      where: { productId },
+      where: { productId: id },
     });
 
     return this.prisma.product.delete({
-      where: { id: productId },
+      where: { id },
     });
   }
 }
