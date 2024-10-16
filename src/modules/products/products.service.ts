@@ -49,19 +49,19 @@ export class ProductsService {
     imagePaths: { filename: string; path: string }[],
   ) {
     const { sellerId, name, price } = createProductDto;
-  
+
     // Convert sellerId to a number and validate
     const parsedSellerId = Number(sellerId);
     if (isNaN(parsedSellerId)) {
       throw new BadRequestException('Seller ID must be a valid number');
     }
-  
+
     // Convert price to a number (float) and validate
     const parsedPrice = parseFloat(price.toString());
     if (isNaN(parsedPrice)) {
       throw new BadRequestException('Price must be a valid number');
     }
-  
+
     return this.prisma.product.create({
       data: {
         name,
@@ -76,7 +76,6 @@ export class ProductsService {
       },
     });
   }
-  
 
   async update(id: string, updateProductDto: UpdateProductDto) {
     // The product ID is a UUID (string)

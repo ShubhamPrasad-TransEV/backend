@@ -264,14 +264,14 @@ export class RegisterService {
       address,
       phoneNumber,
     } = updateUserDto;
-  
+
     // Ensure id is an integer
     const userId = parseInt(id.toString(), 10);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-  
+
     // Create the data object to update
     const dataToUpdate: Prisma.UserUpdateInput = {
       username: username ?? undefined,
@@ -281,21 +281,21 @@ export class RegisterService {
       address: address ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
     };
-  
+
     // If roleId is provided, connect the role using the nested update syntax
     if (roleId) {
       dataToUpdate.role = {
         connect: { id: roleId },
       };
     }
-  
+
     // Start a transaction to ensure atomicity
     return this.prisma.$transaction(async (prisma) => {
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: dataToUpdate,
       });
-  
+
       // If roleId is 3, link the user to the Seller table by user ID
       if (roleId === 3) {
         await prisma.seller.upsert({
@@ -305,14 +305,14 @@ export class RegisterService {
           },
           update: {},
         });
-      } 
+      }
       // If roleId is 2, delete the seller entry if it exists
       else if (roleId === 2) {
         await prisma.seller.deleteMany({
           where: { id: userId },
         });
       }
-  
+
       return updatedUser;
     });
   }
