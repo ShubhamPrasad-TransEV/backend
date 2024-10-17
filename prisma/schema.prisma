@@ -16,27 +16,26 @@ model User {
   phoneNumber   String?         @db.VarChar(15)
   isSeller      Boolean         @default(false)
   companyName   String?         @db.VarChar(100)
-  description   String?         @db.Text
   contactPerson String?         @db.VarChar(100)
   address       String?         @db.Text
-  roleId        Int?
+  roleId        Int?            @default(2)
   aboutUs       String?         @db.Text
   logo          String?         @db.VarChar(255)
   role          Role?           @relation(fields: [roleId], references: [id])
   orders        Order[]
   resets        PasswordReset[]
   cartItems     CartItem[]
-  products      Product[]       @relation("UserProducts")
   Admins        Admins?
+  Wishlist      Wishlist[]
 
   @@index([username, email])
 }
 
 model Seller {
   id            Int            @id @default(autoincrement())
-  products      Product[]
+  products      Product[]      // Products are now tied to Sellers, not Users
   notifications Notification[]
-  Order         Order[] // Sellers handle multiple orders through their products
+  Order         Order[]        // Sellers handle multiple orders through their products
 }
 
 model Admins {
@@ -56,28 +55,31 @@ model Role {
 }
 
 model Product {
-  id          Int         @id @default(autoincrement())
-  name        String
-  price       Float
-  description String
-  userId      Int
-  user        User        @relation("UserProducts", fields: [userId], references: [id])
-  images      Image[]
-  seller      Seller?     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  sellerId    Int?
-  OrderItem   OrderItem[]
-  cartItems   CartItem[]
+  id             String     @id @default(uuid())
+  name           String
+  price          Float
+  sellerId       Int
+  seller         Seller     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images         Image[]
+  cartItems      CartItem[]
+  categories     Category[] @relation("ProductCategories")
+  productDetails Json
+  Wishlist       Wishlist[]
+
+  @@index([sellerId])
 }
 
 model Order {
-  id         Int         @id @default(autoincrement())
-  userId     Int
-  user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[] // Relation to OrderItem model
-
+  id                     Int     @id @default(autoincrement())
+  userId                 Int
+  user                   User    @relation(fields: [userId], references: [id])
+  orderedItems           Json // JSON format to store {productId: quantity}
+  shipmentCompany        String?
+  shipmentRequestStatus  String?
   shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
-  invoice                String? // Invoice number or reference
+  invoice                String? // Invoice number or reference (Location)
   refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  refundDetails          String?
   shippingCost           Float   @default(0.0) // Shipping cost associated with the order
   orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
   orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
@@ -89,31 +91,21 @@ model Order {
   @@index([userId])
 }
 
-model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id]) // Relation to Order
-  productId Int
-  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
-
-  // No need for a seller relation here as the seller can be accessed via the product
-}
-
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  data      Bytes
-  productId Int
+  path      String  // File path on the filesystem
+  productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
 
 model CartItem {
-  id        Int @id @default(autoincrement())
-  userId    Int
-  productId Int
-  quantity  Int @default(1)
+  id        Int    @id @default(autoincrement())
+  sellerId  Int
+  productId String
+  quantity  Int    @default(1)
 
-  user    User    @relation(fields: [userId], references: [id])
+  user    User    @relation(fields: [sellerId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 }
 
@@ -132,6 +124,7 @@ model Category {
   name             String     @unique
   parentCategories Category[] @relation("CategoryParentChild")
   childCategories  Category[] @relation("CategoryParentChild")
+  products         Product[]  @relation("ProductCategories")
 }
 
 model Notification {
@@ -179,4 +172,13 @@ model OperationalSettings {
   twitter               String? @default("")
   minimumOrderAmount    Float
   backupFrequency       String? @default("")
+}
+
+model Wishlist {
+  userId    Int
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId]) // Composite primary key to ensure uniqueness
 }

@@ -54,7 +54,7 @@ export class AdminService {
         roleId: adminRole.id,
         isSeller: false, // Admins are not sellers by default
         companyName: createAdminDto.companyName,
-        description: createAdminDto.description,
+        // description: createAdminDto.description,
         contactPerson: createAdminDto.contactPerson,
         phoneNumber: createAdminDto.phoneNumber,
         address: createAdminDto.address,
@@ -97,7 +97,7 @@ export class AdminService {
       name: admin.admin.name,
       phoneNumber: admin.admin.phoneNumber,
       companyName: admin.admin.companyName,
-      description: admin.admin.description,
+      // description: admin.admin.description,
       contactPerson: admin.admin.contactPerson,
       address: admin.admin.address,
       role: {

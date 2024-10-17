@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsBoolean, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrderDto {
@@ -8,6 +8,34 @@ export class CreateOrderDto {
   })
   @IsNumber()
   userId: number;
+
+  @ApiProperty({
+    example: {
+      "product-uuid-1": 2,
+      "product-uuid-2": 1
+    },
+    description: 'Products and their quantities in the order',
+  })
+  @IsObject()
+  orderedItems: Record<string, number>;
+
+  @ApiProperty({
+    example: 'FedEx',
+    description: 'Shipment company handling the order',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  shipmentCompany?: string;
+
+  @ApiProperty({
+    example: 'Pending',
+    description: 'Current shipment request status',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  shipmentRequestStatus?: string;
 
   @ApiProperty({
     example: 'Pending',
@@ -35,6 +63,15 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   refundStatus?: string;
+
+  @ApiProperty({
+    example: 'Refund processed on 2024-10-01.',
+    description: 'Details of the refund, if any',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  refundDetails?: string;
 
   @ApiProperty({
     example: 10.5,

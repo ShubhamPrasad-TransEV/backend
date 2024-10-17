@@ -200,6 +200,7 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RegisterService {
@@ -259,7 +260,6 @@ export class RegisterService {
       username,
       roleId,
       companyName,
-      description,
       contactPerson,
       address,
       phoneNumber,
@@ -272,23 +272,49 @@ export class RegisterService {
       throw new NotFoundException('User not found');
     }
 
-    const dataToUpdate = {
+    // Create the data object to update
+    const dataToUpdate: Prisma.UserUpdateInput = {
       username: username ?? undefined,
-      roleId: roleId ?? undefined,
-      isSeller: roleId === 3 ? true : undefined,
+      isSeller: roleId === 3 ? true : roleId === 2 ? false : undefined,
       companyName: companyName ?? undefined,
-      description: description ?? undefined,
       contactPerson: contactPerson ?? undefined,
       address: address ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
     };
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: dataToUpdate,
-    });
+    // If roleId is provided, connect the role using the nested update syntax
+    if (roleId) {
+      dataToUpdate.role = {
+        connect: { id: roleId },
+      };
+    }
 
-    return updatedUser;
+    // Start a transaction to ensure atomicity
+    return this.prisma.$transaction(async (prisma) => {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: dataToUpdate,
+      });
+
+      // If roleId is 3, link the user to the Seller table by user ID
+      if (roleId === 3) {
+        await prisma.seller.upsert({
+          where: { id: userId },
+          create: {
+            id: userId,
+          },
+          update: {},
+        });
+      }
+      // If roleId is 2, delete the seller entry if it exists
+      else if (roleId === 2) {
+        await prisma.seller.deleteMany({
+          where: { id: userId },
+        });
+      }
+
+      return updatedUser;
+    });
   }
 
   // Fetch all sellers

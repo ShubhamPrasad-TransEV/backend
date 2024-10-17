@@ -8,7 +8,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { EmailService } from './email/email.service';
 import { ProductsModule } from './modules/products/products.module';
-import { CartModule } from './modules/cart/cart.module';
+// import { CartModule } from './modules/cart/cart.module';
+import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { CategoriesModule } from './modules/category/category.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { StoreModule } from './modules/store/store.module';
@@ -26,13 +27,14 @@ import { OrderModule } from './modules/orders/order.module';
     AdminModule,
     AuthModule,
     ProductsModule,
-    CartModule,
+    // CartModule,
     CategoriesModule,
     NotificationModule,
     StoreModule,
     AdminSettingsModule, // Added AdminSettingsModule
     OperationalSettingsModule, // Added OperationalSettingsModule
     OrderModule,
+    WishlistModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

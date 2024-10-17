@@ -8,10 +8,9 @@ CREATE TABLE `User` (
     `phoneNumber` VARCHAR(15) NULL,
     `isSeller` BOOLEAN NOT NULL DEFAULT false,
     `companyName` VARCHAR(100) NULL,
-    `description` TEXT NULL,
     `contactPerson` VARCHAR(100) NULL,
     `address` TEXT NULL,
-    `roleId` INTEGER NULL,
+    `roleId` INTEGER NULL DEFAULT 2,
     `aboutUs` TEXT NULL,
     `logo` VARCHAR(255) NULL,
 
@@ -48,12 +47,10 @@ CREATE TABLE `Role` (
 
 -- CreateTable
 CREATE TABLE `Product` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `price` DOUBLE NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
-    `userId` INTEGER NOT NULL,
-    `sellerId` INTEGER NULL,
+    `sellerId` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -62,9 +59,12 @@ CREATE TABLE `Product` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `shipmentCompany` VARCHAR(191) NULL,
+    `shipmentRequestStatus` VARCHAR(191) NULL,
     `shipmentStatus` VARCHAR(191) NOT NULL DEFAULT 'Pending',
     `invoice` VARCHAR(191) NULL,
     `refundStatus` VARCHAR(191) NOT NULL DEFAULT 'No Refund',
+    `refundDetails` VARCHAR(191) NULL,
     `shippingCost` DOUBLE NOT NULL DEFAULT 0.0,
     `orderingStatus` VARCHAR(191) NOT NULL DEFAULT 'Pending',
     `orderFulfillmentStatus` VARCHAR(191) NOT NULL DEFAULT 'Unfulfilled',
@@ -80,7 +80,7 @@ CREATE TABLE `Order` (
 CREATE TABLE `OrderItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `orderId` INTEGER NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -89,8 +89,8 @@ CREATE TABLE `OrderItem` (
 CREATE TABLE `Image` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `filename` VARCHAR(191) NOT NULL,
-    `data` LONGBLOB NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `path` VARCHAR(191) NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -98,8 +98,8 @@ CREATE TABLE `Image` (
 -- CreateTable
 CREATE TABLE `CartItem` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `userId` INTEGER NOT NULL,
-    `productId` INTEGER NOT NULL,
+    `sellerId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
     `quantity` INTEGER NOT NULL DEFAULT 1,
 
     PRIMARY KEY (`id`)
@@ -192,6 +192,15 @@ CREATE TABLE `_CategoryParentChild` (
     INDEX `_CategoryParentChild_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `_ProductCategories` (
+    `A` INTEGER NOT NULL,
+    `B` VARCHAR(191) NOT NULL,
+
+    UNIQUE INDEX `_ProductCategories_AB_unique`(`A`, `B`),
+    INDEX `_ProductCategories_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -199,10 +208,7 @@ ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFE
 ALTER TABLE `Admins` ADD CONSTRAINT `Admins_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Product` ADD CONSTRAINT `Product_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Product` ADD CONSTRAINT `Product_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Product` ADD CONSTRAINT `Product_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -220,7 +226,7 @@ ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_productId_fkey` FOREIGN KEY (`
 ALTER TABLE `Image` ADD CONSTRAINT `Image_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CartItem` ADD CONSTRAINT `CartItem_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -242,3 +248,9 @@ ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_A_fkey` 
 
 -- AddForeignKey
 ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_B_fkey` FOREIGN KEY (`B`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_ProductCategories` ADD CONSTRAINT `_ProductCategories_A_fkey` FOREIGN KEY (`A`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_ProductCategories` ADD CONSTRAINT `_ProductCategories_B_fkey` FOREIGN KEY (`B`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
