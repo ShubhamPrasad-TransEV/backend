@@ -1,74 +1,68 @@
-import { Controller, Post, Patch, Delete, Body, Param, Get } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoriesService } from './category.service';
-import { CreateCategoryDto, CreateSubcategoryDto, UpdateCategoryDto } from './dto/create-category.dto';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // Create a new category
   @Post()
   async createCategory(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.createCategory(createCategoryDto);
   }
 
-  // Create a new subcategory
-  @Post('subcategory')
-  async createSubcategory(@Body() createSubcategoryDto: CreateSubcategoryDto) {
-    return this.categoriesService.createSubcategory(createSubcategoryDto);
+  @Patch('name/:name')
+  async updateCategory(
+    @Param('name') name: string,
+    @Body() updateCategoryDto: UpdateCategoryDto,
+  ) {
+    return this.categoriesService.updateCategory(name, updateCategoryDto);
   }
 
-  // Get all categories without subcategories
   @Get()
-  async getCategories() {
-    return this.categoriesService.getCategoriesWithoutSubcategories();
+  async getAllCategoriesWithParentsAndChildren() {
+    return this.categoriesService.getAllCategoriesWithParentsAndChildren();
   }
 
-  // Get a category by ID without subcategories
-  @Get(':id')
-  async getCategoryById(@Param('id') id: string) {
-    return this.categoriesService.getCategoryByIdWithoutSubcategories(Number(id));
+  @Get('up-tree/name/:name')
+  async getUpTreeHierarchy(@Param('name') name: string) {
+    return this.categoriesService.getUpTreeHierarchy(name);
   }
 
-  // Get a category by name without subcategories
-  @Get('name/:name')
-  async getCategoryByName(@Param('name') name: string) {
-    return this.categoriesService.getCategoryByNameWithoutSubcategories(name);
+  @Get('down-tree/name/:name')
+  async getDownTreeHierarchy(@Param('name') name: string) {
+    return this.categoriesService.getDownTreeHierarchy(name);
   }
 
-  // Get subcategories by category ID
-  @Get(':id/subcategories')
-  async getSubcategoriesByCategoryId(@Param('id') id: string) {
-    return this.categoriesService.getSubcategoriesByCategoryId(Number(id));
+  @Delete('name/:name')
+  async deleteCategory(@Param('name') name: string) {
+    return this.categoriesService.deleteCategory(name);
   }
-
-  // Get a subcategory by name
-  @Get('subcategory/name/:name')
-  async getSubcategoryByName(@Param('name') name: string) {
-    return this.categoriesService.getSubcategoryByName(name);
-  }
-
-  // Update a category by ID
-  @Patch(':id')
-  async updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.updateCategory(Number(id), updateCategoryDto);
-  }
-
-  // Update a subcategory by name
-  @Patch('subcategory/:name')
-  async updateSubcategory(@Param('name') name: string, @Body() updateCategoryDto: UpdateCategoryDto) {
-    return this.categoriesService.updateSubcategory(name, updateCategoryDto);
-  }
-
-  // Delete a category by ID
-  @Delete(':id')
-  async deleteCategory(@Param('id') id: string) {
-    return this.categoriesService.deleteCategory(Number(id));
-  }
-
-  // Delete a subcategory by name
-  @Delete('subcategory/:name')
-  async deleteSubcategory(@Param('name') name: string) {
-    return this.categoriesService.deleteSubcategory(name);
+  // New endpoint to process the file and create categories
+  @Post('import')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        filePath: {
+          type: 'string',
+          description: 'Absolute file path of the taxonomy file',
+          example: './src/Google_Product_Taxonomy_Version 2.txt',
+        },
+      },
+    },
+  })
+  async createCategoriesFromFile(@Body('filePath') filePath: string) {
+    return this.categoriesService.createCategoriesFromFile(filePath);
   }
 }

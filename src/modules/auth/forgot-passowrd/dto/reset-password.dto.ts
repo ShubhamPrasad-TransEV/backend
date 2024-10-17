@@ -10,6 +10,8 @@ export class ResetPasswordDto {
   @ApiProperty({ description: 'The new password for the user' })
   @IsString()
   @IsNotEmpty()
-  @Length(8, 50, { message: 'Password must be between 8 and 50 characters long' })
+  @Length(8, 50, {
+    message: 'Password must be between 8 and 50 characters long',
+  })
   newPassword: string;
 }
