@@ -26,15 +26,17 @@ model User {
   resets        PasswordReset[]
   cartItems     CartItem[]
   Admins        Admins?
+  Wishlist      Wishlist[]
+  description   String?
 
   @@index([username, email])
 }
 
 model Seller {
   id            Int            @id @default(autoincrement())
-  products      Product[] // Products are now tied to Sellers, not Users
+  products      Product[]      // Products are now tied to Sellers, not Users
   notifications Notification[]
-  Order         Order[] // Sellers handle multiple orders through their products
+  Order         Order[]        // Sellers handle multiple orders through their products
 }
 
 model Admins {
@@ -54,52 +56,46 @@ model Role {
 }
 
 model Product {
-  id        String      @id @default(uuid())
-  name      String
-  price     Float
-  sellerId  Int
-  seller    Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  images    Image[]
-  OrderItem OrderItem[]
-  cartItems CartItem[]
+  id             String     @id @default(uuid())
+  name           String
+  price          Float
+  sellerId       Int
+  seller         Seller     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images         Image[]
+  cartItems      CartItem[]
+  categories     Category[] @relation("ProductCategories")
+  productDetails Json
+  Wishlist       Wishlist[]
+
+  @@index([sellerId])
 }
 
 model Order {
-  id                     Int         @id @default(autoincrement())
+  id                     Int     @id @default(autoincrement())
   userId                 Int
-  user                   User        @relation(fields: [userId], references: [id])
-  orderItems             OrderItem[] // Relation to OrderItem model
+  user                   User    @relation(fields: [userId], references: [id])
+  orderedItems           Json // JSON format to store {productId: quantity}
   shipmentCompany        String?
   shipmentRequestStatus  String?
-  shipmentStatus         String      @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
+  shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
   invoice                String? // Invoice number or reference (Location)
-  refundStatus           String      @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
   refundDetails          String?
-  shippingCost           Float       @default(0.0) // Shipping cost associated with the order
-  orderingStatus         String      @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
-  orderFulfillmentStatus String      @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
-  prePayment             Boolean     @default(false) // Indicates if pre-payment was made
-  paymentStatus          Boolean     @default(false) // Indicates if the order has been fully paid
-  Seller                 Seller?     @relation(fields: [sellerId], references: [id])
+  shippingCost           Float   @default(0.0) // Shipping cost associated with the order
+  orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
+  orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
+  prePayment             Boolean @default(false) // Indicates if pre-payment was made
+  paymentStatus          Boolean @default(false) // Indicates if the order has been fully paid
+  Seller                 Seller? @relation(fields: [sellerId], references: [id])
   sellerId               Int?
 
   @@index([userId])
 }
 
-model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id]) // Relation to Order
-  productId String
-  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
-
-  // No need for a seller relation here as the seller can be accessed via the product
-}
-
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  path      String // File path on the filesystem
+  path      String  // File path on the filesystem
   productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
@@ -129,6 +125,7 @@ model Category {
   name             String     @unique
   parentCategories Category[] @relation("CategoryParentChild")
   childCategories  Category[] @relation("CategoryParentChild")
+  products         Product[]  @relation("ProductCategories")
 }
 
 model Notification {
@@ -176,4 +173,13 @@ model OperationalSettings {
   twitter               String? @default("")
   minimumOrderAmount    Float
   backupFrequency       String? @default("")
+}
+
+model Wishlist {
+  userId    Int
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId]) // Composite primary key to ensure uniqueness
 }

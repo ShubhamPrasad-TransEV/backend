@@ -1,194 +1,3 @@
-// import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-// import { PrismaService } from 'src/prisma/prisma.service';
-// import { CreateUserDto } from './dto/create-user.dto';
-// import * as bcrypt from 'bcrypt';
-// import { UpdateUserDto } from './dto/update-user.dto';
-// import { EmailService } from 'src/email/email.service';
-// import { UpdateSellerDto } from './dto/update-seller.dto';
-
-// @Injectable()
-// export class RegisterService {
-//     constructor(private readonly prisma: PrismaService, private readonly emailService: EmailService) {}
-
-//     // Register a new user
-//     async register(createUserDto: CreateUserDto) {
-//         const { name, username, password, email, phoneNumber } = createUserDto;
-
-//         // Check if the user already exists
-//         const existingUser = await this.prisma.user.findUnique({
-//             where: { username },
-//         });
-//         if (existingUser) {
-//             throw new Error('User already exists');
-//         }
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         // Create the user
-//         const user = await this.prisma.user.create({
-//             data: {
-//                 name,
-//                 username,
-//                 email,
-//                 password: hashedPassword,
-//                 phoneNumber,
-//             },
-//         });
-
-//         // Send welcome email
-//         await this.emailService.sendMail(
-//             user.email,
-//             'Welcome to Our Service',
-//             'Thank you for registering!'
-//         );
-
-//         return user;
-//     }
-
-//     // Find a user by ID
-//     async findOne(id: number) {
-//         const user = await this.prisma.user.findUnique({
-//             where: { id },
-//         });
-//         if (!user) {
-//             throw new NotFoundException('User not found');
-//         }
-//         return user;
-//     }
-
-//     // Fetch all users
-//     async getAllUsers() {
-//         return this.prisma.user.findMany({
-//             include: {
-//                 role: true, // Include role information
-//             },
-//         });
-//     }
-
-//     // Update user details
-//     async updateUser(updateUserDto: UpdateUserDto) {
-//         const { id, username, roleId, companyName, description, contactPerson, address, phoneNumber } = updateUserDto;
-
-//         const user = await this.prisma.user.findUnique({ where: { id } });
-//         if (!user) {
-//             throw new NotFoundException('User not found');
-//         }
-
-//         const dataToUpdate: any = {
-//             username: username ?? undefined,
-//             roleId: roleId ?? undefined,
-//             isSeller: roleId === 3 ? true : undefined,
-//             companyName: companyName ?? undefined,
-//             description: description ?? undefined,
-//             contactPerson: contactPerson ?? undefined,
-//             address: address ?? undefined,
-//             phoneNumber: phoneNumber ?? undefined,
-//         };
-
-//         const updatedUser = await this.prisma.user.update({
-//             where: { id },
-//             data: dataToUpdate,
-//         });
-
-//         return updatedUser;
-//     }
-
-//     // Fetch all sellers
-//     async getAllSellers() {
-//         return this.prisma.user.findMany({
-//             where: {
-//                 role: {
-//                     name: 'Seller', // Assuming 'Seller' is the role name in your database
-//                 },
-//             },
-//             include: {
-//                 role: true, // Include role information if needed
-//             },
-//         });
-//     }
-
-//     // Get a seller by ID
-//     async getSellerById(id: number) {
-//         const seller = await this.prisma.user.findUnique({
-//             where: { id },
-//             include: {
-//                 role: true, // Include role information if needed
-//             },
-//         });
-
-//         if (!seller || seller.role.name !== 'Seller') {
-//             throw new NotFoundException('Seller not found');
-//         }
-
-//         return seller;
-//     }
-
-//     // Delete a user by ID
-//     async deleteUser(userId: number) {
-//         const user = await this.prisma.user.findUnique({
-//             where: { id: userId },
-//         });
-
-//         if (!user) {
-//             throw new NotFoundException('User not found');
-//         }
-
-//         await this.prisma.user.delete({
-//             where: { id: userId },
-//         });
-
-//         return { message: 'User deleted successfully' };
-//     }
-
-//     // Delete a seller by ID
-//     async deleteSeller(sellerId: number) {
-//         const seller = await this.prisma.user.findUnique({
-//             where: { id: sellerId },
-//         });
-
-//         if (!seller || !seller.isSeller) {
-//             throw new NotFoundException('Seller not found');
-//         }
-
-//         await this.prisma.user.delete({
-//             where: { id: sellerId },
-//         });
-
-//         return { message: 'Seller deleted successfully' };
-//     }
-
-//     // Update seller details
-//     async updateSeller(updateSellerDto: UpdateSellerDto) {
-//         const { id, aboutUs, logo } = updateSellerDto;
-
-//         // Check if id is provided
-//         if (!id) {
-//             throw new BadRequestException('Seller ID is required');
-//         }
-
-//         const seller = await this.prisma.user.findUnique({
-//             where: { id },
-//         });
-
-//         if (!seller || !seller.isSeller) {
-//             throw new NotFoundException('Seller not found');
-//         }
-
-//         const dataToUpdate: any = {
-//             aboutUs: aboutUs ?? undefined,
-//             logo: logo ?? undefined,
-//         };
-
-//         const updatedSeller = await this.prisma.user.update({
-//             where: { id },
-//             data: dataToUpdate,
-//         });
-
-//         return updatedSeller;
-//     }
-
-// }
 import {
   BadRequestException,
   Injectable,
@@ -200,7 +9,6 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RegisterService {
@@ -263,6 +71,8 @@ export class RegisterService {
       contactPerson,
       address,
       phoneNumber,
+      email,
+      description,
     } = updateUserDto;
 
     // Ensure id is an integer
@@ -272,49 +82,32 @@ export class RegisterService {
       throw new NotFoundException('User not found');
     }
 
-    // Create the data object to update
-    const dataToUpdate: Prisma.UserUpdateInput = {
+    // Prepare the update object
+    const dataToUpdate: any = {
       username: username ?? undefined,
-      isSeller: roleId === 3 ? true : roleId === 2 ? false : undefined,
+      email: email ?? undefined, // Ensure email is included and updated if provided
+      isSeller: roleId === 3 ? true : undefined,
       companyName: companyName ?? undefined,
       contactPerson: contactPerson ?? undefined,
       address: address ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
+      description: description ?? undefined,
     };
 
-    // If roleId is provided, connect the role using the nested update syntax
+    // If `roleId` is provided, update the role using nested relation
     if (roleId) {
       dataToUpdate.role = {
         connect: { id: roleId },
       };
     }
 
-    // Start a transaction to ensure atomicity
-    return this.prisma.$transaction(async (prisma) => {
-      const updatedUser = await prisma.user.update({
-        where: { id: userId },
-        data: dataToUpdate,
-      });
-
-      // If roleId is 3, link the user to the Seller table by user ID
-      if (roleId === 3) {
-        await prisma.seller.upsert({
-          where: { id: userId },
-          create: {
-            id: userId,
-          },
-          update: {},
-        });
-      }
-      // If roleId is 2, delete the seller entry if it exists
-      else if (roleId === 2) {
-        await prisma.seller.deleteMany({
-          where: { id: userId },
-        });
-      }
-
-      return updatedUser;
+    // Update the user
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: dataToUpdate,
     });
+
+    return updatedUser;
   }
 
   // Fetch all sellers
@@ -382,9 +175,10 @@ export class RegisterService {
       throw new NotFoundException('Seller not found');
     }
 
-    const dataToUpdate = {};
-    if (aboutUs) dataToUpdate['aboutUs'] = aboutUs;
-    if (logo) dataToUpdate['logo'] = logo;
+    const dataToUpdate = {
+      aboutUs: aboutUs ?? undefined,
+      logo: logo ?? undefined,
+    };
 
     const updatedSeller = await this.prisma.user.update({
       where: { id: sellerId },

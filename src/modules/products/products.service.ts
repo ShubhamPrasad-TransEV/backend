@@ -12,19 +12,40 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       include: {
-        images: true, // Include images relation
+        images: true,
+        categories: true,
       },
+    });
+
+    return products.map((product) => {
+      const imageUrls = product.images
+        ? product.images.map((image) => ({
+            filename: image.filename,
+            url: `${process.env.BASE_URL}/products/images/${image.filename}`,
+          }))
+        : [];
+
+      const categoryNames = product.categories
+        ? product.categories.map((category) => category.name)
+        : [];
+
+      return {
+        ...product,
+        images: imageUrls,
+        categories: categoryNames,
+        productDetails: product.productDetails, // Return productDetails as JSON
+      };
     });
   }
 
   async findOne(id: string) {
-    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
-        images: true, // Include images relation to ensure TypeScript knows about it
+        images: true,
+        categories: true,
       },
     });
 
@@ -32,15 +53,22 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    // Map the image paths to create URLs for each image
-    const imageUrls = product.images.map((image) => ({
-      filename: image.filename,
-      url: `${process.env.BASE_URL}/products/images/${image.filename}`,
-    }));
+    const imageUrls = product.images
+      ? product.images.map((image) => ({
+          filename: image.filename,
+          url: `${process.env.BASE_URL}/products/images/${image.filename}`,
+        }))
+      : [];
+
+    const categoryNames = product.categories
+      ? product.categories.map((category) => category.name)
+      : [];
 
     return {
       ...product,
       images: imageUrls,
+      categories: categoryNames,
+      productDetails: product.productDetails, // Return productDetails as JSON
     };
   }
 
@@ -48,18 +76,51 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const { sellerId, name, price } = createProductDto;
+    const { sellerId, name, price, categories, productDetails } =
+      createProductDto;
 
-    // Convert sellerId to a number and validate
     const parsedSellerId = Number(sellerId);
     if (isNaN(parsedSellerId)) {
       throw new BadRequestException('Seller ID must be a valid number');
     }
 
-    // Convert price to a number (float) and validate
     const parsedPrice = parseFloat(price.toString());
     if (isNaN(parsedPrice)) {
       throw new BadRequestException('Price must be a valid number');
+    }
+
+    // Handle categories as either a string or an array
+    let parsedCategories;
+    if (typeof categories === 'string') {
+      try {
+        parsedCategories = JSON.parse(categories);
+        if (!Array.isArray(parsedCategories)) {
+          throw new Error();
+        }
+      } catch (error) {
+        throw new BadRequestException('Categories must be a valid JSON array');
+      }
+    } else if (Array.isArray(categories)) {
+      parsedCategories = categories;
+    } else {
+      throw new BadRequestException('Categories must be a non-empty array');
+    }
+
+    if (parsedCategories.length === 0) {
+      throw new BadRequestException('Categories must be a non-empty array');
+    }
+
+    // Fetch categories based on names
+    const categoryRecords = await this.prisma.category.findMany({
+      where: {
+        name: {
+          in: parsedCategories,
+        },
+      },
+    });
+
+    if (categoryRecords.length !== parsedCategories.length) {
+      throw new BadRequestException('Some categories provided are invalid.');
     }
 
     return this.prisma.product.create({
@@ -67,22 +128,32 @@ export class ProductsService {
         name,
         price: parsedPrice,
         sellerId: parsedSellerId,
+        productDetails: productDetails || {}, // Save productDetails as JSON
         images: {
           create: imagePaths.map((file) => ({
             filename: file.filename,
             path: file.path,
           })),
         },
+        categories: {
+          connect: categoryRecords.map((category) => ({
+            id: category.id,
+          })),
+        },
+      },
+      include: {
+        images: true,
+        categories: true,
       },
     });
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
-        images: true, // Ensure images are included in the product
+        images: true,
+        categories: true,
       },
     });
 
@@ -90,13 +161,39 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const { price, images, ...rest } = updateProductDto;
+    const { price, images, categories, productDetails, ...rest } =
+      updateProductDto;
 
-    // Handle image updates (delete and recreate for simplicity)
-    if (images) {
-      await this.prisma.image.deleteMany({
-        where: { productId: id },
+    // Handle category updates
+    let parsedCategories = categories;
+    if (typeof categories === 'string') {
+      try {
+        parsedCategories = JSON.parse(categories);
+        if (!Array.isArray(parsedCategories)) {
+          throw new Error();
+        }
+      } catch (error) {
+        throw new BadRequestException('Categories must be a valid JSON array');
+      }
+    }
+
+    let categoryConnect = undefined;
+    if (Array.isArray(parsedCategories)) {
+      const categoryRecords = await this.prisma.category.findMany({
+        where: {
+          name: { in: parsedCategories },
+        },
       });
+
+      if (categoryRecords.length !== parsedCategories.length) {
+        throw new BadRequestException('Some categories provided are invalid.');
+      }
+
+      categoryConnect = {
+        set: categoryRecords.map((category) => ({
+          id: category.id,
+        })),
+      };
     }
 
     return this.prisma.product.update({
@@ -104,6 +201,7 @@ export class ProductsService {
       data: {
         ...rest,
         price,
+        productDetails: productDetails ?? product.productDetails, // Update or keep existing productDetails
         images: images
           ? {
               create: images.map((file) => ({
@@ -112,12 +210,16 @@ export class ProductsService {
               })),
             }
           : undefined,
+        categories: categoryConnect,
+      },
+      include: {
+        images: true,
+        categories: true,
       },
     });
   }
 
   async remove(id: string) {
-    // The product ID is a UUID (string)
     const product = await this.prisma.product.findUnique({
       where: { id },
     });
