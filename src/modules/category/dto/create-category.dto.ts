@@ -1,35 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsInt, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsArray, ArrayNotEmpty } from 'class-validator';
 
 export class CreateCategoryDto {
-  @ApiProperty({ example: 'Men', description: 'Name of the category' })
+  @ApiProperty({
+    example: 'Clothing',
+    description: 'Name of the category',
+  })
   @IsString()
   name: string;
 
-  @ApiProperty({ example: null, description: 'Parent category ID (null for root category)', required: false })
+  @ApiProperty({
+    example: ["Men's Fashion"],
+    description: 'List of parent category names, if applicable',
+    required: false,
+  })
   @IsOptional()
-  @IsInt()
-  parentId?: number; // Use number instead of string
-}
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  parentCategoryNames?: string[]; // List of parent category names
 
-export class CreateSubcategoryDto {
-  @ApiProperty({ example: 'Shirt', description: 'Name of the subcategory' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ example: 'Men', description: 'Name of the parent category' })
-  @IsString()
-  parentCategoryName: string;
-}
-
-export class UpdateCategoryDto {
-  @ApiProperty({ example: 'Men', description: 'Name of the category' })
+  @ApiProperty({
+    example: ['Accessories'],
+    description: 'List of child category names, if applicable',
+    required: false,
+  })
   @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiProperty({ example: null, description: 'Parent category ID (null for root category)', required: false })
-  @IsOptional()
-  @IsInt()
-  parentId?: number; // Use number instead of string
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  childCategoryNames?: string[]; // List of child category names
 }

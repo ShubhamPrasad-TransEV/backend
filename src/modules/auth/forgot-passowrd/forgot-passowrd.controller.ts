@@ -11,16 +11,20 @@ export class ForgotPasswordController {
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset' })
-  @ApiResponse({ status: 200, 
- description: 'Password reset request created',
- schema: {
-example: { message: 'OTP sent successfully' },
-}, })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset request created',
+    schema: {
+      example: { message: 'OTP sent successfully' },
+    },
+  })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async forgotPassword(
-    @Body() requestPasswordResetDto: RequestPasswordResetDto
+    @Body() requestPasswordResetDto: RequestPasswordResetDto,
   ): Promise<void> {
-    await this.forgotPasswordService.resetPassword(requestPasswordResetDto.email);
+    await this.forgotPasswordService.resetPassword(
+      requestPasswordResetDto.email,
+    );
   }
 
   @Post('reset-password')
@@ -28,8 +32,10 @@ example: { message: 'OTP sent successfully' },
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired OTP' })
   async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto
+    @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<void> {
-    await this.forgotPasswordService.verifyOtpAndResetPassword(resetPasswordDto);
+    await this.forgotPasswordService.verifyOtpAndResetPassword(
+      resetPasswordDto,
+    );
   }
 }

@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString,IsArray } from 'class-validator';
+// create-product.dto.ts
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateIf,
+  IsJSON,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateProductDto {
@@ -13,18 +22,25 @@ export class CreateProductDto {
   price: number;
 
   @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
-  @ApiProperty()
   @IsNumber()
   @IsNotEmpty()
-  userId: number;
+  sellerId: number;
 
-  // Optional: If you need to handle image files as part of the DTO, use the following:
-  // Make sure to handle file uploads separately
   @ApiProperty({ type: 'array', items: { type: 'string' } })
   @IsOptional()
-  imageFiles?: Express.Multer.File[];
+  images?: Express.Multer.File[];
+
+  @ApiProperty({ type: 'array', items: { type: 'string' } })
+  @ValidateIf((o) => typeof o.categories === 'string')
+  @IsString()
+  @ValidateIf((o) => Array.isArray(o.categories))
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  categories: string[] | string;
+
+  @ApiProperty({ type: 'object', required: false }) // Swagger documentation
+  @IsOptional()
+  @IsJSON()
+  productDetails?: object; // Optional field for product details
 }

@@ -7,133 +7,179 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Define User model
 model User {
-  id        Int             @id @default(autoincrement())
-  username  String          @unique
-  email     String          @unique
-  password  String
-  roleId    Int             @default(2)
-  role      Role            @relation(fields: [roleId], references: [id])
-  orders    Order[]
-  isSeller  Boolean         @default(false)
-  resets    PasswordReset[]
-  cartItems CartItem[]
-   name        String?         // Optional field for the user's name
-  phoneNumber   String?
-
-  // Seller-specific fields
-  companyName   String?
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(100)
+  username      String          @unique @db.VarChar(50)
+  email         String          @unique @db.VarChar(100)
+  password      String          @db.VarChar(255)
+  phoneNumber   String?         @db.VarChar(15)
+  isSeller      Boolean         @default(false)
+  companyName   String?         @db.VarChar(100)
+  contactPerson String?         @db.VarChar(100)
+  address       String?         @db.Text
+  roleId        Int?            @default(2)
+  aboutUs       String?         @db.Text
+  logo          String?         @db.VarChar(255)
+  role          Role?           @relation(fields: [roleId], references: [id])
+  orders        Order[]
+  resets        PasswordReset[]
+  cartItems     CartItem[]
+  Admins        Admins?
+  Wishlist      Wishlist[]
   description   String?
-  contactPerson String?
-  address       String?
-   
-  
 
-  // Define the relation from User to Product
-  products Product[] @relation("UserProducts")
+  @@index([username, email])
 }
 
-// Define seller schema
 model Seller {
-  id       Int       @id @default(autoincrement())
-  products Product[]
+  id            Int            @id @default(autoincrement())
+  products      Product[]      // Products are now tied to Sellers, not Users
   notifications Notification[]
+  Order         Order[]        // Sellers handle multiple orders through their products
 }
 
-// Define Role model
+model Admins {
+  id                  Int                   @id @default(autoincrement()) // Autoincrementing primary key
+  adminId             Int // This will reference the User model where roleId = 1
+  admin               User                  @relation(fields: [adminId], references: [id], onDelete: Cascade) // Foreign key relationship to User
+  adminSettings       AdminSettings[]
+  operationalSettings OperationalSettings[]
+
+  @@unique([adminId]) // Ensure that a user can only appear once in the Admins table
+}
+
 model Role {
   id    Int    @id @default(autoincrement())
   name  String @unique
   users User[]
 }
 
-// Define Product model
 model Product {
-  id          Int         @id @default(autoincrement())
-  name        String
-  price       Float
-  description String
-  userId      Int
-  user        User        @relation("UserProducts", fields: [userId], references: [id])
-  images      Image[]
-  Seller      Seller?     @relation(fields: [sellerId], references: [id])
-  sellerId    Int?
-  OrderItem   OrderItem[]
-  cartItems   CartItem[]
+  id             String     @id @default(uuid())
+  name           String
+  price          Float
+  sellerId       Int
+  seller         Seller     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images         Image[]
+  cartItems      CartItem[]
+  categories     Category[] @relation("ProductCategories")
+  productDetails Json
+  Wishlist       Wishlist[]
+
+  @@index([sellerId])
 }
 
-// Define Order model
 model Order {
-  id         Int         @id @default(autoincrement())
-  userId     Int
-  // Define the relation from Order to User
-  user       User        @relation(fields: [userId], references: [id])
-  orderItems OrderItem[]
+  id                     Int     @id @default(autoincrement())
+  userId                 Int
+  user                   User    @relation(fields: [userId], references: [id])
+  orderedItems           Json // JSON format to store {productId: quantity}
+  shipmentCompany        String?
+  shipmentRequestStatus  String?
+  shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
+  invoice                String? // Invoice number or reference (Location)
+  refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  refundDetails          String?
+  shippingCost           Float   @default(0.0) // Shipping cost associated with the order
+  orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
+  orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
+  prePayment             Boolean @default(false) // Indicates if pre-payment was made
+  paymentStatus          Boolean @default(false) // Indicates if the order has been fully paid
+  Seller                 Seller? @relation(fields: [sellerId], references: [id])
+  sellerId               Int?
+
+  @@index([userId])
 }
 
-// Define OrderItem model
-model OrderItem {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  // Define the relation from OrderItem to Order
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId Int
-  // Define the relation from OrderItem to Product
-  product   Product @relation(fields: [productId], references: [id])
-}
-
-// Define Image model
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  data      Bytes
-  productId Int
-  // Define the relation from Image to Product
-  product   Product @relation(fields: [productId], references: [id])
+  path      String  // File path on the filesystem
+  productId String
+  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
 
-//define cart item
 model CartItem {
-  id        Int @id @default(autoincrement())
-  userId    Int
-  productId Int
-  quantity  Int @default(1)
+  id        Int    @id @default(autoincrement())
+  sellerId  Int
+  productId String
+  quantity  Int    @default(1)
 
-  user    User    @relation(fields: [userId], references: [id])
+  user    User    @relation(fields: [sellerId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 }
 
-// Define PasswordReset model
 model PasswordReset {
   id        Int      @id @default(autoincrement())
   otp       String
   userId    Int
   expiresAt DateTime
-  // Define the relation from PasswordReset to User
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([otp])
 }
-model Category {
-  id       Int         @id @default(autoincrement())
-  name     String
-  parentId Int?        // Optional field for parent categories
-  parent   Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  subcategories Category[] @relation("CategoryHierarchy")
 
-  @@index([parentId], name: "Category_parentId_idx")
-  @@map("Category")
+model Category {
+  id               Int        @id @default(autoincrement())
+  name             String     @unique
+  parentCategories Category[] @relation("CategoryParentChild")
+  childCategories  Category[] @relation("CategoryParentChild")
+  products         Product[]  @relation("ProductCategories")
 }
+
 model Notification {
   id        Int      @id @default(autoincrement())
   sellerId  Int
   message   String
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
-  
-  // Optionally, you might want to relate it to a Seller model
   seller    Seller   @relation(fields: [sellerId], references: [id])
 }
 
+model Store {
+  id          Int      @id @default(autoincrement())
+  name        String
+  logo        String?
+  address     String
+  email       String   @unique
+  phoneNumber String
+  aboutUs     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
+model AdminSettings {
+  id          Int     @id @default(autoincrement()) // Autoincrementing primary key
+  siteName    String
+  siteLogo    String?
+  siteAddress String
+  siteEmail   String
+  storePhone  String
+  adminId     Int     @unique // Foreign key that references the Admins table
+  admin       Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade) // Relationship to Admins
+}
+
+model OperationalSettings {
+  adminId               Int     @unique // This ensures each admin can have only one operational settings entry
+  admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
+  timeZone              String
+  currency              String
+  taxRate               Float
+  freeShippingThreshold Float
+  orderProcessingTime   Int
+  facebook              String? @default("")
+  instagram             String? @default("")
+  twitter               String? @default("")
+  minimumOrderAmount    Float
+  backupFrequency       String? @default("")
+}
+
+model Wishlist {
+  userId    Int
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId]) // Composite primary key to ensure uniqueness
+}

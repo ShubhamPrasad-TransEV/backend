@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,24 +12,40 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
+        images: true,
+        categories: true,
       },
+    });
+
+    return products.map((product) => {
+      const imageUrls = product.images
+        ? product.images.map((image) => ({
+            filename: image.filename,
+            url: `${process.env.BASE_URL}/products/images/${image.filename}`,
+          }))
+        : [];
+
+      const categoryNames = product.categories
+        ? product.categories.map((category) => category.name)
+        : [];
+
+      return {
+        ...product,
+        images: imageUrls,
+        categories: categoryNames,
+        productDetails: product.productDetails, // Return productDetails as JSON
+      };
     });
   }
 
   async findOne(id: string) {
-    const productId = parseInt(id, 10);
-
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
       include: {
-        images: true, // Assuming you have an `images` relation in your Prisma schema
+        images: true,
+        categories: true,
       },
     });
 
@@ -38,112 +53,175 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return product;
-  }
+    const imageUrls = product.images
+      ? product.images.map((image) => ({
+          filename: image.filename,
+          url: `${process.env.BASE_URL}/products/images/${image.filename}`,
+        }))
+      : [];
 
-  private async validateUserRole(userId: number) {
-    if (!userId) {
-      throw new BadRequestException('User ID is required and must be valid.');
-    }
+    const categoryNames = product.categories
+      ? product.categories.map((category) => category.name)
+      : [];
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
-    if (!user) {
-      throw new BadRequestException(`User with ID ${userId} does not exist`);
-    }
-
-    if (user.role.name !== 'Admin' && user.role.name !== 'Seller') {
-      throw new ForbiddenException(
-        `User with ID ${userId} is not authorized to upload products`,
-      );
-    }
+    return {
+      ...product,
+      images: imageUrls,
+      categories: categoryNames,
+      productDetails: product.productDetails, // Return productDetails as JSON
+    };
   }
 
   async createProduct(
     createProductDto: CreateProductDto,
-    imageBuffers: { filename: string; data: Buffer }[],
+    imagePaths: { filename: string; path: string }[],
   ) {
-    const userId = parseInt(createProductDto.userId?.toString(), 10);
+    const { sellerId, name, price, categories, productDetails } =
+      createProductDto;
 
-    if (isNaN(userId)) {
-      throw new BadRequestException('User ID must be a valid number');
+    const parsedSellerId = Number(sellerId);
+    if (isNaN(parsedSellerId)) {
+      throw new BadRequestException('Seller ID must be a valid number');
     }
 
-    await this.validateUserRole(userId);
-
-    const price = parseFloat(createProductDto.price?.toString());
-
-    if (isNaN(price)) {
+    const parsedPrice = parseFloat(price.toString());
+    if (isNaN(parsedPrice)) {
       throw new BadRequestException('Price must be a valid number');
+    }
+
+    // Handle categories as either a string or an array
+    let parsedCategories;
+    if (typeof categories === 'string') {
+      try {
+        parsedCategories = JSON.parse(categories);
+        if (!Array.isArray(parsedCategories)) {
+          throw new Error();
+        }
+      } catch (error) {
+        throw new BadRequestException('Categories must be a valid JSON array');
+      }
+    } else if (Array.isArray(categories)) {
+      parsedCategories = categories;
+    } else {
+      throw new BadRequestException('Categories must be a non-empty array');
+    }
+
+    if (parsedCategories.length === 0) {
+      throw new BadRequestException('Categories must be a non-empty array');
+    }
+
+    // Fetch categories based on names
+    const categoryRecords = await this.prisma.category.findMany({
+      where: {
+        name: {
+          in: parsedCategories,
+        },
+      },
+    });
+
+    if (categoryRecords.length !== parsedCategories.length) {
+      throw new BadRequestException('Some categories provided are invalid.');
     }
 
     return this.prisma.product.create({
       data: {
-        name: createProductDto.name,
-        price,
-        description: createProductDto.description,
-        userId,
+        name,
+        price: parsedPrice,
+        sellerId: parsedSellerId,
+        productDetails: productDetails || {}, // Save productDetails as JSON
         images: {
-          create: imageBuffers.map(buffer => ({
-            filename: buffer.filename,
-            data: buffer.data,
+          create: imagePaths.map((file) => ({
+            filename: file.filename,
+            path: file.path,
           })),
         },
+        categories: {
+          connect: categoryRecords.map((category) => ({
+            id: category.id,
+          })),
+        },
+      },
+      include: {
+        images: true,
+        categories: true,
       },
     });
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const productId = parseInt(id, 10);
-
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
+      include: {
+        images: true,
+        categories: true,
+      },
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const price = updateProductDto.price
-      ? parseFloat(updateProductDto.price.toString())
-      : undefined;
+    const { price, images, categories, productDetails, ...rest } =
+      updateProductDto;
+
+    // Handle category updates
+    let parsedCategories = categories;
+    if (typeof categories === 'string') {
+      try {
+        parsedCategories = JSON.parse(categories);
+        if (!Array.isArray(parsedCategories)) {
+          throw new Error();
+        }
+      } catch (error) {
+        throw new BadRequestException('Categories must be a valid JSON array');
+      }
+    }
+
+    let categoryConnect = undefined;
+    if (Array.isArray(parsedCategories)) {
+      const categoryRecords = await this.prisma.category.findMany({
+        where: {
+          name: { in: parsedCategories },
+        },
+      });
+
+      if (categoryRecords.length !== parsedCategories.length) {
+        throw new BadRequestException('Some categories provided are invalid.');
+      }
+
+      categoryConnect = {
+        set: categoryRecords.map((category) => ({
+          id: category.id,
+        })),
+      };
+    }
 
     return this.prisma.product.update({
-      where: { id: productId },
+      where: { id },
       data: {
-        ...updateProductDto,
+        ...rest,
         price,
-        images: updateProductDto.images
+        productDetails: productDetails ?? product.productDetails, // Update or keep existing productDetails
+        images: images
           ? {
-              updateMany: {
-                where: { productId },
-                data: updateProductDto.images.map(url => ({
-                  filename: url,
-                  data: Buffer.alloc(0), // Placeholder for image data; adjust as needed
-                })),
-              },
+              create: images.map((file) => ({
+                filename: file.filename,
+                path: file.path,
+              })),
             }
           : undefined,
+        categories: categoryConnect,
+      },
+      include: {
+        images: true,
+        categories: true,
       },
     });
   }
 
   async remove(id: string) {
-    const productId = parseInt(id, 10);
-
-    if (isNaN(productId)) {
-      throw new BadRequestException('Product ID must be a valid number');
-    }
-
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id },
     });
 
     if (!product) {
@@ -151,12 +229,11 @@ export class ProductsService {
     }
 
     await this.prisma.image.deleteMany({
-      where: { productId },
+      where: { productId: id },
     });
 
     return this.prisma.product.delete({
-      where: { id: productId },
+      where: { id },
     });
   }
 }
-
