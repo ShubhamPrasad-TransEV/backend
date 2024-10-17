@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -8,9 +12,11 @@ export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Helper method to check if products exist in the database
-  private async validateProducts(orderedItems: Record<string, number>): Promise<string[]> {
+  private async validateProducts(
+    orderedItems: Record<string, number>,
+  ): Promise<string[]> {
     const productIds = Object.keys(orderedItems);
-    
+
     // Fetch products that exist in the database
     const existingProducts = await this.prisma.product.findMany({
       where: {
@@ -20,10 +26,12 @@ export class OrderService {
     });
 
     // Extract existing product IDs
-    const existingProductIds = existingProducts.map(product => product.id);
+    const existingProductIds = existingProducts.map((product) => product.id);
 
     // Find product IDs that are missing
-    const missingProductIds = productIds.filter(id => !existingProductIds.includes(id));
+    const missingProductIds = productIds.filter(
+      (id) => !existingProductIds.includes(id),
+    );
 
     return missingProductIds;
   }
@@ -31,10 +39,14 @@ export class OrderService {
   // Create a new order
   async create(createOrderDto: CreateOrderDto) {
     // Validate if all products in orderedItems exist
-    const missingProductIds = await this.validateProducts(createOrderDto.orderedItems);
+    const missingProductIds = await this.validateProducts(
+      createOrderDto.orderedItems,
+    );
 
     if (missingProductIds.length > 0) {
-      throw new BadRequestException(`The following product IDs are not valid: ${missingProductIds.join(', ')}`);
+      throw new BadRequestException(
+        `The following product IDs are not valid: ${missingProductIds.join(', ')}`,
+      );
     }
 
     // Create the order if all products are valid
@@ -95,10 +107,14 @@ export class OrderService {
 
     if (updateOrderDto.orderedItems) {
       // Validate if all products in orderedItems exist
-      const missingProductIds = await this.validateProducts(updateOrderDto.orderedItems);
+      const missingProductIds = await this.validateProducts(
+        updateOrderDto.orderedItems,
+      );
 
       if (missingProductIds.length > 0) {
-        throw new BadRequestException(`The following product IDs are not valid: ${missingProductIds.join(', ')}`);
+        throw new BadRequestException(
+          `The following product IDs are not valid: ${missingProductIds.join(', ')}`,
+        );
       }
     }
 

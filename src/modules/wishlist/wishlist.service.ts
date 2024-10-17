@@ -24,7 +24,8 @@ export class WishlistService {
           select: {
             id: true,
             name: true,
-            images: { // Changed to 'images' to match the schema
+            images: {
+              // Changed to 'images' to match the schema
               select: {
                 id: true, // Adjust fields as needed
                 filename: true,

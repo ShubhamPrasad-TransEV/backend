@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Delete, Body, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { WishlistService } from './wishlist.service';
 import { AddToWishlistDto } from './dto/wishlist.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -9,8 +17,11 @@ export class WishlistController {
   constructor(private wishlistService: WishlistService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Add a product to wishlist' })  
-  @ApiResponse({ status: 201, description: 'The product has been added to the wishlist.' })
+  @ApiOperation({ summary: 'Add a product to wishlist' })
+  @ApiResponse({
+    status: 201,
+    description: 'The product has been added to the wishlist.',
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async addToWishlist(@Body() addToWishlistDto: AddToWishlistDto) {
     const { userId, productId } = addToWishlistDto;
@@ -27,7 +38,10 @@ export class WishlistController {
 
   @Delete(':userId/:productId')
   @ApiOperation({ summary: 'Remove product from wishlist' })
-  @ApiResponse({ status: 200, description: 'The product has been removed from the wishlist.' })
+  @ApiResponse({
+    status: 200,
+    description: 'The product has been removed from the wishlist.',
+  })
   @ApiResponse({ status: 404, description: 'Product or User not found.' })
   async removeFromWishlist(
     @Param('userId', ParseIntPipe) userId: number,

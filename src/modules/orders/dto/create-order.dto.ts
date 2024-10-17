@@ -1,4 +1,10 @@
-import { IsNumber, IsOptional, IsString, IsBoolean, IsObject } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsObject,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrderDto {
@@ -11,8 +17,8 @@ export class CreateOrderDto {
 
   @ApiProperty({
     example: {
-      "product-uuid-1": 2,
-      "product-uuid-2": 1
+      'product-uuid-1': 2,
+      'product-uuid-2': 1,
     },
     description: 'Products and their quantities in the order',
   })

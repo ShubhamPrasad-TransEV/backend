@@ -34,7 +34,7 @@ import { OrderModule } from './modules/orders/order.module';
     AdminSettingsModule, // Added AdminSettingsModule
     OperationalSettingsModule, // Added OperationalSettingsModule
     OrderModule,
-    WishlistModule
+    WishlistModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
