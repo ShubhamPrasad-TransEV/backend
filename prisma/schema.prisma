@@ -54,14 +54,16 @@ model Role {
 }
 
 model Product {
-  id        String      @id @default(uuid())
-  name      String
-  price     Float
-  sellerId  Int
-  seller    Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  images    Image[]
-  OrderItem OrderItem[]
-  cartItems CartItem[]
+  id         String      @id @default(uuid())
+  name       String
+  price      Float
+  sellerId   Int
+  seller     Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images     Image[]
+  OrderItem  OrderItem[]
+  cartItems  CartItem[]
+  categories Category[] @relation("ProductCategories")
+  productDetails Json
 }
 
 model Order {
@@ -129,6 +131,7 @@ model Category {
   name             String     @unique
   parentCategories Category[] @relation("CategoryParentChild")
   childCategories  Category[] @relation("CategoryParentChild")
+  products  Product[]  @relation("ProductCategories")
 }
 
 model Notification {
