@@ -26,6 +26,7 @@ model User {
   resets        PasswordReset[]
   cartItems     CartItem[]
   Admins        Admins?
+  Wishlist      Wishlist[]
 
   @@index([username, email])
 }
@@ -54,16 +55,17 @@ model Role {
 }
 
 model Product {
-  id         String      @id @default(uuid())
-  name       String
-  price      Float
-  sellerId   Int
-  seller     Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  images     Image[]
-  OrderItem  OrderItem[]
-  cartItems  CartItem[]
-  categories Category[] @relation("ProductCategories")
+  id             String      @id @default(uuid())
+  name           String
+  price          Float
+  sellerId       Int
+  seller         Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images         Image[]
+  OrderItem      OrderItem[]
+  cartItems      CartItem[]
+  categories     Category[]  @relation("ProductCategories")
   productDetails Json
+  Wishlist       Wishlist[]
 }
 
 model Order {
@@ -131,7 +133,7 @@ model Category {
   name             String     @unique
   parentCategories Category[] @relation("CategoryParentChild")
   childCategories  Category[] @relation("CategoryParentChild")
-  products  Product[]  @relation("ProductCategories")
+  products         Product[]  @relation("ProductCategories")
 }
 
 model Notification {
@@ -179,4 +181,13 @@ model OperationalSettings {
   twitter               String? @default("")
   minimumOrderAmount    Float
   backupFrequency       String? @default("")
+}
+
+model Wishlist {
+  userId    Int
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([userId, productId]) // Composite primary key to ensure uniqueness
 }
