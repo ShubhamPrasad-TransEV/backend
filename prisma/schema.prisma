@@ -33,9 +33,9 @@ model User {
 
 model Seller {
   id            Int            @id @default(autoincrement())
-  products      Product[] // Products are now tied to Sellers, not Users
+  products      Product[]      // Products are now tied to Sellers, not Users
   notifications Notification[]
-  Order         Order[] // Sellers handle multiple orders through their products
+  Order         Order[]        // Sellers handle multiple orders through their products
 }
 
 model Admins {
@@ -60,12 +60,14 @@ model Product {
   price          Float
   sellerId       Int
   seller         Seller      @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  images         Image[]
-  OrderItem      OrderItem[]
-  cartItems      CartItem[]
-  categories     Category[]  @relation("ProductCategories")
+  images         Image[]     // Relation to the Image model
+  OrderItem      OrderItem[] // Relation to OrderItem model
+  cartItems      CartItem[]  // Relation to CartItem model
+  categories     Category[]   @relation("ProductCategories")
   productDetails Json
   Wishlist       Wishlist[]
+
+  @@index([sellerId])
 }
 
 model Order {
@@ -103,7 +105,7 @@ model OrderItem {
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  path      String // File path on the filesystem
+  path      String  // File path on the filesystem
   productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }

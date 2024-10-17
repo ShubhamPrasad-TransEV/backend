@@ -15,12 +15,25 @@ export class WishlistService {
     });
   }
 
-  // Method to retrieve a user's wishlist with product details
+  // Method to retrieve a user's wishlist with product details, including images
   async getWishlistByUser(userId: number) {
     return this.prisma.wishlist.findMany({
       where: { userId },
       include: {
-        product: true, // Assuming a relation exists between wishlist and product
+        product: {
+          select: {
+            id: true,
+            name: true,
+            images: { // Changed to 'images' to match the schema
+              select: {
+                id: true, // Adjust fields as needed
+                filename: true,
+                path: true, // Include path if necessary for your application
+              },
+            },
+            // Include any other necessary fields
+          },
+        },
       },
     });
   }
