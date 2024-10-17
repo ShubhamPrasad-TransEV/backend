@@ -72,6 +72,7 @@ export class RegisterService {
       address,
       phoneNumber,
       email,
+      description,
     } = updateUserDto;
 
     // Ensure id is an integer
@@ -90,6 +91,7 @@ export class RegisterService {
       contactPerson: contactPerson ?? undefined,
       address: address ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
+      description: description ?? undefined,
     };
 
     // If `roleId` is provided, update the role using nested relation

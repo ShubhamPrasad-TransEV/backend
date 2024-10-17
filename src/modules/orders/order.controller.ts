@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  BadRequestException,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -30,18 +31,30 @@ export class OrderController {
   // Get a single order by ID
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id); // +id converts string to number
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new BadRequestException('Invalid order ID format');
+    }
+    return this.orderService.findOne(orderId);
   }
 
   // Update an order
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(+id, updateOrderDto);
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new BadRequestException('Invalid order ID format');
+    }
+    return this.orderService.update(orderId, updateOrderDto);
   }
 
   // Delete an order
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.orderService.remove(+id);
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new BadRequestException('Invalid order ID format');
+    }
+    return this.orderService.remove(orderId);
   }
 }
