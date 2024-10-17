@@ -27,6 +27,7 @@ model User {
   cartItems     CartItem[]
   Admins        Admins?
   Wishlist      Wishlist[]
+  description   String?
 
   @@index([username, email])
 }
