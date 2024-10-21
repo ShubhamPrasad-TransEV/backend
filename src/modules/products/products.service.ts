@@ -11,6 +11,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Fetch all products
   async findAll() {
     const products = await this.prisma.product.findMany({
       include: {
@@ -35,11 +36,12 @@ export class ProductsService {
         ...product,
         images: imageUrls,
         categories: categoryNames,
-        productDetails: product.productDetails, // Return productDetails as JSON
+        productDetails: product.productDetails,
       };
     });
   }
 
+  // Fetch one product by ID
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
@@ -68,15 +70,16 @@ export class ProductsService {
       ...product,
       images: imageUrls,
       categories: categoryNames,
-      productDetails: product.productDetails, // Return productDetails as JSON
+      productDetails: product.productDetails,
     };
   }
 
+  // Create a product with units
   async createProduct(
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const { sellerId, name, price, categories, productDetails } =
+    const { sellerId, name, price, categories, productDetails, quantity } =
       createProductDto;
 
     const parsedSellerId = Number(sellerId);
@@ -89,7 +92,12 @@ export class ProductsService {
       throw new BadRequestException('Price must be a valid number');
     }
 
-    // Handle categories as either a string or an array
+    const parsedQuantity = parseInt(quantity.toString(), 10);
+    if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+      throw new BadRequestException('Quantity must be a valid positive number');
+    }
+
+    // If categories is a string, parse it into an array
     let parsedCategories;
     if (typeof categories === 'string') {
       try {
@@ -110,7 +118,7 @@ export class ProductsService {
       throw new BadRequestException('Categories must be a non-empty array');
     }
 
-    // Fetch categories based on names
+    // Fetch categories based on names to get their IDs
     const categoryRecords = await this.prisma.category.findMany({
       where: {
         name: {
@@ -123,7 +131,7 @@ export class ProductsService {
       throw new BadRequestException('Some categories provided are invalid.');
     }
 
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         name,
         price: parsedPrice,
@@ -140,45 +148,101 @@ export class ProductsService {
             id: category.id,
           })),
         },
+        quantity: parsedQuantity,
       },
       include: {
         images: true,
         categories: true,
       },
     });
+
+    // Create units for the product
+    const units = Array.from({ length: parsedQuantity }).map(() => ({
+      productId: product.id,
+    }));
+
+    await this.prisma.unit.createMany({
+      data: units,
+    });
+
+    return product;
   }
 
+  // Update a product with unit handling
   async update(id: string, updateProductDto: UpdateProductDto) {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
         images: true,
         categories: true,
-      },
+        Unit: { select: { id: true } },
+      }, // Include units and select id
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const { price, images, categories, productDetails, ...rest } =
+    const { price, images, categories, productDetails, quantity, ...rest } =
       updateProductDto;
 
-    // Handle category updates
-    let parsedCategories = categories;
-    if (typeof categories === 'string') {
-      try {
-        parsedCategories = JSON.parse(categories);
-        if (!Array.isArray(parsedCategories)) {
-          throw new Error();
+    let updatedQuantity = product.quantity;
+
+    // Handle the quantity update
+    if (quantity) {
+      if (typeof quantity === 'string') {
+        if (quantity.startsWith('+')) {
+          updatedQuantity += parseInt(quantity.slice(1), 10);
+        } else if (quantity.startsWith('-')) {
+          updatedQuantity -= parseInt(quantity.slice(1), 10);
+        } else {
+          updatedQuantity = parseInt(quantity, 10);
         }
-      } catch (error) {
-        throw new BadRequestException('Categories must be a valid JSON array');
+
+        if (updatedQuantity < 0) {
+          throw new BadRequestException(
+            'Resulting quantity cannot be negative',
+          );
+        }
+
+        const currentUnitsCount = product.Unit.length;
+        if (updatedQuantity > currentUnitsCount) {
+          const newUnits = Array.from({
+            length: updatedQuantity - currentUnitsCount,
+          }).map(() => ({
+            productId: product.id,
+          }));
+          await this.prisma.unit.createMany({ data: newUnits });
+        } else if (updatedQuantity < currentUnitsCount) {
+          const unitsToRemove = product.Unit.slice(
+            0,
+            currentUnitsCount - updatedQuantity,
+          ).map((unit) => unit.id);
+          await this.prisma.unit.deleteMany({
+            where: { id: { in: unitsToRemove } },
+          });
+        }
       }
     }
 
+    // Handle category updates
     let categoryConnect = undefined;
-    if (Array.isArray(parsedCategories)) {
+    if (categories) {
+      let parsedCategories = categories; // Create a mutable variable
+
+      if (typeof categories === 'string') {
+        try {
+          parsedCategories = JSON.parse(categories); // Parse into an array
+          if (!Array.isArray(parsedCategories)) {
+            throw new Error();
+          }
+        } catch (error) {
+          throw new BadRequestException(
+            'Categories must be a valid JSON array',
+          );
+        }
+      }
+
       const categoryRecords = await this.prisma.category.findMany({
         where: {
           name: { in: parsedCategories },
@@ -202,6 +266,7 @@ export class ProductsService {
         ...rest,
         price,
         productDetails: productDetails ?? product.productDetails, // Update or keep existing productDetails
+        quantity: updatedQuantity,
         images: images
           ? {
               create: images.map((file) => ({
@@ -210,7 +275,7 @@ export class ProductsService {
               })),
             }
           : undefined,
-        categories: categoryConnect,
+        categories: categoryConnect, // Set updated categories if provided
       },
       include: {
         images: true,
@@ -219,19 +284,25 @@ export class ProductsService {
     });
   }
 
+  // Delete product and its units
   async remove(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
+      include: {
+        Unit: true, // Ensure we include units to be deleted
+      },
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    await this.prisma.image.deleteMany({
+    // Delete associated units first
+    await this.prisma.unit.deleteMany({
       where: { productId: id },
     });
 
+    // Finally, delete the product
     return this.prisma.product.delete({
       where: { id },
     });

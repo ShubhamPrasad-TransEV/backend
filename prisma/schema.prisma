@@ -34,9 +34,9 @@ model User {
 
 model Seller {
   id            Int            @id @default(autoincrement())
-  products      Product[]      // Products are now tied to Sellers, not Users
+  products      Product[] // Products are now tied to Sellers, not Users
   notifications Notification[]
-  Order         Order[]        // Sellers handle multiple orders through their products
+  Order         Order[] // Sellers handle multiple orders through their products
 }
 
 model Admins {
@@ -66,8 +66,20 @@ model Product {
   categories     Category[] @relation("ProductCategories")
   productDetails Json
   Wishlist       Wishlist[]
+  quantity       Int @default(1)
+  Unit           Unit[]
 
   @@index([sellerId])
+}
+
+model Unit {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
 }
 
 model Order {
@@ -95,7 +107,7 @@ model Order {
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String
-  path      String  // File path on the filesystem
+  path      String // File path on the filesystem
   productId String
   product   Product @relation(fields: [productId], references: [id]) // Relation to Product
 }
