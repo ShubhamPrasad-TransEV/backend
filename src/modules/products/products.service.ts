@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import stringSimilarity from 'string-similarity';
 
 @Injectable()
 export class ProductsService {
@@ -306,5 +307,50 @@ export class ProductsService {
     return this.prisma.product.delete({
       where: { id },
     });
+  }
+
+  async searchProducts(term: string): Promise<{ id: string; name: string; similarity: number }[]> {
+    if (!term || term.trim() === '') {
+      throw new BadRequestException('Search term cannot be empty');
+    }
+
+    const searchTerm = term.toLowerCase();
+
+    // Fetch products with only the name field
+    const products = await this.prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    // Filter and rank products by partial or fuzzy match on product name
+    const rankedProducts = products.map((product) => {
+      // Compute the similarity score between the product name and the search term
+      const similarity = this.partialOrFuzzyMatch(product.name.toLowerCase(), searchTerm);
+
+      return {
+        id: product.id,
+        name: product.name,
+        similarity,
+      };
+    });
+
+    // Sort products by their similarity score in descending order
+    rankedProducts.sort((a, b) => b.similarity - a.similarity);
+
+    // Return products with a similarity score above a certain threshold
+    return rankedProducts.filter(product => product.similarity > 0.3);
+  }
+
+  // Helper function to perform partial or fuzzy matching on product names
+  private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
+    // Return high similarity for partial matches (substring match)
+    if (productName.includes(searchTerm)) {
+      return 1; // Treat this as a perfect match
+    }
+
+    // If no direct substring match, fall back to fuzzy matching
+    return stringSimilarity.compareTwoStrings(productName, searchTerm);
   }
 }

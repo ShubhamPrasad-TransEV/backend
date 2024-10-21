@@ -9,8 +9,8 @@ import {
   UploadedFiles,
   UseInterceptors,
   Body,
+  Query,
   BadRequestException,
-  NotFoundException,
   Res,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -82,5 +82,13 @@ export class ProductsController {
     } catch (error) {
       throw new BadRequestException(`Failed to delete product with ID ${id}`);
     }
+  }
+
+  @Get('search/name')
+  async searchProducts(@Query('term') term: string) {
+    if (!term || term.trim() === '') {
+      throw new BadRequestException('Search term cannot be empty');
+    }
+    return this.productsService.searchProducts(term);
   }
 }
