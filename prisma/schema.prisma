@@ -15,6 +15,7 @@ model User {
   password      String          @db.VarChar(255)
   phoneNumber   String?         @db.VarChar(15)
   isSeller      Boolean         @default(false)
+  seller        Seller?
   companyName   String?         @db.VarChar(100)
   contactPerson String?         @db.VarChar(100)
   address       String?         @db.Text
@@ -34,6 +35,9 @@ model User {
 
 model Seller {
   id            Int            @id @default(autoincrement())
+  user          User           @relation(fields: [id], references: [id])
+  aboutUs       String?
+  logo          String?
   products      Product[] // Products are now tied to Sellers, not Users
   notifications Notification[]
   Order         Order[] // Sellers handle multiple orders through their products
@@ -66,7 +70,7 @@ model Product {
   categories     Category[] @relation("ProductCategories")
   productDetails Json
   Wishlist       Wishlist[]
-  quantity       Int @default(1)
+  quantity       Int        @default(1)
   Unit           Unit[]
 
   @@index([sellerId])
