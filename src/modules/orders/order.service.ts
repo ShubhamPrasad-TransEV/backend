@@ -12,6 +12,31 @@ import { OrderedItemDto } from './dto/create-order.dto';
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Get all orders
+  async findAll() {
+    return this.prisma.order.findMany({
+      include: {
+        user: true,
+      },
+    });
+  }
+
+  // Get a single order by ID
+  async findOne(id: number) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    return order;
+  }
+
   // Helper method to check if products exist
   private async validateProducts(
     orderedItems: CreateOrderDto['orderedItems'],
