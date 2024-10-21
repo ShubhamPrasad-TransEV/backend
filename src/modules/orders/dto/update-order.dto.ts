@@ -1,30 +1,53 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateOrderDto } from './create-order.dto';
-import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsObject,
-  IsOptional,
-  IsBoolean,
-  IsString,
   IsNumber,
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
-export class UpdateOrderDto extends PartialType(CreateOrderDto) {
+class OrderedItemDto {
   @ApiProperty({
-    example: {
-      'product-uuid-1': 2,
-      'product-uuid-2': 1,
-    },
-    description: 'Updated products and their quantities in the order',
+    example: 'product-uuid-1',
+    description: 'The ID of the product being ordered',
+  })
+  @IsString()
+  productId: string;
+
+  @ApiProperty({
+    example: 2,
+    description: 'The quantity of the product being ordered',
+  })
+  @IsNumber()
+  quantity: number;
+
+  @ApiProperty({
+    example: ['unit-uuid-1', 'unit-uuid-2'],
+    description: 'The assigned unit IDs for the product',
+  })
+  @IsArray()
+  @IsString({ each: true })
+  assignedUnits: string[];
+}
+
+export class UpdateOrderDto {
+  @ApiProperty({
+    description:
+      'List of ordered items including productId, quantity, and assignedUnits',
+    type: [OrderedItemDto],
     required: false,
   })
   @IsOptional()
-  @IsObject()
-  orderedItems?: Record<string, number>;
+  @ValidateNested({ each: true })
+  @Type(() => OrderedItemDto)
+  orderedItems?: OrderedItemDto[];
 
   @ApiProperty({
-    example: 'DHL',
-    description: 'Updated shipment company',
+    example: 'FedEx',
+    description: 'Shipment company handling the order',
     required: false,
   })
   @IsOptional()
@@ -32,8 +55,17 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   shipmentCompany?: string;
 
   @ApiProperty({
-    example: 'Shipped',
-    description: 'Updated shipment status',
+    example: 'Pending',
+    description: 'Current shipment request status',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  shipmentRequestStatus?: string;
+
+  @ApiProperty({
+    example: 'Pending',
+    description: 'Current shipment status',
     required: false,
   })
   @IsOptional()
@@ -41,17 +73,17 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   shipmentStatus?: string;
 
   @ApiProperty({
-    example: 'Fulfilled',
-    description: 'Updated order fulfillment status',
+    example: 'INV123456',
+    description: 'Invoice reference or number',
     required: false,
   })
   @IsOptional()
   @IsString()
-  orderFulfillmentStatus?: string;
+  invoice?: string;
 
   @ApiProperty({
-    example: 'Refunded',
-    description: 'Updated refund status',
+    example: 'No Refund',
+    description: 'Current refund status',
     required: false,
   })
   @IsOptional()
@@ -59,8 +91,8 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   refundStatus?: string;
 
   @ApiProperty({
-    example: 'Refund processed on 2024-10-10.',
-    description: 'Updated refund details',
+    example: 'Refund processed on 2024-10-01.',
+    description: 'Details of the refund, if any',
     required: false,
   })
   @IsOptional()
@@ -68,8 +100,17 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   refundDetails?: string;
 
   @ApiProperty({
-    example: 'Completed',
-    description: 'Updated order status',
+    example: 10.5,
+    description: 'Shipping cost for the order',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  shippingCost?: number;
+
+  @ApiProperty({
+    example: 'Pending',
+    description: 'Current order status',
     required: false,
   })
   @IsOptional()
@@ -77,20 +118,29 @@ export class UpdateOrderDto extends PartialType(CreateOrderDto) {
   orderingStatus?: string;
 
   @ApiProperty({
-    example: true,
-    description: 'Updated payment status',
+    example: 'Unfulfilled',
+    description: 'Order fulfillment status',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  orderFulfillmentStatus?: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether pre-payment was made',
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  prePayment?: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether the order has been paid for',
     required: false,
   })
   @IsOptional()
   @IsBoolean()
   paymentStatus?: boolean;
-
-  @ApiProperty({
-    example: 5.0,
-    description: 'Updated shipping cost for the order',
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  shippingCost?: number;
 }
