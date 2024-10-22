@@ -309,7 +309,9 @@ export class ProductsService {
     });
   }
 
-  async searchProducts(term: string): Promise<{ id: string; name: string; similarity: number }[]> {
+  async searchProducts(
+    term: string,
+  ): Promise<{ id: string; name: string; similarity: number }[]> {
     if (!term || term.trim() === '') {
       throw new BadRequestException('Search term cannot be empty');
     }
@@ -327,7 +329,10 @@ export class ProductsService {
     // Filter and rank products by partial or fuzzy match on product name
     const rankedProducts = products.map((product) => {
       // Compute the similarity score between the product name and the search term
-      const similarity = this.partialOrFuzzyMatch(product.name.toLowerCase(), searchTerm);
+      const similarity = this.partialOrFuzzyMatch(
+        product.name.toLowerCase(),
+        searchTerm,
+      );
 
       return {
         id: product.id,
@@ -340,7 +345,7 @@ export class ProductsService {
     rankedProducts.sort((a, b) => b.similarity - a.similarity);
 
     // Return products with a similarity score above a certain threshold
-    return rankedProducts.filter(product => product.similarity > 0.3);
+    return rankedProducts.filter((product) => product.similarity > 0.3);
   }
 
   // Helper function to perform partial or fuzzy matching on product names
@@ -352,5 +357,25 @@ export class ProductsService {
 
     // If no direct substring match, fall back to fuzzy matching
     return stringSimilarity.compareTwoStrings(productName, searchTerm);
+  }
+
+  async getProductsBySellerId(sellerId: number) {
+    // Find all products associated with the given sellerId
+    const products = await this.prisma.product.findMany({
+      where: { sellerId }, // Filtering by sellerId
+      include: {
+        images: true, // Include related images if you want
+        categories: true, // Include related categories if you want
+      },
+    });
+
+    // If no products are found, throw an exception
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No products found for seller with ID ${sellerId}`,
+      );
+    }
+
+    return products; // Return the found products
   }
 }
