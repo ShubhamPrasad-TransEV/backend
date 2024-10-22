@@ -9,9 +9,11 @@ import {
   UploadedFiles,
   UseInterceptors,
   Body,
+  Query,
   BadRequestException,
-  NotFoundException,
   Res,
+  ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
@@ -82,5 +84,28 @@ export class ProductsController {
     } catch (error) {
       throw new BadRequestException(`Failed to delete product with ID ${id}`);
     }
+  }
+
+  @Get('search/name')
+  async searchProducts(@Query('term') term: string) {
+    if (!term || term.trim() === '') {
+      throw new BadRequestException('Search term cannot be empty');
+    }
+    return this.productsService.searchProducts(term);
+  }
+
+  @Get('seller/:sellerId')
+  async getProductsBySellerId(
+    @Param('sellerId', ParseIntPipe) sellerId: number,
+  ) {
+    const products = await this.productsService.getProductsBySellerId(sellerId);
+
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No products found for seller with ID ${sellerId}`,
+      );
+    }
+
+    return products;
   }
 }
