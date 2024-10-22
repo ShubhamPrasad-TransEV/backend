@@ -113,7 +113,7 @@ model Image {
   filename  String
   path      String // File path on the filesystem
   productId String
-  product   Product @relation(fields: [productId], references: [id]) // Relation to Product
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade) // Relation to Product
 }
 
 model CartItem {
@@ -123,7 +123,7 @@ model CartItem {
   quantity  Int    @default(1)
 
   user    User    @relation(fields: [sellerId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model PasswordReset {

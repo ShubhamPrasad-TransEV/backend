@@ -290,13 +290,24 @@ export class ProductsService {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
-        Unit: true, // Ensure we include units to be deleted
+        Unit: true,
+        categories: true, // Ensure we include units to be deleted
       },
     });
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
+    await this.prisma.product.update({
+      where: { id },
+      data: {
+        categories: {
+          disconnect: product.categories.map((category) => ({
+            id: category.id,
+          })), // Disconnect categories
+        },
+      },
+    });
 
     // Delete associated units first
     await this.prisma.unit.deleteMany({

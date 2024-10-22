@@ -82,7 +82,9 @@ export class ProductsController {
       await this.productsService.remove(id);
       return { message: `Product with ID ${id} has been deleted` };
     } catch (error) {
-      throw new BadRequestException(`Failed to delete product with ID ${id}`);
+      throw new BadRequestException(
+        `Failed to delete product with ID ${id} \n Error: ${error}`,
+      );
     }
   }
 
