@@ -19,10 +19,10 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { GetVarietiesDto } from './dto/products.varieties.dto';
 import { multerConfig } from './multer.config';
 import { Response } from 'express';
 import { join } from 'path';
-import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductsController {
@@ -112,13 +112,10 @@ export class ProductsController {
     return products;
   }
 
-  @Get('varieties')
-  @ApiQuery({ name: 'productId', required: false, type: String })
-  @ApiQuery({ name: 'productName', required: false, type: String })
-  async getVarieties(
-    @Query('productId') productId?: string,
-    @Query('productName') productName?: string,
-  ) {
+  @Post('varieties')
+  async getVarieties(@Body() getVarietiesDto: GetVarietiesDto) {
+    const { productId, productName } = getVarietiesDto;
+
     if (!productId && !productName) {
       throw new BadRequestException(
         'Either productId or productName must be provided',

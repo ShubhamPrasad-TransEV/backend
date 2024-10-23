@@ -80,8 +80,7 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const { sellerId, name, price, categories, productDetails, quantity } =
-      createProductDto;
+    const { sellerId, name, price, categories, quantity } = createProductDto;
 
     const parsedSellerId = Number(sellerId);
     if (isNaN(parsedSellerId)) {
@@ -131,6 +130,11 @@ export class ProductsService {
     if (categoryRecords.length !== parsedCategories.length) {
       throw new BadRequestException('Some categories provided are invalid.');
     }
+
+    const productDetails =
+      typeof createProductDto.productDetails === 'string'
+        ? JSON.parse(createProductDto.productDetails)
+        : createProductDto.productDetails;
 
     const product = await this.prisma.product.create({
       data: {
