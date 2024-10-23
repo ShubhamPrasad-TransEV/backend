@@ -359,25 +359,36 @@ export class ProductsService {
     return rankedProducts.filter((product) => product.similarity > 0.2); // You can adjust the threshold as needed
   }
 
-  // Helper function to perform weighted partial or fuzzy matching
+  // Helper function to perform weighted partial or fuzzy matching with normalization
   private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
-    // Generate n-grams for product name and search term (using n=2 for bigrams)
-    const productNgrams = this.createNgrams(productName, 2);
-    const searchNgrams = this.createNgrams(searchTerm, 2);
+    // Normalize the product name and search term by removing spaces and special characters
+    const normalizedProductName = this.normalizeString(productName);
+    const normalizedSearchTerm = this.normalizeString(searchTerm);
+
+    // Generate n-grams for the normalized product name and search term (using n=2 for bigrams)
+    const productNgrams = this.createNgrams(normalizedProductName, 2);
+    const searchNgrams = this.createNgrams(normalizedSearchTerm, 2);
 
     // Calculate the percentage of n-grams in the search term that match the product name
-    const matchedNgrams = searchNgrams.filter((ngram) => productNgrams.includes(ngram));
+    const matchedNgrams = searchNgrams.filter((ngram) =>
+      productNgrams.includes(ngram),
+    );
     const matchRatio = matchedNgrams.length / searchNgrams.length;
 
     // Length-based weighting to prioritize longer matches
-    const matchLengthScore = matchedNgrams.join('').length / productName.length;
+    const matchLengthScore =
+      matchedNgrams.join('').length / normalizedProductName.length;
 
     // Combine matchRatio and matchLengthScore to create a weighted similarity
     let similarityScore = 0.7 * matchRatio + 0.3 * matchLengthScore; // Adjust these weights as needed
 
     // Fall back to fuzzy matching if the n-gram match is weak
-    if (similarityScore < 0.5) { // Threshold for falling back to fuzzy matching
-      similarityScore = stringSimilarity.compareTwoStrings(productName, searchTerm);
+    if (similarityScore < 0.5) {
+      // Threshold for falling back to fuzzy matching
+      similarityScore = stringSimilarity.compareTwoStrings(
+        normalizedProductName,
+        normalizedSearchTerm,
+      );
     }
 
     return similarityScore;
@@ -390,6 +401,12 @@ export class ProductsService {
       ngrams.push(text.substring(i, i + n));
     }
     return ngrams;
+  }
+
+  // Helper function to normalize strings by removing spaces and special characters
+  private normalizeString(text: string): string {
+    // Remove all spaces and special characters, only keeping alphanumeric characters
+    return text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   }
 
   async getProductsBySellerId(sellerId: number) {
