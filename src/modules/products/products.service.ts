@@ -339,7 +339,7 @@ export class ProductsService {
 
     // Filter and rank products by partial or fuzzy match on product name
     const rankedProducts = products.map((product) => {
-      // Compute the similarity score using n-grams and fuzzy matching
+      // Compute the similarity score using weighted n-gram and fuzzy matching
       const similarity = this.partialOrFuzzyMatch(
         product.name.toLowerCase(),
         searchTerm,
@@ -359,24 +359,28 @@ export class ProductsService {
     return rankedProducts.filter((product) => product.similarity > 0.2); // You can adjust the threshold as needed
   }
 
-  // Helper function to perform partial or fuzzy matching on product names
+  // Helper function to perform weighted partial or fuzzy matching
   private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
     // Generate n-grams for product name and search term (using n=2 for bigrams)
     const productNgrams = this.createNgrams(productName, 2);
     const searchNgrams = this.createNgrams(searchTerm, 2);
 
-    // Check if any n-gram from the search term exists in the product name n-grams
-    const ngramMatch = searchNgrams.some((ngram) =>
-      productNgrams.includes(ngram),
-    );
+    // Calculate the percentage of n-grams in the search term that match the product name
+    const matchedNgrams = searchNgrams.filter((ngram) => productNgrams.includes(ngram));
+    const matchRatio = matchedNgrams.length / searchNgrams.length;
 
-    // If an n-gram match is found, return a high similarity score
-    if (ngramMatch) {
-      return 1; // Treat as a perfect match for n-gram similarity
+    // Length-based weighting to prioritize longer matches
+    const matchLengthScore = matchedNgrams.join('').length / productName.length;
+
+    // Combine matchRatio and matchLengthScore to create a weighted similarity
+    let similarityScore = 0.7 * matchRatio + 0.3 * matchLengthScore; // Adjust these weights as needed
+
+    // Fall back to fuzzy matching if the n-gram match is weak
+    if (similarityScore < 0.5) { // Threshold for falling back to fuzzy matching
+      similarityScore = stringSimilarity.compareTwoStrings(productName, searchTerm);
     }
 
-    // If no n-gram match, fall back to fuzzy matching using stringSimilarity
-    return stringSimilarity.compareTwoStrings(productName, searchTerm);
+    return similarityScore;
   }
 
   // Helper function to create n-grams from a given string
