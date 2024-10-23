@@ -22,6 +22,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { multerConfig } from './multer.config';
 import { Response } from 'express';
 import { join } from 'path';
+import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('products')
 export class ProductsController {
@@ -112,6 +113,8 @@ export class ProductsController {
   }
 
   @Get('varieties')
+  @ApiQuery({ name: 'productId', required: false, type: String })
+  @ApiQuery({ name: 'productName', required: false, type: String })
   async getVarieties(
     @Query('productId') productId?: string,
     @Query('productName') productName?: string,
