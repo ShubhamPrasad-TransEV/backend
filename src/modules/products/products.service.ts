@@ -339,7 +339,7 @@ export class ProductsService {
 
     // Filter and rank products by partial or fuzzy match on product name
     const rankedProducts = products.map((product) => {
-      // Compute the similarity score between the product name and the search term
+      // Compute the similarity score using weighted n-gram and fuzzy matching
       const similarity = this.partialOrFuzzyMatch(
         product.name.toLowerCase(),
         searchTerm,
@@ -356,18 +356,57 @@ export class ProductsService {
     rankedProducts.sort((a, b) => b.similarity - a.similarity);
 
     // Return products with a similarity score above a certain threshold
-    return rankedProducts.filter((product) => product.similarity > 0.3);
+    return rankedProducts.filter((product) => product.similarity > 0.2); // You can adjust the threshold as needed
   }
 
-  // Helper function to perform partial or fuzzy matching on product names
+  // Helper function to perform weighted partial or fuzzy matching with normalization
   private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
-    // Return high similarity for partial matches (substring match)
-    if (productName.includes(searchTerm)) {
-      return 1; // Treat this as a perfect match
+    // Normalize the product name and search term by removing spaces and special characters
+    const normalizedProductName = this.normalizeString(productName);
+    const normalizedSearchTerm = this.normalizeString(searchTerm);
+
+    // Generate n-grams for the normalized product name and search term (using n=2 for bigrams)
+    const productNgrams = this.createNgrams(normalizedProductName, 2);
+    const searchNgrams = this.createNgrams(normalizedSearchTerm, 2);
+
+    // Calculate the percentage of n-grams in the search term that match the product name
+    const matchedNgrams = searchNgrams.filter((ngram) =>
+      productNgrams.includes(ngram),
+    );
+    const matchRatio = matchedNgrams.length / searchNgrams.length;
+
+    // Length-based weighting to prioritize longer matches
+    const matchLengthScore =
+      matchedNgrams.join('').length / normalizedProductName.length;
+
+    // Combine matchRatio and matchLengthScore to create a weighted similarity
+    let similarityScore = 0.7 * matchRatio + 0.3 * matchLengthScore; // Adjust these weights as needed
+
+    // Fall back to fuzzy matching if the n-gram match is weak
+    if (similarityScore < 0.5) {
+      // Threshold for falling back to fuzzy matching
+      similarityScore = stringSimilarity.compareTwoStrings(
+        normalizedProductName,
+        normalizedSearchTerm,
+      );
     }
 
-    // If no direct substring match, fall back to fuzzy matching
-    return stringSimilarity.compareTwoStrings(productName, searchTerm);
+    return similarityScore;
+  }
+
+  // Helper function to create n-grams from a given string
+  private createNgrams(text: string, n: number): string[] {
+    const ngrams: string[] = [];
+    for (let i = 0; i <= text.length - n; i++) {
+      ngrams.push(text.substring(i, i + n));
+    }
+    return ngrams;
+  }
+
+  // Helper function to normalize strings by removing spaces and special characters
+  private normalizeString(text: string): string {
+    // Remove all spaces and special characters, only keeping alphanumeric characters
+    return text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   }
 
   async getProductsBySellerId(sellerId: number) {
@@ -388,5 +427,89 @@ export class ProductsService {
     }
 
     return products; // Return the found products
+  }
+
+  async getVarieties(productId?: string, productName?: string) {
+    let nameToSearch: string;
+
+    // If productId is provided, fetch the product and get the product name
+    if (productId) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+        select: { name: true },
+      });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${productId} not found`);
+      }
+
+      nameToSearch = product.name;
+    }
+
+    // If productName is provided, use it directly
+    if (productName) {
+      nameToSearch = productName;
+    }
+
+    // Fetch all products with the same name
+    const products = await this.prisma.product.findMany({
+      where: { name: nameToSearch },
+      select: {
+        id: true,
+        name: true,
+        productDetails: true,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No varieties found for product ${nameToSearch}`,
+      );
+    }
+
+    // Compare the productDetails to find differing fields
+    const varieties = this.getDifferingFields(
+      products.map((p) => p.productDetails),
+    );
+
+    return {
+      varieties,
+    };
+  }
+
+  /**
+   * Compares an array of productDetails (JSON objects) and returns only the keys
+   * that have differing values between the products.
+   */
+  private getDifferingFields(
+    productDetailsArray: any[],
+  ): Record<string, any[]> {
+    if (productDetailsArray.length <= 1) {
+      return {}; // No differing fields if only one product or none
+    }
+
+    const allKeys = new Set<string>();
+
+    // Collect all keys from all productDetails
+    productDetailsArray.forEach((details) => {
+      Object.keys(details).forEach((key) => allKeys.add(key));
+    });
+
+    const differingFields: Record<string, any[]> = {};
+
+    allKeys.forEach((key) => {
+      const values = productDetailsArray.map((details) => details[key]);
+
+      // Check if all values for this key are the same
+      const isSame = values.every(
+        (value) => JSON.stringify(value) === JSON.stringify(values[0]),
+      );
+
+      if (!isSame) {
+        differingFields[key] = values; // Store differing values for this field
+      }
+    });
+
+    return differingFields;
   }
 }
