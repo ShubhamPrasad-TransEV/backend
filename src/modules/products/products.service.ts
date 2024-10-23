@@ -443,21 +443,15 @@ export class ProductsService {
       });
 
       if (!product) {
-        console.log(`Product with ID ${productId} not found.`);
         throw new NotFoundException(`Product with ID ${productId} not found`);
       }
 
-      console.log(`Found product with ID ${productId}, name: ${product.name}`);
       nameToSearch = product.name;
     }
 
     if (productName) {
-      console.log(`Searching for products with name: ${productName}`);
       nameToSearch = productName;
     }
-
-    // Log products retrieval attempt
-    console.log(`Fetching products with name: ${nameToSearch}`);
 
     const products = await this.prisma.product.findMany({
       where: { name: nameToSearch },
@@ -469,13 +463,10 @@ export class ProductsService {
     });
 
     if (!products || products.length === 0) {
-      console.log(`No products found with the name: ${nameToSearch}`);
       throw new NotFoundException(
         `No varieties found for product ${nameToSearch}`,
       );
     }
-
-    console.log(`Found ${products.length} products with name: ${nameToSearch}`);
 
     const varieties = this.getDifferingFields(
       products.map((p) => p.productDetails),
