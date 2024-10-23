@@ -3,7 +3,7 @@ import {
   IsOptional,
   IsString,
   IsNumber,
-  IsJSON,
+  IsObject,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -26,7 +26,7 @@ export class UpdateProductDto {
 
   @ApiProperty({ type: 'object', required: false })
   @IsOptional()
-  @IsJSON()
+  @IsObject()
   productDetails?: object;
 
   @ApiProperty({ type: 'array', items: { type: 'string' } })

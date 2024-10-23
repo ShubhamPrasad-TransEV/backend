@@ -80,8 +80,7 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const { sellerId, name, price, categories, productDetails, quantity } =
-      createProductDto;
+    const { sellerId, name, price, categories, quantity } = createProductDto;
 
     const parsedSellerId = Number(sellerId);
     if (isNaN(parsedSellerId)) {
@@ -131,6 +130,11 @@ export class ProductsService {
     if (categoryRecords.length !== parsedCategories.length) {
       throw new BadRequestException('Some categories provided are invalid.');
     }
+
+    const productDetails =
+      typeof createProductDto.productDetails === 'string'
+        ? JSON.parse(createProductDto.productDetails)
+        : createProductDto.productDetails;
 
     const product = await this.prisma.product.create({
       data: {
@@ -432,7 +436,6 @@ export class ProductsService {
   async getVarieties(productId?: string, productName?: string) {
     let nameToSearch: string;
 
-    // If productId is provided, fetch the product and get the product name
     if (productId) {
       const product = await this.prisma.product.findUnique({
         where: { id: productId },
@@ -440,18 +443,22 @@ export class ProductsService {
       });
 
       if (!product) {
+        console.log(`Product with ID ${productId} not found.`);
         throw new NotFoundException(`Product with ID ${productId} not found`);
       }
 
+      console.log(`Found product with ID ${productId}, name: ${product.name}`);
       nameToSearch = product.name;
     }
 
-    // If productName is provided, use it directly
     if (productName) {
+      console.log(`Searching for products with name: ${productName}`);
       nameToSearch = productName;
     }
 
-    // Fetch all products with the same name
+    // Log products retrieval attempt
+    console.log(`Fetching products with name: ${nameToSearch}`);
+
     const products = await this.prisma.product.findMany({
       where: { name: nameToSearch },
       select: {
@@ -462,12 +469,14 @@ export class ProductsService {
     });
 
     if (!products || products.length === 0) {
+      console.log(`No products found with the name: ${nameToSearch}`);
       throw new NotFoundException(
         `No varieties found for product ${nameToSearch}`,
       );
     }
 
-    // Compare the productDetails to find differing fields
+    console.log(`Found ${products.length} products with name: ${nameToSearch}`);
+
     const varieties = this.getDifferingFields(
       products.map((p) => p.productDetails),
     );
