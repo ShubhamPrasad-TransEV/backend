@@ -339,7 +339,7 @@ export class ProductsService {
 
     // Filter and rank products by partial or fuzzy match on product name
     const rankedProducts = products.map((product) => {
-      // Compute the similarity score between the product name and the search term
+      // Compute the similarity score using n-grams and fuzzy matching
       const similarity = this.partialOrFuzzyMatch(
         product.name.toLowerCase(),
         searchTerm,
@@ -356,18 +356,36 @@ export class ProductsService {
     rankedProducts.sort((a, b) => b.similarity - a.similarity);
 
     // Return products with a similarity score above a certain threshold
-    return rankedProducts.filter((product) => product.similarity > 0.3);
+    return rankedProducts.filter((product) => product.similarity > 0.2); // You can adjust the threshold as needed
   }
 
   // Helper function to perform partial or fuzzy matching on product names
   private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
-    // Return high similarity for partial matches (substring match)
-    if (productName.includes(searchTerm)) {
-      return 1; // Treat this as a perfect match
+    // Generate n-grams for product name and search term (using n=2 for bigrams)
+    const productNgrams = this.createNgrams(productName, 2);
+    const searchNgrams = this.createNgrams(searchTerm, 2);
+
+    // Check if any n-gram from the search term exists in the product name n-grams
+    const ngramMatch = searchNgrams.some((ngram) =>
+      productNgrams.includes(ngram),
+    );
+
+    // If an n-gram match is found, return a high similarity score
+    if (ngramMatch) {
+      return 1; // Treat as a perfect match for n-gram similarity
     }
 
-    // If no direct substring match, fall back to fuzzy matching
+    // If no n-gram match, fall back to fuzzy matching using stringSimilarity
     return stringSimilarity.compareTwoStrings(productName, searchTerm);
+  }
+
+  // Helper function to create n-grams from a given string
+  private createNgrams(text: string, n: number): string[] {
+    const ngrams: string[] = [];
+    for (let i = 0; i <= text.length - n; i++) {
+      ngrams.push(text.substring(i, i + n));
+    }
+    return ngrams;
   }
 
   async getProductsBySellerId(sellerId: number) {
