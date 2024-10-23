@@ -100,7 +100,7 @@ export class OrderService {
       });
     }
 
-    return this.prisma.order.create({
+    const order = await this.prisma.order.create({
       data: {
         user: { connect: { id: createOrderDto.userId } },
         orderedItems: JSON.stringify(orderItemsWithUnits), // Serialize array as JSON
@@ -109,6 +109,9 @@ export class OrderService {
         paymentStatus: createOrderDto.paymentStatus,
       },
     });
+
+    // Return the full order object along with the order ID
+    return { order };
   }
 
   // Update an order
