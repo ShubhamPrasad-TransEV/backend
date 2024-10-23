@@ -111,7 +111,7 @@ export class OrderService {
     });
 
     // Return the full order object along with the order ID
-    return { order };
+    return order;
   }
 
   // Update an order
