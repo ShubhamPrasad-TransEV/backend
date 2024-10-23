@@ -428,4 +428,88 @@ export class ProductsService {
 
     return products; // Return the found products
   }
+
+  async getVarieties(productId?: string, productName?: string) {
+    let nameToSearch: string;
+
+    // If productId is provided, fetch the product and get the product name
+    if (productId) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+        select: { name: true },
+      });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${productId} not found`);
+      }
+
+      nameToSearch = product.name;
+    }
+
+    // If productName is provided, use it directly
+    if (productName) {
+      nameToSearch = productName;
+    }
+
+    // Fetch all products with the same name
+    const products = await this.prisma.product.findMany({
+      where: { name: nameToSearch },
+      select: {
+        id: true,
+        name: true,
+        productDetails: true,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No varieties found for product ${nameToSearch}`,
+      );
+    }
+
+    // Compare the productDetails to find differing fields
+    const varieties = this.getDifferingFields(
+      products.map((p) => p.productDetails),
+    );
+
+    return {
+      varieties,
+    };
+  }
+
+  /**
+   * Compares an array of productDetails (JSON objects) and returns only the keys
+   * that have differing values between the products.
+   */
+  private getDifferingFields(
+    productDetailsArray: any[],
+  ): Record<string, any[]> {
+    if (productDetailsArray.length <= 1) {
+      return {}; // No differing fields if only one product or none
+    }
+
+    const allKeys = new Set<string>();
+
+    // Collect all keys from all productDetails
+    productDetailsArray.forEach((details) => {
+      Object.keys(details).forEach((key) => allKeys.add(key));
+    });
+
+    const differingFields: Record<string, any[]> = {};
+
+    allKeys.forEach((key) => {
+      const values = productDetailsArray.map((details) => details[key]);
+
+      // Check if all values for this key are the same
+      const isSame = values.every(
+        (value) => JSON.stringify(value) === JSON.stringify(values[0]),
+      );
+
+      if (!isSame) {
+        differingFields[key] = values; // Store differing values for this field
+      }
+    });
+
+    return differingFields;
+  }
 }

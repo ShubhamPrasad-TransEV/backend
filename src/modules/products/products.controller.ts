@@ -110,4 +110,18 @@ export class ProductsController {
 
     return products;
   }
+
+  @Get('varieties')
+  async getVarieties(
+    @Query('productId') productId?: string,
+    @Query('productName') productName?: string,
+  ) {
+    if (!productId && !productName) {
+      throw new BadRequestException(
+        'Either productId or productName must be provided',
+      );
+    }
+
+    return this.productsService.getVarieties(productId, productName);
+  }
 }
