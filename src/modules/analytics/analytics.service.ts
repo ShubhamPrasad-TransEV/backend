@@ -15,7 +15,8 @@ export class AnalyticsService {
   async getSellerAnalytics(
     params: GetSellerAnalyticsDto,
   ): Promise<SellerAnalyticsResponseDto> {
-    const { sellerId, type, startMonthYear, endMonthYear } = params;
+    const { type, startMonthYear, endMonthYear } = params;
+    const sellerId = Number(params.sellerId);
 
     const startDate = startMonthYear
       ? new Date(`${startMonthYear}-01`)
