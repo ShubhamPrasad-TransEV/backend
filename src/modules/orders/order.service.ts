@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderedItemDto } from './dto/create-order.dto';
+import { Prisma } from '@prisma/client'; // Import Prisma types
 
 @Injectable()
 export class OrderService {
@@ -69,7 +70,7 @@ export class OrderService {
       );
     }
 
-    const orderItemsWithUnits = [];
+    const orderItemsWithUnits: OrderedItemDto[] = [];
 
     for (const orderedItem of createOrderDto.orderedItems) {
       const { productId, quantity } = orderedItem;
@@ -100,17 +101,17 @@ export class OrderService {
       });
     }
 
+    // Cast OrderedItemDto[] to unknown, then to Prisma.JsonValue
     const order = await this.prisma.order.create({
       data: {
         user: { connect: { id: createOrderDto.userId } },
-        orderedItems: JSON.stringify(orderItemsWithUnits), // Serialize array as JSON
+        orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue, // Use unknown first, then cast to Prisma.JsonValue
         shipmentCompany: createOrderDto.shipmentCompany,
         shipmentStatus: createOrderDto.shipmentStatus,
         paymentStatus: createOrderDto.paymentStatus,
       },
     });
 
-    // Return the full order object along with the order ID
     return order;
   }
 
@@ -132,6 +133,8 @@ export class OrderService {
           `Invalid product IDs: ${missingProductIds.join(', ')}`,
         );
       }
+
+      const orderItemsWithUnits: OrderedItemDto[] = [];
 
       for (const orderedItem of updateOrderDto.orderedItems) {
         const { productId, quantity } = orderedItem;
@@ -160,26 +163,28 @@ export class OrderService {
         await this.prisma.unit.deleteMany({
           where: { id: { in: assignedUnits } },
         });
-      }
-    }
 
-    return this.prisma.order.update({
-      where: { id },
-      data: {
-        orderedItems: JSON.stringify(updateOrderDto.orderedItems), // Serialize array as JSON
-        shipmentCompany: updateOrderDto.shipmentCompany,
-        shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
-        shipmentStatus: updateOrderDto.shipmentStatus,
-        invoice: updateOrderDto.invoice,
-        refundStatus: updateOrderDto.refundStatus,
-        refundDetails: updateOrderDto.refundDetails,
-        shippingCost: updateOrderDto.shippingCost,
-        orderingStatus: updateOrderDto.orderingStatus,
-        orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
-        prePayment: updateOrderDto.prePayment,
-        paymentStatus: updateOrderDto.paymentStatus,
-      },
-    });
+        orderItemsWithUnits.push({ productId, quantity, assignedUnits });
+      }
+
+      return this.prisma.order.update({
+        where: { id },
+        data: {
+          orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue, // Use unknown first, then cast to Prisma.JsonValue
+          shipmentCompany: updateOrderDto.shipmentCompany,
+          shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
+          shipmentStatus: updateOrderDto.shipmentStatus,
+          invoice: updateOrderDto.invoice,
+          refundStatus: updateOrderDto.refundStatus,
+          refundDetails: updateOrderDto.refundDetails,
+          shippingCost: updateOrderDto.shippingCost,
+          orderingStatus: updateOrderDto.orderingStatus,
+          orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
+          prePayment: updateOrderDto.prePayment,
+          paymentStatus: updateOrderDto.paymentStatus,
+        },
+      });
+    }
   }
 
   // Delete an order
@@ -192,9 +197,8 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    const orderItems: OrderedItemDto[] = JSON.parse(
-      order.orderedItems as string,
-    );
+    // Cast the retrieved JSON to OrderedItemDto[]
+    const orderItems: OrderedItemDto[] = order.orderedItems as unknown as OrderedItemDto[]; 
 
     for (const item of orderItems) {
       const { productId, assignedUnits } = item;
