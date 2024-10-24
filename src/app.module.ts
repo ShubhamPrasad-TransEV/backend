@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EmailService } from './email/email.service';
 import { ProductsModule } from './modules/products/products.module';
 // import { CartModule } from './modules/cart/cart.module';
+import { AnalyticsModule } from './modules/analytics/analytics.modules';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { CategoriesModule } from './modules/category/category.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -35,6 +36,7 @@ import { OrderModule } from './modules/orders/order.module';
     OperationalSettingsModule, // Added OperationalSettingsModule
     OrderModule,
     WishlistModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

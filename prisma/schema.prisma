@@ -87,23 +87,27 @@ model Unit {
 }
 
 model Order {
-  id                     Int     @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   userId                 Int
-  user                   User    @relation(fields: [userId], references: [id])
+  user                   User      @relation(fields: [userId], references: [id])
   orderedItems           Json // JSON format to store {productId: quantity}
   shipmentCompany        String?
   shipmentRequestStatus  String?
-  shipmentStatus         String  @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
+  shipmentStatus         String    @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
   invoice                String? // Invoice number or reference (Location)
-  refundStatus           String  @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  refundStatus           String    @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
   refundDetails          String?
-  shippingCost           Float   @default(0.0) // Shipping cost associated with the order
-  orderingStatus         String  @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
-  orderFulfillmentStatus String  @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
-  prePayment             Boolean @default(false) // Indicates if pre-payment was made
-  paymentStatus          Boolean @default(false) // Indicates if the order has been fully paid
-  Seller                 Seller? @relation(fields: [sellerId], references: [id])
+  shippingCost           Float     @default(0.0) // Shipping cost associated with the order
+  totalOrderCost         Float     @default(0.0)
+  totalItemCost          Float     @default(0.0)
+  orderingStatus         String    @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
+  orderFulfillmentStatus String    @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
+  prePayment             Boolean   @default(false) // Indicates if pre-payment was made
+  paymentStatus          Boolean   @default(false) // Indicates if the order has been fully paid
+  Seller                 Seller?   @relation(fields: [sellerId], references: [id])
   sellerId               Int?
+  orderedAt              DateTime  @default(now()) // Timestamp when the order was placed
+  orderFulfilledAt       DateTime? // Timestamp when the order was fulfilled (can be null)
 
   @@index([userId])
 }
