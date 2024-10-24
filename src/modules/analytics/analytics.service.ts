@@ -42,6 +42,18 @@ export class AnalyticsService {
         return this.getFulfilledOrders(sellerId, startDate, endDate);
       case 'recentOrders':
         return this.getRecentOrders(sellerId);
+      case 'totalRevenue':
+        return this.getTotalRevenue(sellerId, startDate, endDate);
+      case 'averageMonthlyRevenue':
+        return this.getAverageMonthlyRevenue(sellerId, startDate, endDate);
+      case 'totalOrdersFulfilled':
+        return this.getTotalOrdersFulfilled(sellerId, startDate, endDate);
+      case 'totalOrdersCancelled':
+        return this.getTotalOrdersCancelled(sellerId, startDate, endDate);
+      case 'topRevenueGeneratingProduct':
+        return this.getTopRevenueGeneratingProduct(sellerId, startDate, endDate);
+      case 'topSellingProduct':
+        return this.getTopSellingProduct(sellerId, startDate, endDate);
       default:
         throw new Error('Invalid analytics type');
     }
@@ -77,17 +89,15 @@ export class AnalyticsService {
 
   // Total unique users
   private async getTotalUniqueUsers(sellerId: number) {
-    // Fetch all users who ordered from the seller, deduplicate on `userId`
     const orders = await this.prisma.order.findMany({
       where: {
         sellerId,
       },
       select: {
-        userId: true, // Only fetch `userId` from each order
+        userId: true,
       },
     });
 
-    // Deduplicate userId values using a Set
     const uniqueUserIds = Array.from(
       new Set(orders.map((order) => order.userId)),
     );
@@ -251,5 +261,160 @@ export class AnalyticsService {
     });
 
     return { data: { recentOrders } };
+  }
+
+  // Total revenue for a specific time period
+  private async getTotalRevenue(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const totalRevenue = await this.prisma.order.aggregate({
+      _sum: {
+        shippingCost: true,
+      },
+      where: {
+        sellerId,
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    return { data: { totalRevenue: totalRevenue._sum.shippingCost } };
+  }
+
+  // Average monthly revenue
+  private async getAverageMonthlyRevenue(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const totalRevenueData = await this.getTotalRevenue(sellerId, startDate, endDate);
+    const months = Math.max(
+      1,
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()),
+    );
+    const averageRevenue = totalRevenueData.data.totalRevenue / months;
+
+    return { data: { averageMonthlyRevenue: averageRevenue } };
+  }
+
+  // Total orders fulfilled
+  private async getTotalOrdersFulfilled(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const totalOrdersFulfilled = await this.prisma.order.count({
+      where: {
+        sellerId,
+        orderFulfillmentStatus: 'Fulfilled',
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    return { data: { totalOrdersFulfilled } };
+  }
+
+  // Total orders cancelled
+  private async getTotalOrdersCancelled(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const totalOrdersCancelled = await this.prisma.order.count({
+      where: {
+        sellerId,
+        orderingStatus: 'Cancelled',
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    return { data: { totalOrdersCancelled } };
+  }
+
+  // Top 5 revenue-generating products (fetching from JSON)
+  private async getTopRevenueGeneratingProduct(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        sellerId,
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        orderedItems: true,
+        shippingCost: true,
+      },
+    });
+
+    const productRevenueMap = new Map<number, number>(); // productId -> total revenue
+
+    orders.forEach((order) => {
+      const orderedItems = order.orderedItems as { [productId: number]: number }; // Assuming { productId: quantity }
+
+      for (const productId in orderedItems) {
+        const productRevenue = (productRevenueMap.get(+productId) || 0) + order.shippingCost;
+        productRevenueMap.set(+productId, productRevenue);
+      }
+    });
+
+    // Convert map to array and sort by revenue
+    const sortedProducts = Array.from(productRevenueMap.entries())
+      .sort(([, revenueA], [, revenueB]) => revenueB - revenueA)
+      .slice(0, 5); // Get top 5
+
+    return { data: { topRevenueGeneratingProducts: sortedProducts } };
+  }
+
+  // Top 5 selling products (fetching from JSON)
+  private async getTopSellingProduct(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        sellerId,
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        orderedItems: true,
+      },
+    });
+
+    const productSalesMap = new Map<number, number>(); // productId -> total quantity sold
+
+    orders.forEach((order) => {
+      const orderedItems = order.orderedItems as { [productId: number]: number }; // Assuming { productId: quantity }
+
+      for (const productId in orderedItems) {
+        const currentSales = productSalesMap.get(+productId) || 0;
+        productSalesMap.set(+productId, currentSales + orderedItems[+productId]);
+      }
+    });
+
+    // Convert map to array and sort by quantity sold
+    const sortedProducts = Array.from(productSalesMap.entries())
+      .sort(([, salesA], [, salesB]) => salesB - salesA)
+      .slice(0, 5); // Get top 5
+
+    return { data: { topSellingProducts: sortedProducts } };
   }
 }
