@@ -1,5 +1,3 @@
-// analytics.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -69,24 +67,52 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const orders = await this.prisma.order.groupBy({
-      by: ['orderedAt'],
+    const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
         orderedAt: {
           gte: startDate,
           lte: endDate,
         },
       },
-      _sum: {
-        totalItemCost: true, // Sum totalItemCost instead of shippingCost
+      select: {
+        orderedItems: true,
+        orderedAt: true, // For grouping by month
       },
     });
 
-    const result = orders.map((order) => ({
-      month: startOfMonth(order.orderedAt),
-      revenue: order._sum.totalItemCost, // Use totalItemCost for monthly revenue
-    }));
+    const monthlyRevenueMap = new Map<string, number>();
+
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+      const orderMonth = startOfMonth(order.orderedAt).toISOString();
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: {
+            sellerId: true,
+            price: true,
+          },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          const quantity = orderedItems[productId];
+          const revenue = product.price * quantity;
+
+          const currentRevenue = monthlyRevenueMap.get(orderMonth) || 0;
+          monthlyRevenueMap.set(orderMonth, currentRevenue + revenue);
+        }
+      }
+    }
+
+    const result = Array.from(monthlyRevenueMap.entries()).map(
+      ([month, revenue]) => ({
+        month,
+        revenue,
+      }),
+    );
 
     return { data: result };
   }
@@ -95,18 +121,37 @@ export class AnalyticsService {
   private async getTotalUniqueUsers(sellerId: number) {
     const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
+        orderedAt: {
+          gte: new Date('2000-01-01'), // Fetch all orders (no date restriction for this query)
+        },
       },
       select: {
         userId: true,
+        orderedItems: true, // We need orderedItems to filter by seller
       },
     });
 
-    const uniqueUserIds = Array.from(
-      new Set(orders.map((order) => order.userId)),
-    );
+    const uniqueUserIds = new Set<number>();
 
-    return { data: { totalUsers: uniqueUserIds.length } };
+    // Iterate over all orders and filter based on sellerId in orderedItems
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          uniqueUserIds.add(order.userId);
+        }
+      }
+    }
+
+    return { data: { totalUsers: uniqueUserIds.size } };
   }
 
   // Percentage of orders lost
@@ -118,27 +163,19 @@ export class AnalyticsService {
     const previousStartDate = subMonths(startDate, 1);
     const previousEndDate = subMonths(endDate, 1);
 
-    const currentOrdersCount = await this.prisma.order.count({
-      where: {
-        sellerId,
-        orderedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-        orderingStatus: 'Cancelled',
-      },
-    });
+    const currentOrdersCount = await this.countOrdersByStatus(
+      sellerId,
+      startDate,
+      endDate,
+      'Cancelled',
+    );
 
-    const previousOrdersCount = await this.prisma.order.count({
-      where: {
-        sellerId,
-        orderedAt: {
-          gte: previousStartDate,
-          lte: previousEndDate,
-        },
-        orderingStatus: 'Cancelled',
-      },
-    });
+    const previousOrdersCount = await this.countOrdersByStatus(
+      sellerId,
+      previousStartDate,
+      previousEndDate,
+      'Cancelled',
+    );
 
     const percentageLost = this.calculatePercentageChange(
       previousOrdersCount,
@@ -157,27 +194,19 @@ export class AnalyticsService {
     const previousStartDate = subMonths(startDate, 1);
     const previousEndDate = subMonths(endDate, 1);
 
-    const currentOrdersCount = await this.prisma.order.count({
-      where: {
-        sellerId,
-        orderedAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-        orderingStatus: 'Completed',
-      },
-    });
+    const currentOrdersCount = await this.countOrdersByStatus(
+      sellerId,
+      startDate,
+      endDate,
+      'Completed',
+    );
 
-    const previousOrdersCount = await this.prisma.order.count({
-      where: {
-        sellerId,
-        orderedAt: {
-          gte: previousStartDate,
-          lte: previousEndDate,
-        },
-        orderingStatus: 'Completed',
-      },
-    });
+    const previousOrdersCount = await this.countOrdersByStatus(
+      sellerId,
+      previousStartDate,
+      previousEndDate,
+      'Completed',
+    );
 
     const percentageGained = this.calculatePercentageChange(
       previousOrdersCount,
@@ -185,6 +214,50 @@ export class AnalyticsService {
     );
 
     return { data: { percentageOrdersGained: percentageGained } };
+  }
+
+  // Helper to count orders by status (Cancelled or Completed)
+  private async countOrdersByStatus(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+    status: string,
+  ) {
+    const orders = await this.prisma.order.findMany({
+      where: {
+        orderedAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+        orderingStatus: status,
+      },
+      select: {
+        orderedItems: true,
+      },
+    });
+
+    let count = 0;
+
+    // Check each product's sellerId in the ordered items
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          count++;
+          break; // Stop checking the rest of the items if one matches the seller
+        }
+      }
+    }
+
+    return count;
   }
 
   private calculatePercentageChange(
@@ -210,17 +283,40 @@ export class AnalyticsService {
     const now = new Date();
     const startOfWeek = subDays(now, 7);
 
-    const weeklyOrders = await this.prisma.order.count({
+    const weeklyOrders = await this.prisma.order.findMany({
       where: {
-        sellerId,
         orderedAt: {
           gte: startOfWeek,
           lte: now,
         },
       },
+      select: {
+        orderedItems: true,
+      },
     });
 
-    return { data: { weeklyOrders } };
+    let orderCount = 0;
+
+    // Check each product's sellerId in the ordered items
+    for (const order of weeklyOrders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          orderCount++;
+          break; // Stop checking if one product matches the seller
+        }
+      }
+    }
+
+    return { data: { weeklyOrders: orderCount } };
   }
 
   // Fulfilled orders (grouped by month, last 6 months if no date provided)
@@ -229,25 +325,48 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const ordersByMonth = await this.prisma.order.groupBy({
-      by: ['orderedAt'],
+    const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
-        orderFulfillmentStatus: 'Fulfilled',
         orderedAt: {
           gte: startDate,
           lte: endDate,
         },
+        orderFulfillmentStatus: 'Fulfilled',
       },
-      _count: {
-        _all: true,
+      select: {
+        orderedItems: true,
+        orderedAt: true,
       },
     });
 
-    const result = ordersByMonth.map((order) => ({
-      month: startOfMonth(order.orderedAt),
-      fulfilledOrders: order._count._all,
-    }));
+    const monthlyFulfilledMap = new Map<string, number>();
+
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+      const orderMonth = startOfMonth(order.orderedAt).toISOString();
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          const currentCount = monthlyFulfilledMap.get(orderMonth) || 0;
+          monthlyFulfilledMap.set(orderMonth, currentCount + 1);
+          break; // Stop checking once a match is found for the seller
+        }
+      }
+    }
+
+    const result = Array.from(monthlyFulfilledMap.entries()).map(
+      ([month, count]) => ({
+        month,
+        fulfilledOrders: count,
+      }),
+    );
 
     return { data: result };
   }
@@ -255,16 +374,38 @@ export class AnalyticsService {
   // Recent orders (last 10 orders)
   private async getRecentOrders(sellerId: number) {
     const recentOrders = await this.prisma.order.findMany({
-      where: {
-        sellerId,
-      },
+      where: {},
       orderBy: {
         orderedAt: 'desc',
       },
       take: 10,
+      select: {
+        orderedItems: true,
+        orderedAt: true,
+      },
     });
 
-    return { data: { recentOrders } };
+    const filteredOrders = [];
+
+    for (const order of recentOrders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          filteredOrders.push(order);
+          break; // Add the order to the list if one item matches the seller
+        }
+      }
+    }
+
+    return { data: { recentOrders: filteredOrders } };
   }
 
   // Total revenue for a specific time period
@@ -273,20 +414,43 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const totalRevenue = await this.prisma.order.aggregate({
-      _sum: {
-        totalItemCost: true, // Sum totalItemCost instead of shippingCost
-      },
+    const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
         orderedAt: {
           gte: startDate,
           lte: endDate,
         },
       },
+      select: {
+        orderedItems: true,
+        totalItemCost: true,
+      },
     });
 
-    return { data: { totalRevenue: totalRevenue._sum.totalItemCost } };
+    let totalRevenue = 0;
+
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: {
+            sellerId: true,
+            price: true,
+          },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          const quantity = orderedItems[productId];
+          totalRevenue += product.price * quantity;
+        }
+      }
+    }
+
+    return { data: { totalRevenue } };
   }
 
   // Average monthly revenue
@@ -316,18 +480,40 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const totalOrdersFulfilled = await this.prisma.order.count({
+    const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
-        orderFulfillmentStatus: 'Fulfilled',
         orderedAt: {
           gte: startDate,
           lte: endDate,
         },
+        orderFulfillmentStatus: 'Fulfilled',
+      },
+      select: {
+        orderedItems: true,
       },
     });
 
-    return { data: { totalOrdersFulfilled } };
+    let fulfilledCount = 0;
+
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          fulfilledCount++;
+          break; // Stop checking once a match is found for the seller
+        }
+      }
+    }
+
+    return { data: { totalOrdersFulfilled: fulfilledCount } };
   }
 
   // Total orders cancelled
@@ -336,18 +522,40 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const totalOrdersCancelled = await this.prisma.order.count({
+    const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
-        orderingStatus: 'Cancelled',
         orderedAt: {
           gte: startDate,
           lte: endDate,
         },
+        orderingStatus: 'Cancelled',
+      },
+      select: {
+        orderedItems: true,
       },
     });
 
-    return { data: { totalOrdersCancelled } };
+    let cancelledCount = 0;
+
+    for (const order of orders) {
+      const orderedItems = order.orderedItems as {
+        [productId: string]: number;
+      };
+
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          cancelledCount++;
+          break; // Stop checking once a match is found for the seller
+        }
+      }
+    }
+
+    return { data: { totalOrdersCancelled: cancelledCount } };
   }
 
   // Top 5 revenue-generating products (considering totalItemCost)
@@ -358,7 +566,6 @@ export class AnalyticsService {
   ) {
     const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
         orderedAt: {
           gte: startDate,
           lte: endDate,
@@ -366,41 +573,38 @@ export class AnalyticsService {
       },
       select: {
         orderedItems: true,
-        totalItemCost: true, // Fetch totalItemCost
       },
     });
 
-    const productRevenueMap = new Map<string, number>(); // productId (as string) -> total revenue
+    const productRevenueMap = new Map<string, number>();
 
     for (const order of orders) {
       const orderedItems = order.orderedItems as {
         [productId: string]: number;
-      }; // Product IDs are strings
+      };
 
-      const productIds = Object.keys(orderedItems);
-      const products = await this.prisma.product.findMany({
-        where: {
-          id: { in: productIds },
-        },
-        select: {
-          id: true,
-          price: true,
-        },
-      });
+      for (const productId in orderedItems) {
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: {
+            sellerId: true,
+            price: true,
+            id: true,
+          },
+        });
 
-      for (const product of products) {
-        const quantity = orderedItems[product.id];
-        const productRevenue = product.price * quantity; // Calculate revenue without shipping cost
-
-        const currentRevenue = productRevenueMap.get(product.id) || 0;
-        productRevenueMap.set(product.id, currentRevenue + productRevenue);
+        if (product && product.sellerId === sellerId) {
+          const quantity = orderedItems[productId];
+          const productRevenue = product.price * quantity;
+          const currentRevenue = productRevenueMap.get(product.id) || 0;
+          productRevenueMap.set(product.id, currentRevenue + productRevenue);
+        }
       }
     }
 
-    // Convert map to array and sort by revenue
     const sortedProducts = Array.from(productRevenueMap.entries())
       .sort(([, revenueA], [, revenueB]) => revenueB - revenueA)
-      .slice(0, 5); // Get top 5
+      .slice(0, 5);
 
     return { data: { topRevenueGeneratingProducts: sortedProducts } };
   }
@@ -413,7 +617,6 @@ export class AnalyticsService {
   ) {
     const orders = await this.prisma.order.findMany({
       where: {
-        sellerId,
         orderedAt: {
           gte: startDate,
           lte: endDate,
@@ -424,23 +627,32 @@ export class AnalyticsService {
       },
     });
 
-    const productSalesMap = new Map<string, number>(); // productId (as string) -> total quantity sold
+    const productSalesMap = new Map<string, number>();
 
-    orders.forEach((order) => {
+    orders.forEach(async (order) => {
       const orderedItems = order.orderedItems as {
         [productId: string]: number;
-      }; // Product IDs are strings
+      };
 
       for (const productId in orderedItems) {
-        const currentSales = productSalesMap.get(productId) || 0;
-        productSalesMap.set(productId, currentSales + orderedItems[productId]);
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { sellerId: true },
+        });
+
+        if (product && product.sellerId === sellerId) {
+          const currentSales = productSalesMap.get(productId) || 0;
+          productSalesMap.set(
+            productId,
+            currentSales + orderedItems[productId],
+          );
+        }
       }
     });
 
-    // Convert map to array and sort by quantity sold
     const sortedProducts = Array.from(productSalesMap.entries())
       .sort(([, salesA], [, salesB]) => salesB - salesA)
-      .slice(0, 5); // Get top 5
+      .slice(0, 5);
 
     return { data: { topSellingProducts: sortedProducts } };
   }
