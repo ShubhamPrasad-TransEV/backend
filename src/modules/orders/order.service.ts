@@ -198,7 +198,8 @@ export class OrderService {
     }
 
     // Cast the retrieved JSON to OrderedItemDto[]
-    const orderItems: OrderedItemDto[] = order.orderedItems as unknown as OrderedItemDto[]; 
+    const orderItems: OrderedItemDto[] =
+      order.orderedItems as unknown as OrderedItemDto[];
 
     for (const item of orderItems) {
       const { productId, assignedUnits } = item;

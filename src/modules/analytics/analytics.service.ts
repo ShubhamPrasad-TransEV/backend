@@ -2,14 +2,19 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetSellerAnalyticsDto, SellerAnalyticsResponseDto } from './dto/analytics.dto';
+import {
+  GetSellerAnalyticsDto,
+  SellerAnalyticsResponseDto,
+} from './dto/analytics.dto';
 import { subMonths, endOfMonth, startOfMonth, subDays } from 'date-fns';
 
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
-  async getSellerAnalytics(params: GetSellerAnalyticsDto): Promise<SellerAnalyticsResponseDto> {
+  async getSellerAnalytics(
+    params: GetSellerAnalyticsDto,
+  ): Promise<SellerAnalyticsResponseDto> {
     const { sellerId, type, startMonthYear, endMonthYear } = params;
 
     const startDate = startMonthYear
@@ -42,7 +47,11 @@ export class AnalyticsService {
   }
 
   // Monthly revenue
-  private async getMonthlyRevenue(sellerId: number, startDate: Date, endDate: Date) {
+  private async getMonthlyRevenue(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const orders = await this.prisma.order.groupBy({
       by: ['orderedAt'],
       where: {
@@ -57,7 +66,7 @@ export class AnalyticsService {
       },
     });
 
-    const result = orders.map(order => ({
+    const result = orders.map((order) => ({
       month: startOfMonth(order.orderedAt),
       revenue: order._sum.shippingCost,
     }));
@@ -76,15 +85,21 @@ export class AnalyticsService {
         userId: true, // Only fetch `userId` from each order
       },
     });
-  
+
     // Deduplicate userId values using a Set
-    const uniqueUserIds = Array.from(new Set(orders.map(order => order.userId)));
-  
+    const uniqueUserIds = Array.from(
+      new Set(orders.map((order) => order.userId)),
+    );
+
     return { data: { totalUsers: uniqueUserIds.length } };
   }
 
   // Percentage of orders lost
-  private async getPercentageOrdersLost(sellerId: number, startDate: Date, endDate: Date) {
+  private async getPercentageOrdersLost(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const previousStartDate = subMonths(startDate, 1);
     const previousEndDate = subMonths(endDate, 1);
 
@@ -110,13 +125,20 @@ export class AnalyticsService {
       },
     });
 
-    const percentageLost = this.calculatePercentageChange(previousOrdersCount, currentOrdersCount);
+    const percentageLost = this.calculatePercentageChange(
+      previousOrdersCount,
+      currentOrdersCount,
+    );
 
     return { data: { percentageOrdersLost: percentageLost } };
   }
 
   // Percentage of orders gained
-  private async getPercentageOrdersGained(sellerId: number, startDate: Date, endDate: Date) {
+  private async getPercentageOrdersGained(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const previousStartDate = subMonths(startDate, 1);
     const previousEndDate = subMonths(endDate, 1);
 
@@ -142,12 +164,18 @@ export class AnalyticsService {
       },
     });
 
-    const percentageGained = this.calculatePercentageChange(previousOrdersCount, currentOrdersCount);
+    const percentageGained = this.calculatePercentageChange(
+      previousOrdersCount,
+      currentOrdersCount,
+    );
 
     return { data: { percentageOrdersGained: percentageGained } };
   }
 
-  private calculatePercentageChange(previousCount: number, currentCount: number): number {
+  private calculatePercentageChange(
+    previousCount: number,
+    currentCount: number,
+  ): number {
     if (previousCount === 0) {
       return currentCount > 0 ? 100 : 0;
     }
@@ -181,7 +209,11 @@ export class AnalyticsService {
   }
 
   // Fulfilled orders (grouped by month, last 6 months if no date provided)
-  private async getFulfilledOrders(sellerId: number, startDate: Date, endDate: Date) {
+  private async getFulfilledOrders(
+    sellerId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const ordersByMonth = await this.prisma.order.groupBy({
       by: ['orderedAt'],
       where: {
@@ -197,7 +229,7 @@ export class AnalyticsService {
       },
     });
 
-    const result = ordersByMonth.map(order => ({
+    const result = ordersByMonth.map((order) => ({
       month: startOfMonth(order.orderedAt),
       fulfilledOrders: order._count._all,
     }));

@@ -2,7 +2,10 @@
 
 import { Controller, Get, Query } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
-import { GetSellerAnalyticsDto, SellerAnalyticsResponseDto } from './dto/analytics.dto';
+import {
+  GetSellerAnalyticsDto,
+  SellerAnalyticsResponseDto,
+} from './dto/analytics.dto';
 
 @Controller('analytics')
 export class AnalyticsController {
