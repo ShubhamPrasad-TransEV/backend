@@ -51,7 +51,11 @@ export class AnalyticsService {
       case 'totalOrdersCancelled':
         return this.getTotalOrdersCancelled(sellerId, startDate, endDate);
       case 'topRevenueGeneratingProduct':
-        return this.getTopRevenueGeneratingProduct(sellerId, startDate, endDate);
+        return this.getTopRevenueGeneratingProduct(
+          sellerId,
+          startDate,
+          endDate,
+        );
       case 'topSellingProduct':
         return this.getTopSellingProduct(sellerId, startDate, endDate);
       default:
@@ -291,10 +295,15 @@ export class AnalyticsService {
     startDate: Date,
     endDate: Date,
   ) {
-    const totalRevenueData = await this.getTotalRevenue(sellerId, startDate, endDate);
+    const totalRevenueData = await this.getTotalRevenue(
+      sellerId,
+      startDate,
+      endDate,
+    );
     const months = Math.max(
       1,
-      (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()),
+      (endDate.getFullYear() - startDate.getFullYear()) * 12 +
+        (endDate.getMonth() - startDate.getMonth()),
     );
     const averageRevenue = totalRevenueData.data.totalRevenue / months;
 
@@ -364,10 +373,13 @@ export class AnalyticsService {
     const productRevenueMap = new Map<number, number>(); // productId -> total revenue
 
     orders.forEach((order) => {
-      const orderedItems = order.orderedItems as { [productId: number]: number }; // Assuming { productId: quantity }
+      const orderedItems = order.orderedItems as {
+        [productId: number]: number;
+      }; // Assuming { productId: quantity }
 
       for (const productId in orderedItems) {
-        const productRevenue = (productRevenueMap.get(+productId) || 0) + order.shippingCost;
+        const productRevenue =
+          (productRevenueMap.get(+productId) || 0) + order.shippingCost;
         productRevenueMap.set(+productId, productRevenue);
       }
     });
@@ -402,11 +414,16 @@ export class AnalyticsService {
     const productSalesMap = new Map<number, number>(); // productId -> total quantity sold
 
     orders.forEach((order) => {
-      const orderedItems = order.orderedItems as { [productId: number]: number }; // Assuming { productId: quantity }
+      const orderedItems = order.orderedItems as {
+        [productId: number]: number;
+      }; // Assuming { productId: quantity }
 
       for (const productId in orderedItems) {
         const currentSales = productSalesMap.get(+productId) || 0;
-        productSalesMap.set(+productId, currentSales + orderedItems[+productId]);
+        productSalesMap.set(
+          +productId,
+          currentSales + orderedItems[+productId],
+        );
       }
     });
 
