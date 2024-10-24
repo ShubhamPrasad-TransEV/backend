@@ -70,10 +70,21 @@ export class OrderService {
       );
     }
 
+    let totalItemCost = 0;
     const orderItemsWithUnits: OrderedItemDto[] = [];
 
     for (const orderedItem of createOrderDto.orderedItems) {
       const { productId, quantity } = orderedItem;
+
+      // Fetch the product price
+      const product = await this.prisma.product.findUnique({
+        where: { id: productId },
+        select: { price: true },
+      });
+
+      if (!product) {
+        throw new BadRequestException(`Product with ID ${productId} not found`);
+      }
 
       const availableUnits = await this.prisma.unit.findMany({
         where: { productId },
@@ -99,9 +110,14 @@ export class OrderService {
       await this.prisma.unit.deleteMany({
         where: { id: { in: assignedUnits } },
       });
+
+      // Calculate total item cost for this product (price * quantity)
+      totalItemCost += product.price * quantity;
     }
 
-    // Cast OrderedItemDto[] to unknown, then to Prisma.JsonValue
+    // Calculate totalOrderCost = totalItemCost + shippingCost
+    const totalOrderCost = totalItemCost + (createOrderDto.shippingCost || 0);
+
     const order = await this.prisma.order.create({
       data: {
         user: { connect: { id: createOrderDto.userId } },
@@ -109,6 +125,9 @@ export class OrderService {
         shipmentCompany: createOrderDto.shipmentCompany,
         shipmentStatus: createOrderDto.shipmentStatus,
         paymentStatus: createOrderDto.paymentStatus,
+        shippingCost: createOrderDto.shippingCost,
+        totalItemCost: totalItemCost, // Store total item cost
+        totalOrderCost: totalOrderCost, // Store total order cost
       },
     });
 
@@ -123,6 +142,9 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
+    let totalItemCost = 0;
+    const orderItemsWithUnits: OrderedItemDto[] = [];
+
     if (updateOrderDto.orderedItems) {
       const missingProductIds = await this.validateProducts(
         updateOrderDto.orderedItems,
@@ -134,10 +156,20 @@ export class OrderService {
         );
       }
 
-      const orderItemsWithUnits: OrderedItemDto[] = [];
-
       for (const orderedItem of updateOrderDto.orderedItems) {
         const { productId, quantity } = orderedItem;
+
+        // Fetch the product price
+        const product = await this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { price: true },
+        });
+
+        if (!product) {
+          throw new BadRequestException(
+            `Product with ID ${productId} not found`,
+          );
+        }
 
         const availableUnits = await this.prisma.unit.findMany({
           where: { productId },
@@ -164,27 +196,36 @@ export class OrderService {
           where: { id: { in: assignedUnits } },
         });
 
+        // Add product to order items
         orderItemsWithUnits.push({ productId, quantity, assignedUnits });
-      }
 
-      return this.prisma.order.update({
-        where: { id },
-        data: {
-          orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue, // Use unknown first, then cast to Prisma.JsonValue
-          shipmentCompany: updateOrderDto.shipmentCompany,
-          shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
-          shipmentStatus: updateOrderDto.shipmentStatus,
-          invoice: updateOrderDto.invoice,
-          refundStatus: updateOrderDto.refundStatus,
-          refundDetails: updateOrderDto.refundDetails,
-          shippingCost: updateOrderDto.shippingCost,
-          orderingStatus: updateOrderDto.orderingStatus,
-          orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
-          prePayment: updateOrderDto.prePayment,
-          paymentStatus: updateOrderDto.paymentStatus,
-        },
-      });
+        // Calculate total item cost for this product (price * quantity)
+        totalItemCost += product.price * quantity;
+      }
     }
+
+    // Calculate totalOrderCost = totalItemCost + shippingCost
+    const totalOrderCost = totalItemCost + (updateOrderDto.shippingCost || 0);
+
+    return this.prisma.order.update({
+      where: { id },
+      data: {
+        orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue,
+        shipmentCompany: updateOrderDto.shipmentCompany,
+        shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
+        shipmentStatus: updateOrderDto.shipmentStatus,
+        invoice: updateOrderDto.invoice,
+        refundStatus: updateOrderDto.refundStatus,
+        refundDetails: updateOrderDto.refundDetails,
+        shippingCost: updateOrderDto.shippingCost,
+        orderingStatus: updateOrderDto.orderingStatus,
+        orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
+        prePayment: updateOrderDto.prePayment,
+        paymentStatus: updateOrderDto.paymentStatus,
+        totalItemCost: totalItemCost, // Update total item cost
+        totalOrderCost: totalOrderCost, // Update total order cost
+      },
+    });
   }
 
   // Delete an order

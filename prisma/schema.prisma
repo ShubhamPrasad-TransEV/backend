@@ -98,6 +98,8 @@ model Order {
   refundStatus           String    @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
   refundDetails          String?
   shippingCost           Float     @default(0.0) // Shipping cost associated with the order
+  totalOrderCost         Float     @default(0.0)
+  totalItemCost          Float     @default(0.0)
   orderingStatus         String    @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
   orderFulfillmentStatus String    @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
   prePayment             Boolean   @default(false) // Indicates if pre-payment was made

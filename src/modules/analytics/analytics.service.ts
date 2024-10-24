@@ -79,13 +79,13 @@ export class AnalyticsService {
         },
       },
       _sum: {
-        shippingCost: true,
+        totalItemCost: true, // Sum totalItemCost instead of shippingCost
       },
     });
 
     const result = orders.map((order) => ({
       month: startOfMonth(order.orderedAt),
-      revenue: order._sum.shippingCost,
+      revenue: order._sum.totalItemCost, // Use totalItemCost for monthly revenue
     }));
 
     return { data: result };
@@ -275,7 +275,7 @@ export class AnalyticsService {
   ) {
     const totalRevenue = await this.prisma.order.aggregate({
       _sum: {
-        shippingCost: true,
+        totalItemCost: true, // Sum totalItemCost instead of shippingCost
       },
       where: {
         sellerId,
@@ -286,7 +286,7 @@ export class AnalyticsService {
       },
     });
 
-    return { data: { totalRevenue: totalRevenue._sum.shippingCost } };
+    return { data: { totalRevenue: totalRevenue._sum.totalItemCost } };
   }
 
   // Average monthly revenue
@@ -350,7 +350,7 @@ export class AnalyticsService {
     return { data: { totalOrdersCancelled } };
   }
 
-  // Top 5 revenue-generating products (fetching from JSON)
+  // Top 5 revenue-generating products (considering totalItemCost)
   private async getTopRevenueGeneratingProduct(
     sellerId: number,
     startDate: Date,
@@ -366,23 +366,36 @@ export class AnalyticsService {
       },
       select: {
         orderedItems: true,
-        shippingCost: true,
+        totalItemCost: true, // Fetch totalItemCost
       },
     });
 
-    const productRevenueMap = new Map<number, number>(); // productId -> total revenue
+    const productRevenueMap = new Map<string, number>(); // productId (as string) -> total revenue
 
-    orders.forEach((order) => {
+    for (const order of orders) {
       const orderedItems = order.orderedItems as {
-        [productId: number]: number;
-      }; // Assuming { productId: quantity }
+        [productId: string]: number;
+      }; // Product IDs are strings
 
-      for (const productId in orderedItems) {
-        const productRevenue =
-          (productRevenueMap.get(+productId) || 0) + order.shippingCost;
-        productRevenueMap.set(+productId, productRevenue);
+      const productIds = Object.keys(orderedItems);
+      const products = await this.prisma.product.findMany({
+        where: {
+          id: { in: productIds },
+        },
+        select: {
+          id: true,
+          price: true,
+        },
+      });
+
+      for (const product of products) {
+        const quantity = orderedItems[product.id];
+        const productRevenue = product.price * quantity; // Calculate revenue without shipping cost
+
+        const currentRevenue = productRevenueMap.get(product.id) || 0;
+        productRevenueMap.set(product.id, currentRevenue + productRevenue);
       }
-    });
+    }
 
     // Convert map to array and sort by revenue
     const sortedProducts = Array.from(productRevenueMap.entries())
@@ -392,7 +405,7 @@ export class AnalyticsService {
     return { data: { topRevenueGeneratingProducts: sortedProducts } };
   }
 
-  // Top 5 selling products (fetching from JSON)
+  // Top 5 selling products
   private async getTopSellingProduct(
     sellerId: number,
     startDate: Date,
@@ -411,19 +424,16 @@ export class AnalyticsService {
       },
     });
 
-    const productSalesMap = new Map<number, number>(); // productId -> total quantity sold
+    const productSalesMap = new Map<string, number>(); // productId (as string) -> total quantity sold
 
     orders.forEach((order) => {
       const orderedItems = order.orderedItems as {
-        [productId: number]: number;
-      }; // Assuming { productId: quantity }
+        [productId: string]: number;
+      }; // Product IDs are strings
 
       for (const productId in orderedItems) {
-        const currentSales = productSalesMap.get(+productId) || 0;
-        productSalesMap.set(
-          +productId,
-          currentSales + orderedItems[+productId],
-        );
+        const currentSales = productSalesMap.get(productId) || 0;
+        productSalesMap.set(productId, currentSales + orderedItems[productId]);
       }
     });
 
