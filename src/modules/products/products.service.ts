@@ -6,7 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import stringSimilarity from 'string-similarity';
+import { stringSimilarity } from 'string-similarity';
 
 @Injectable()
 export class ProductsService {
