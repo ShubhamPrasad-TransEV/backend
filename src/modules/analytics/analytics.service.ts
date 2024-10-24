@@ -83,22 +83,30 @@ export class AnalyticsService {
     const monthlyRevenueMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
       const orderMonth = startOfMonth(order.orderedAt).toISOString();
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId, quantity } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: {
+            id: true,
             sellerId: true,
             price: true,
           },
         });
 
         if (product && product.sellerId === sellerId) {
-          const quantity = orderedItems[productId];
           const revenue = product.price * quantity;
 
           const currentRevenue = monthlyRevenueMap.get(orderMonth) || 0;
@@ -133,13 +141,20 @@ export class AnalyticsService {
 
     const uniqueUserIds = new Set<number>();
 
-    // Iterate over all orders and filter based on sellerId in orderedItems
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -238,13 +253,20 @@ export class AnalyticsService {
 
     let count = 0;
 
-    // Check each product's sellerId in the ordered items
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -252,7 +274,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           count++;
-          break; // Stop checking the rest of the items if one matches the seller
+          break;
         }
       }
     }
@@ -297,13 +319,20 @@ export class AnalyticsService {
 
     let orderCount = 0;
 
-    // Check each product's sellerId in the ordered items
     for (const order of weeklyOrders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -311,7 +340,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           orderCount++;
-          break; // Stop checking if one product matches the seller
+          break;
         }
       }
     }
@@ -342,12 +371,20 @@ export class AnalyticsService {
     const monthlyFulfilledMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
       const orderMonth = startOfMonth(order.orderedAt).toISOString();
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -356,7 +393,7 @@ export class AnalyticsService {
         if (product && product.sellerId === sellerId) {
           const currentCount = monthlyFulfilledMap.get(orderMonth) || 0;
           monthlyFulfilledMap.set(orderMonth, currentCount + 1);
-          break; // Stop checking once a match is found for the seller
+          break;
         }
       }
     }
@@ -388,11 +425,19 @@ export class AnalyticsService {
     const filteredOrders = [];
 
     for (const order of recentOrders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -400,7 +445,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           filteredOrders.push(order);
-          break; // Add the order to the list if one item matches the seller
+          break;
         }
       }
     }
@@ -430,11 +475,19 @@ export class AnalyticsService {
     let totalRevenue = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId, quantity } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: {
@@ -444,7 +497,6 @@ export class AnalyticsService {
         });
 
         if (product && product.sellerId === sellerId) {
-          const quantity = orderedItems[productId];
           totalRevenue += product.price * quantity;
         }
       }
@@ -496,11 +548,19 @@ export class AnalyticsService {
     let fulfilledCount = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -508,7 +568,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           fulfilledCount++;
-          break; // Stop checking once a match is found for the seller
+          break;
         }
       }
     }
@@ -538,11 +598,19 @@ export class AnalyticsService {
     let cancelledCount = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -550,7 +618,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           cancelledCount++;
-          break; // Stop checking once a match is found for the seller
+          break;
         }
       }
     }
@@ -579,11 +647,19 @@ export class AnalyticsService {
     const productRevenueMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId, quantity } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: {
@@ -594,7 +670,6 @@ export class AnalyticsService {
         });
 
         if (product && product.sellerId === sellerId) {
-          const quantity = orderedItems[productId];
           const productRevenue = product.price * quantity;
           const currentRevenue = productRevenueMap.get(product.id) || 0;
           productRevenueMap.set(product.id, currentRevenue + productRevenue);
@@ -630,11 +705,19 @@ export class AnalyticsService {
     const productSalesMap = new Map<string, number>();
 
     orders.forEach(async (order) => {
-      const orderedItems = order.orderedItems as {
-        [productId: string]: number;
-      };
+      const orderedItems = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
 
-      for (const productId in orderedItems) {
+      for (const orderedItem of orderedItems) {
+        const { productId, quantity } = orderedItem;
+
+        if (!productId) {
+          console.error('Missing productId for orderedItem:', orderedItem);
+          continue;
+        }
+
         const product = await this.prisma.product.findUnique({
           where: { id: productId },
           select: { sellerId: true },
@@ -642,10 +725,7 @@ export class AnalyticsService {
 
         if (product && product.sellerId === sellerId) {
           const currentSales = productSalesMap.get(productId) || 0;
-          productSalesMap.set(
-            productId,
-            currentSales + orderedItems[productId],
-          );
+          productSalesMap.set(productId, currentSales + quantity);
         }
       }
     });

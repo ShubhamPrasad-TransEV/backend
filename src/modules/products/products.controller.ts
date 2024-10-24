@@ -23,6 +23,7 @@ import { GetVarietiesDto } from './dto/products.varieties.dto';
 import { multerConfig } from './multer.config';
 import { Response } from 'express';
 import { join } from 'path';
+import { readFileSync } from 'fs';
 
 @Controller('products')
 export class ProductsController {
@@ -66,10 +67,7 @@ export class ProductsController {
   }
 
   @Get('images/product/:productId')
-  async getImagesByProductId(
-    @Param('productId') productId: string,
-    @Res() res: Response,
-  ) {
+  async getImagesByProductId(@Param('productId') productId: string) {
     try {
       const images = await this.productsService.getImagesByProductId(productId);
 
@@ -79,13 +77,22 @@ export class ProductsController {
         );
       }
 
-      const imagePaths = images.map((image) => ({
-        filename: image.filename,
-        url: `${process.env.BASE_URL}/products/images/${image.filename}`,
-        path: image.path,
-      }));
+      const base64Images = images.map((image) => {
+        // Read the image file
+        const imagePath = join(process.cwd(), image.path);
+        const imageBuffer = readFileSync(imagePath);
 
-      return res.json(imagePaths);
+        // Convert the image buffer to base64
+        const base64 = imageBuffer.toString('base64');
+
+        // Return the base64-encoded image along with the filename
+        return {
+          filename: image.filename,
+          base64: `data:image/${image.filename.split('.').pop()};base64,${base64}`,
+        };
+      });
+
+      return base64Images;
     } catch (error) {
       throw new BadRequestException(
         `Failed to retrieve images for product ID ${productId}: ${error.message}`,
