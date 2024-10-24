@@ -3,7 +3,7 @@ import {
   IsOptional,
   IsString,
   IsNumber,
-  IsJSON,
+  IsObject,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -26,10 +26,20 @@ export class UpdateProductDto {
 
   @ApiProperty({ type: 'object', required: false })
   @IsOptional()
-  @IsJSON()
-  productDetails?: object; // Optional field for product details
+  @IsObject()
+  productDetails?: object;
 
   @ApiProperty({ type: 'array', items: { type: 'string' } })
   @IsOptional()
   images?: Express.Multer.File[];
+
+  @ApiProperty({
+    example: '+50',
+    description:
+      'Can be a positive or negative number as a string for incremental update (e.g., +50, -50) or a direct new value',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  quantity?: string;
 }

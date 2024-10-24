@@ -57,7 +57,7 @@ export class RegisterController {
     if (!seller) {
       throw new NotFoundException(`Seller with ID ${id} not found`);
     }
-    return seller;
+    return seller.user;
   }
 
   // Fetch user profile by ID

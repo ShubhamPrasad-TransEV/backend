@@ -6,70 +6,11 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { OrderedItemDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
-
-  // Helper method to check if products exist in the database
-  private async validateProducts(
-    orderedItems: Record<string, number>,
-  ): Promise<string[]> {
-    const productIds = Object.keys(orderedItems);
-
-    // Fetch products that exist in the database
-    const existingProducts = await this.prisma.product.findMany({
-      where: {
-        id: { in: productIds },
-      },
-      select: { id: true },
-    });
-
-    // Extract existing product IDs
-    const existingProductIds = existingProducts.map((product) => product.id);
-
-    // Find product IDs that are missing
-    const missingProductIds = productIds.filter(
-      (id) => !existingProductIds.includes(id),
-    );
-
-    return missingProductIds;
-  }
-
-  // Create a new order
-  async create(createOrderDto: CreateOrderDto) {
-    // Validate if all products in orderedItems exist
-    const missingProductIds = await this.validateProducts(
-      createOrderDto.orderedItems,
-    );
-
-    if (missingProductIds.length > 0) {
-      throw new BadRequestException(
-        `The following product IDs are not valid: ${missingProductIds.join(', ')}`,
-      );
-    }
-
-    // Create the order if all products are valid
-    return this.prisma.order.create({
-      data: {
-        user: {
-          connect: { id: createOrderDto.userId },
-        },
-        orderedItems: createOrderDto.orderedItems,
-        shipmentCompany: createOrderDto.shipmentCompany,
-        shipmentRequestStatus: createOrderDto.shipmentRequestStatus,
-        shipmentStatus: createOrderDto.shipmentStatus,
-        invoice: createOrderDto.invoice,
-        refundStatus: createOrderDto.refundStatus,
-        refundDetails: createOrderDto.refundDetails,
-        shippingCost: createOrderDto.shippingCost,
-        orderingStatus: createOrderDto.orderingStatus,
-        orderFulfillmentStatus: createOrderDto.orderFulfillmentStatus,
-        prePayment: createOrderDto.prePayment,
-        paymentStatus: createOrderDto.paymentStatus,
-      },
-    });
-  }
 
   // Get all orders
   async findAll() {
@@ -96,9 +37,85 @@ export class OrderService {
     return order;
   }
 
-  // Update an existing order
+  // Helper method to check if products exist
+  private async validateProducts(
+    orderedItems: CreateOrderDto['orderedItems'],
+  ): Promise<string[]> {
+    const productIds = orderedItems.map((item) => item.productId);
+
+    // Fetch products that exist
+    const existingProducts = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true },
+    });
+
+    const existingProductIds = existingProducts.map((product) => product.id);
+    const missingProductIds = productIds.filter(
+      (id) => !existingProductIds.includes(id),
+    );
+
+    return missingProductIds;
+  }
+
+  // Create an order
+  async create(createOrderDto: CreateOrderDto) {
+    const missingProductIds = await this.validateProducts(
+      createOrderDto.orderedItems,
+    );
+
+    if (missingProductIds.length > 0) {
+      throw new BadRequestException(
+        `Invalid product IDs: ${missingProductIds.join(', ')}`,
+      );
+    }
+
+    const orderItemsWithUnits = [];
+
+    for (const orderedItem of createOrderDto.orderedItems) {
+      const { productId, quantity } = orderedItem;
+
+      const availableUnits = await this.prisma.unit.findMany({
+        where: { productId },
+        take: quantity,
+      });
+
+      if (availableUnits.length < quantity) {
+        throw new BadRequestException(
+          `Not enough units for product ID: ${productId}`,
+        );
+      }
+
+      const assignedUnits = availableUnits.map((unit) => unit.id);
+      orderItemsWithUnits.push({ productId, quantity, assignedUnits });
+
+      // Update product quantity
+      await this.prisma.product.update({
+        where: { id: productId },
+        data: { quantity: { decrement: quantity } },
+      });
+
+      // Delete assigned units
+      await this.prisma.unit.deleteMany({
+        where: { id: { in: assignedUnits } },
+      });
+    }
+
+    const order = await this.prisma.order.create({
+      data: {
+        user: { connect: { id: createOrderDto.userId } },
+        orderedItems: JSON.stringify(orderItemsWithUnits), // Serialize array as JSON
+        shipmentCompany: createOrderDto.shipmentCompany,
+        shipmentStatus: createOrderDto.shipmentStatus,
+        paymentStatus: createOrderDto.paymentStatus,
+      },
+    });
+
+    // Return the full order object along with the order ID
+    return order;
+  }
+
+  // Update an order
   async update(id: number, updateOrderDto: UpdateOrderDto) {
-    // Find the order to ensure it exists before updating
     const existingOrder = await this.prisma.order.findUnique({ where: { id } });
 
     if (!existingOrder) {
@@ -106,23 +123,50 @@ export class OrderService {
     }
 
     if (updateOrderDto.orderedItems) {
-      // Validate if all products in orderedItems exist
       const missingProductIds = await this.validateProducts(
         updateOrderDto.orderedItems,
       );
 
       if (missingProductIds.length > 0) {
         throw new BadRequestException(
-          `The following product IDs are not valid: ${missingProductIds.join(', ')}`,
+          `Invalid product IDs: ${missingProductIds.join(', ')}`,
         );
+      }
+
+      for (const orderedItem of updateOrderDto.orderedItems) {
+        const { productId, quantity } = orderedItem;
+
+        const availableUnits = await this.prisma.unit.findMany({
+          where: { productId },
+          take: quantity,
+        });
+
+        if (availableUnits.length < quantity) {
+          throw new BadRequestException(
+            `Not enough units for product ID: ${productId}`,
+          );
+        }
+
+        const assignedUnits = availableUnits.map((unit) => unit.id);
+        orderedItem.assignedUnits = assignedUnits;
+
+        // Update product quantity
+        await this.prisma.product.update({
+          where: { id: productId },
+          data: { quantity: { decrement: quantity } },
+        });
+
+        // Delete assigned units
+        await this.prisma.unit.deleteMany({
+          where: { id: { in: assignedUnits } },
+        });
       }
     }
 
-    // Update the order
     return this.prisma.order.update({
       where: { id },
       data: {
-        orderedItems: updateOrderDto.orderedItems,
+        orderedItems: JSON.stringify(updateOrderDto.orderedItems), // Serialize array as JSON
         shipmentCompany: updateOrderDto.shipmentCompany,
         shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
         shipmentStatus: updateOrderDto.shipmentStatus,
@@ -140,11 +184,34 @@ export class OrderService {
 
   // Delete an order
   async remove(id: number) {
-    // Check if the order exists before attempting to delete
-    const order = await this.prisma.order.findUnique({ where: { id } });
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+    });
 
     if (!order) {
       throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    const orderItems: OrderedItemDto[] = JSON.parse(
+      order.orderedItems as string,
+    );
+
+    for (const item of orderItems) {
+      const { productId, assignedUnits } = item;
+
+      // Restore units
+      await this.prisma.unit.createMany({
+        data: assignedUnits.map((unitId) => ({
+          id: unitId,
+          productId: productId,
+        })),
+      });
+
+      // Update product quantity
+      await this.prisma.product.update({
+        where: { id: productId },
+        data: { quantity: { increment: assignedUnits.length } },
+      });
     }
 
     return this.prisma.order.delete({

@@ -3,9 +3,35 @@ import {
   IsOptional,
   IsString,
   IsBoolean,
-  IsObject,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+export class OrderedItemDto {
+  @ApiProperty({
+    example: 'product-uuid-1',
+    description: 'The ID of the product being ordered',
+  })
+  @IsString()
+  productId: string;
+
+  @ApiProperty({
+    example: 2,
+    description: 'The quantity of the product being ordered',
+  })
+  @IsNumber()
+  quantity: number;
+
+  @ApiProperty({
+    example: ['unit-uuid-1', 'unit-uuid-2'],
+    description: 'The assigned unit IDs for the product',
+  })
+  @IsArray()
+  @IsString({ each: true })
+  assignedUnits: string[];
+}
 
 export class CreateOrderDto {
   @ApiProperty({
@@ -16,14 +42,13 @@ export class CreateOrderDto {
   userId: number;
 
   @ApiProperty({
-    example: {
-      'product-uuid-1': 2,
-      'product-uuid-2': 1,
-    },
-    description: 'Products and their quantities in the order',
+    description:
+      'List of ordered items including productId, quantity, and assignedUnits',
+    type: [OrderedItemDto],
   })
-  @IsObject()
-  orderedItems: Record<string, number>;
+  @ValidateNested({ each: true })
+  @Type(() => OrderedItemDto)
+  orderedItems: OrderedItemDto[];
 
   @ApiProperty({
     example: 'FedEx',

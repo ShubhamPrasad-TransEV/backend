@@ -61,7 +61,7 @@ export class RegisterService {
     return this.prisma.user.findMany({ include: { role: true } });
   }
 
-  // Update user details
+  // Update user details and create Seller entry if role is seller
   async updateUser(updateUserDto: UpdateUserDto) {
     const {
       id,
@@ -107,27 +107,42 @@ export class RegisterService {
       data: dataToUpdate,
     });
 
+    // If the user becomes a seller, create a seller entry
+    if (roleId === 3 && !user.isSeller) {
+      await this.prisma.seller.create({
+        data: {
+          id: updatedUser.id, // Make the seller's id the same as user's id
+        },
+      });
+    }
+
+    // If the user is no longer a seller, remove the seller entry
+    if (user.isSeller && roleId !== 3) {
+      await this.prisma.seller.delete({
+        where: {
+          id: updatedUser.id, // The seller and user share the same id
+        },
+      });
+    }
+
     return updatedUser;
   }
 
   // Fetch all sellers
   async getAllSellers() {
-    return this.prisma.user.findMany({
-      where: { role: { name: 'Seller' } },
-      include: { role: true },
+    return this.prisma.seller.findMany({
+      include: { user: true }, // Include the user information
     });
   }
 
   // Get a seller by ID
   async getSellerById(id: number) {
-    // Ensure id is an integer
-    const sellerId = parseInt(id.toString(), 10);
-    const seller = await this.prisma.user.findUnique({
-      where: { id: sellerId },
-      include: { role: true },
+    const seller = await this.prisma.seller.findUnique({
+      where: { id },
+      include: { user: true }, // Include user info related to seller
     });
 
-    if (!seller || seller.role.name !== 'Seller') {
+    if (!seller) {
       throw new NotFoundException('Seller not found');
     }
 
@@ -141,20 +156,31 @@ export class RegisterService {
       throw new NotFoundException('User not found');
     }
 
+    // Delete seller if the user is a seller
+    if (user.isSeller) {
+      await this.prisma.seller.delete({
+        where: { id: userId }, // Seller id is the same as user id
+      });
+    }
+
     await this.prisma.user.delete({ where: { id: userId } });
     return { message: 'User deleted successfully' };
   }
 
   // Delete a seller by ID
   async deleteSeller(sellerId: number) {
-    const seller = await this.prisma.user.findUnique({
+    const seller = await this.prisma.seller.findUnique({
       where: { id: sellerId },
     });
-    if (!seller || !seller.isSeller) {
+    if (!seller) {
       throw new NotFoundException('Seller not found');
     }
 
-    await this.prisma.user.delete({ where: { id: sellerId } });
+    // Delete seller entry, user deletion can be handled separately if needed
+    await this.prisma.seller.delete({
+      where: { id: sellerId },
+    });
+
     return { message: 'Seller deleted successfully' };
   }
 
@@ -167,11 +193,10 @@ export class RegisterService {
       throw new BadRequestException('Seller ID is required');
     }
 
-    const sellerId = parseInt(id.toString(), 10);
-    const seller = await this.prisma.user.findUnique({
-      where: { id: sellerId },
+    const seller = await this.prisma.seller.findUnique({
+      where: { id },
     });
-    if (!seller || !seller.isSeller) {
+    if (!seller) {
       throw new NotFoundException('Seller not found');
     }
 
@@ -180,8 +205,8 @@ export class RegisterService {
       logo: logo ?? undefined,
     };
 
-    const updatedSeller = await this.prisma.user.update({
-      where: { id: sellerId },
+    const updatedSeller = await this.prisma.seller.update({
+      where: { id },
       data: dataToUpdate,
     });
 
