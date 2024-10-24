@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `order` ADD COLUMN `totalItemCost` DOUBLE NOT NULL DEFAULT 0.0,
-    ADD COLUMN `totalOrderCost` DOUBLE NOT NULL DEFAULT 0.0;
