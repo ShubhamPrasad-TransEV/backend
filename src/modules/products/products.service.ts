@@ -324,6 +324,21 @@ export class ProductsService {
     });
   }
 
+  async getImagesByProductId(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        images: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${productId} not found`);
+    }
+
+    return product.images; // Return the associated images
+  }
+
   async searchProducts(
     term: string,
   ): Promise<{ id: string; name: string; similarity: number }[]> {
