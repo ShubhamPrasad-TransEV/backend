@@ -331,11 +331,11 @@ export class ProductsService {
         images: true,
       },
     });
-  
+
     if (!product) {
       throw new NotFoundException(`Product with ID ${productId} not found`);
     }
-  
+
     return product.images; // Return the associated images
   }
 

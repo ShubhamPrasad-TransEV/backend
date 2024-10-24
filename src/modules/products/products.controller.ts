@@ -68,16 +68,18 @@ export class ProductsController {
   @Get('images/product/:productId')
   async getImagesByProductId(
     @Param('productId') productId: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
       const images = await this.productsService.getImagesByProductId(productId);
 
       if (!images || images.length === 0) {
-        throw new NotFoundException(`No images found for product with ID ${productId}`);
+        throw new NotFoundException(
+          `No images found for product with ID ${productId}`,
+        );
       }
 
-      const imagePaths = images.map(image => ({
+      const imagePaths = images.map((image) => ({
         filename: image.filename,
         url: `${process.env.BASE_URL}/products/images/${image.filename}`,
         path: image.path,
@@ -85,7 +87,9 @@ export class ProductsController {
 
       return res.json(imagePaths);
     } catch (error) {
-      throw new BadRequestException(`Failed to retrieve images for product ID ${productId}: ${error.message}`);
+      throw new BadRequestException(
+        `Failed to retrieve images for product ID ${productId}: ${error.message}`,
+      );
     }
   }
 
