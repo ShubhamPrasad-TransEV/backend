@@ -142,88 +142,34 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    let totalItemCost = 0;
-    const orderItemsWithUnits: OrderedItemDto[] = [];
+    // Remove undefined fields from the updateOrderDto
+    const updateData = Object.fromEntries(
+      Object.entries(updateOrderDto).filter(
+        ([_, value]) => value !== undefined,
+      ),
+    );
 
+    // Prevent updating `orderedItems` or core properties
     if (updateOrderDto.orderedItems) {
-      const missingProductIds = await this.validateProducts(
-        updateOrderDto.orderedItems,
+      throw new BadRequestException(
+        'You cannot modify the ordered items of an order.',
       );
-
-      if (missingProductIds.length > 0) {
-        throw new BadRequestException(
-          `Invalid product IDs: ${missingProductIds.join(', ')}`,
-        );
-      }
-
-      for (const orderedItem of updateOrderDto.orderedItems) {
-        const { productId, quantity } = orderedItem;
-
-        // Fetch the product price
-        const product = await this.prisma.product.findUnique({
-          where: { id: productId },
-          select: { price: true },
-        });
-
-        if (!product) {
-          throw new BadRequestException(
-            `Product with ID ${productId} not found`,
-          );
-        }
-
-        const availableUnits = await this.prisma.unit.findMany({
-          where: { productId },
-          take: quantity,
-        });
-
-        if (availableUnits.length < quantity) {
-          throw new BadRequestException(
-            `Not enough units for product ID: ${productId}`,
-          );
-        }
-
-        const assignedUnits = availableUnits.map((unit) => unit.id);
-        orderedItem.assignedUnits = assignedUnits;
-
-        // Update product quantity
-        await this.prisma.product.update({
-          where: { id: productId },
-          data: { quantity: { decrement: quantity } },
-        });
-
-        // Delete assigned units
-        await this.prisma.unit.deleteMany({
-          where: { id: { in: assignedUnits } },
-        });
-
-        // Add product to order items
-        orderItemsWithUnits.push({ productId, quantity, assignedUnits });
-
-        // Calculate total item cost for this product (price * quantity)
-        totalItemCost += product.price * quantity;
-      }
     }
 
-    // Calculate totalOrderCost = totalItemCost + shippingCost
-    const totalOrderCost = totalItemCost + (updateOrderDto.shippingCost || 0);
+    // Ensure that core fields are not updated (like `orderedItems` and `id`)
+    delete updateData.orderedItems; // Disallow updates to orderedItems
+    delete updateData.id; // Disallow updates to the ID
+
+    // Calculate the total cost if shippingCost is provided
+    const totalOrderCost =
+      existingOrder.totalItemCost +
+      (updateOrderDto.shippingCost || existingOrder.shippingCost);
 
     return this.prisma.order.update({
       where: { id },
       data: {
-        orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue,
-        shipmentCompany: updateOrderDto.shipmentCompany,
-        shipmentRequestStatus: updateOrderDto.shipmentRequestStatus,
-        shipmentStatus: updateOrderDto.shipmentStatus,
-        invoice: updateOrderDto.invoice,
-        refundStatus: updateOrderDto.refundStatus,
-        refundDetails: updateOrderDto.refundDetails,
-        shippingCost: updateOrderDto.shippingCost,
-        orderingStatus: updateOrderDto.orderingStatus,
-        orderFulfillmentStatus: updateOrderDto.orderFulfillmentStatus,
-        prePayment: updateOrderDto.prePayment,
-        paymentStatus: updateOrderDto.paymentStatus,
-        totalItemCost: totalItemCost, // Update total item cost
-        totalOrderCost: totalOrderCost, // Update total order cost
+        ...updateData,
+        totalOrderCost, // Update the totalOrderCost if shippingCost changes
       },
     });
   }
