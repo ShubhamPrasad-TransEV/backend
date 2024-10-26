@@ -9,6 +9,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import stringSimilarity from 'string-similarity';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as mime from 'mime-types'; // Import mime-types to get the MIME type based on file extension
 
 @Injectable()
 export class ProductsService {
@@ -171,6 +172,7 @@ export class ProductsService {
 
     const imagesWithBase64 = product.images.map((image) => {
       const imagePath = path.resolve(image.path);
+      const mimeType = mime.lookup(imagePath) || 'image/jpeg';
       const base64Data = fs.existsSync(imagePath)
         ? fs.readFileSync(imagePath).toString('base64')
         : null;
@@ -178,7 +180,7 @@ export class ProductsService {
       return {
         filename: image.filename,
         url: `${process.env.BASE_URL}/products/images/${image.filename}`,
-        base64: base64Data,
+        base64: base64Data ? `data:${mimeType};base64,${base64Data}` : null,
       };
     });
 
@@ -303,6 +305,7 @@ export class ProductsService {
 
     const imagesWithBase64 = updatedProduct.images.map((image) => {
       const imagePath = path.resolve(image.path);
+      const mimeType = mime.lookup(imagePath) || 'image/jpeg';
       const base64Data = fs.existsSync(imagePath)
         ? fs.readFileSync(imagePath).toString('base64')
         : null;
@@ -310,7 +313,7 @@ export class ProductsService {
       return {
         filename: image.filename,
         url: `${process.env.BASE_URL}/products/images/${image.filename}`,
-        base64: base64Data,
+        base64: base64Data ? `data:${mimeType};base64,${base64Data}` : null,
       };
     });
 
