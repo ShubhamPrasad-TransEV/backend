@@ -6,13 +6,9 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-<<<<<<< HEAD
-import { stringSimilarity } from 'string-similarity';
-=======
 import stringSimilarity from 'string-similarity';
 import * as fs from 'fs';
 import * as path from 'path';
->>>>>>> 1d9a804d5372924eb507ab52cc4f4ec76095d97f
 
 @Injectable()
 export class ProductsService {
