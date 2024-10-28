@@ -181,7 +181,7 @@ model AdminSettings {
 }
 
 model OperationalSettings {
-  adminId               Int     @unique // This ensures each admin can have only one operational settings entry
+  adminId               Int   @id  @unique // This ensures each admin can have only one operational settings entry
   admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
   timeZone              String
   currency              String
@@ -196,7 +196,7 @@ model OperationalSettings {
 }
 
 model Wishlist {
-  userId    Int
+  userId    Int     
   productId String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
