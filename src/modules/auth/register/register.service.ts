@@ -130,9 +130,14 @@ export class RegisterService {
 
   // Fetch all sellers
   async getAllSellers() {
-    return this.prisma.seller.findMany({
-      include: { user: true }, // Include the user information
+    const userDetails = await this.prisma.seller.findMany({
+      select: {
+        user: true, // Select only the user relation
+      },
     });
+  
+    // Map to return only the user details from each result
+    return userDetails.map((seller) => seller.user);
   }
 
   // Get a seller by ID
