@@ -135,7 +135,7 @@ export class RegisterService {
         user: true, // Select only the user relation
       },
     });
-  
+
     // Map to return only the user details from each result
     return userDetails.map((seller) => seller.user);
   }
