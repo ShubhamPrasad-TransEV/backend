@@ -1,4 +1,3 @@
-// create-product.dto.ts
 import {
   IsNotEmpty,
   IsNumber,
@@ -39,8 +38,13 @@ export class CreateProductDto {
   @IsNotEmpty({ each: true })
   categories: string[] | string;
 
-  @ApiProperty({ type: 'object', required: false }) // Swagger documentation
+  @ApiProperty({ type: 'object', required: false })
   @IsOptional()
   @IsJSON()
-  productDetails?: object; // Optional field for product details
+  productDetails?: object;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsNotEmpty()
+  quantity: number;
 }
