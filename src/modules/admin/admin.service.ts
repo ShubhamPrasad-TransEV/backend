@@ -52,9 +52,8 @@ export class AdminService {
         email,
         name,
         roleId: adminRole.id,
-        isSeller: false, // Admins are not sellers by default
+        isSeller: false,
         companyName: createAdminDto.companyName,
-        // description: createAdminDto.description,
         contactPerson: createAdminDto.contactPerson,
         phoneNumber: createAdminDto.phoneNumber,
         address: createAdminDto.address,
@@ -68,16 +67,23 @@ export class AdminService {
       },
     });
 
+    // Automatically create an entry in the Seller table for the admin
+    await this.prisma.seller.create({
+      data: {
+        id: user.id, // Use the same ID as the user ID for the seller
+      },
+    });
+
     return user;
   }
 
   // Method to get an admin by ID
   async getAdminById(id: number) {
     const admin = await this.prisma.admins.findUnique({
-      where: { adminId: id }, // Querying the Admins table using adminId
+      where: { adminId: id },
       include: {
         admin: {
-          include: { role: true }, // Including related User and role information
+          include: { role: true },
         },
       },
     });
@@ -86,9 +92,8 @@ export class AdminService {
       throw new NotFoundException(`Admin with ID ${id} not found`);
     }
 
-    // Transform the result to match the expected response format
     const result = {
-      id: admin.admin.id, // Use admin's user id here
+      id: admin.admin.id,
       username: admin.admin.username,
       email: admin.admin.email,
       password: admin.admin.password,
@@ -97,7 +102,6 @@ export class AdminService {
       name: admin.admin.name,
       phoneNumber: admin.admin.phoneNumber,
       companyName: admin.admin.companyName,
-      // description: admin.admin.description,
       contactPerson: admin.admin.contactPerson,
       address: admin.admin.address,
       role: {
@@ -107,5 +111,34 @@ export class AdminService {
     };
 
     return result;
+  }
+
+  // Method to delete an admin by ID
+  async deleteAdmin(adminId: number) {
+    // Find the admin
+    const admin = await this.prisma.admins.findUnique({
+      where: { adminId },
+    });
+
+    if (!admin) {
+      throw new NotFoundException(`Admin with ID ${adminId} not found`);
+    }
+
+    // Delete the seller entry associated with the admin
+    await this.prisma.seller.delete({
+      where: { id: adminId },
+    });
+
+    // Delete the admin entry
+    await this.prisma.admins.delete({
+      where: { adminId },
+    });
+
+    // Delete the user entry associated with the admin
+    await this.prisma.user.delete({
+      where: { id: adminId },
+    });
+
+    return { message: 'Admin and associated seller deleted successfully' };
   }
 }

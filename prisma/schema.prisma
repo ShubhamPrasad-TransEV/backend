@@ -35,7 +35,7 @@ model User {
 
 model Seller {
   id            Int            @id @default(autoincrement())
-  user          User           @relation(fields: [id], references: [id])
+  user          User           @relation(fields: [id], references: [id], onDelete: Cascade)
   aboutUs       String?
   logo          String?
   products      Product[] // Products are now tied to Sellers, not Users
