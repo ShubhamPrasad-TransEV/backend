@@ -84,6 +84,8 @@ CREATE TABLE `Order` (
     `refundStatus` VARCHAR(191) NOT NULL DEFAULT 'No Refund',
     `refundDetails` VARCHAR(191) NULL,
     `shippingCost` DOUBLE NOT NULL DEFAULT 0.0,
+    `totalOrderCost` DOUBLE NOT NULL DEFAULT 0.0,
+    `totalItemCost` DOUBLE NOT NULL DEFAULT 0.0,
     `orderingStatus` VARCHAR(191) NOT NULL DEFAULT 'Pending',
     `orderFulfillmentStatus` VARCHAR(191) NOT NULL DEFAULT 'Unfulfilled',
     `prePayment` BOOLEAN NOT NULL DEFAULT false,
@@ -191,7 +193,8 @@ CREATE TABLE `OperationalSettings` (
     `minimumOrderAmount` DOUBLE NOT NULL,
     `backupFrequency` VARCHAR(191) NULL DEFAULT '',
 
-    UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`)
+    UNIQUE INDEX `OperationalSettings_adminId_key`(`adminId`),
+    PRIMARY KEY (`adminId`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -207,6 +210,7 @@ CREATE TABLE `_CategoryParentChild` (
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
 
+    PRIMARY KEY (`A`, `B`),  -- Add composite primary key
     UNIQUE INDEX `_CategoryParentChild_AB_unique`(`A`, `B`),
     INDEX `_CategoryParentChild_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -216,6 +220,7 @@ CREATE TABLE `_ProductCategories` (
     `A` INTEGER NOT NULL,
     `B` VARCHAR(191) NOT NULL,
 
+    PRIMARY KEY (`A`, `B`),  -- Add composite primary key
     UNIQUE INDEX `_ProductCategories_AB_unique`(`A`, `B`),
     INDEX `_ProductCategories_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -224,7 +229,7 @@ CREATE TABLE `_ProductCategories` (
 ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Seller` ADD CONSTRAINT `Seller_id_fkey` FOREIGN KEY (`id`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Seller` ADD CONSTRAINT `Seller_id_fkey` FOREIGN KEY (`id`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Admins` ADD CONSTRAINT `Admins_adminId_fkey` FOREIGN KEY (`adminId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
