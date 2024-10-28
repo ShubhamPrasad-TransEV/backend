@@ -85,7 +85,7 @@ export class RegisterService {
     // Prepare the update object
     const dataToUpdate: any = {
       username: username ?? undefined,
-      email: email ?? undefined, // Ensure email is included and updated if provided
+      email: email ?? undefined,
       isSeller: roleId === 3 ? true : undefined,
       companyName: companyName ?? undefined,
       contactPerson: contactPerson ?? undefined,
@@ -111,7 +111,7 @@ export class RegisterService {
     if (roleId === 3 && !user.isSeller) {
       await this.prisma.seller.create({
         data: {
-          id: updatedUser.id, // Make the seller's id the same as user's id
+          id: updatedUser.id,
         },
       });
     }
@@ -120,7 +120,7 @@ export class RegisterService {
     if (user.isSeller && roleId !== 3) {
       await this.prisma.seller.delete({
         where: {
-          id: updatedUser.id, // The seller and user share the same id
+          id: updatedUser.id,
         },
       });
     }
@@ -128,11 +128,18 @@ export class RegisterService {
     return updatedUser;
   }
 
-  // Fetch all sellers
+  // Fetch all sellers excluding those with an admin role
   async getAllSellers() {
     const userDetails = await this.prisma.seller.findMany({
+      where: {
+        user: {
+          role: {
+            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+          },
+        },
+      },
       select: {
-        user: true, // Select only the user relation
+        user: true,
       },
     });
 
@@ -140,15 +147,22 @@ export class RegisterService {
     return userDetails.map((seller) => seller.user);
   }
 
-  // Get a seller by ID
+  // Get a seller by ID, excluding those with an admin role
   async getSellerById(id: number) {
-    const seller = await this.prisma.seller.findUnique({
-      where: { id },
-      include: { user: true }, // Include user info related to seller
+    const seller = await this.prisma.seller.findFirst({
+      where: {
+        id,
+        user: {
+          role: {
+            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+          },
+        },
+      },
+      include: { user: true },
     });
 
     if (!seller) {
-      throw new NotFoundException('Seller not found');
+      throw new NotFoundException('Seller not found or is an admin');
     }
 
     return seller;
@@ -164,7 +178,7 @@ export class RegisterService {
     // Delete seller if the user is a seller
     if (user.isSeller) {
       await this.prisma.seller.delete({
-        where: { id: userId }, // Seller id is the same as user id
+        where: { id: userId },
       });
     }
 
@@ -198,11 +212,19 @@ export class RegisterService {
       throw new BadRequestException('Seller ID is required');
     }
 
-    const seller = await this.prisma.seller.findUnique({
-      where: { id },
+    const seller = await this.prisma.seller.findFirst({
+      where: {
+        id,
+        user: {
+          role: {
+            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+          },
+        },
+      },
     });
+
     if (!seller) {
-      throw new NotFoundException('Seller not found');
+      throw new NotFoundException('Seller not found or is an admin');
     }
 
     const dataToUpdate = {
