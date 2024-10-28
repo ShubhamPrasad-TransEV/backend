@@ -6,6 +6,28 @@ import {
 } from './dto/analytics.dto';
 import { subMonths, endOfMonth, startOfMonth, subDays } from 'date-fns';
 
+interface OrderedItem {
+  productId: string;
+  quantity: number;
+}
+
+// Helper function to parse orderedItems safely
+function parseOrderedItems(orderedItems: unknown): OrderedItem[] {
+  if (typeof orderedItems === 'string') {
+    try {
+      return JSON.parse(orderedItems) as OrderedItem[];
+    } catch (error) {
+      console.error('Error parsing orderedItems:', error);
+      return [];
+    }
+  } else if (Array.isArray(orderedItems)) {
+    return orderedItems as OrderedItem[];
+  } else {
+    console.error('Invalid type for orderedItems:', orderedItems);
+    return [];
+  }
+}
+
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
@@ -27,7 +49,7 @@ export class AnalyticsService {
       case 'monthlyRevenue':
         return this.getMonthlyRevenue(sellerId, startDate, endDate);
       case 'totalUsers':
-        return this.getTotalUniqueUsers(sellerId);
+        return this.getTotalUniqueUsers(sellerId, startDate, endDate);
       case 'percentageOrdersLost':
         return this.getPercentageOrdersLost(sellerId, startDate, endDate);
       case 'percentageOrdersGained':
@@ -61,7 +83,6 @@ export class AnalyticsService {
     }
   }
 
-  // Monthly revenue
   private async getMonthlyRevenue(
     sellerId: number,
     startDate: Date,
@@ -76,39 +97,27 @@ export class AnalyticsService {
       },
       select: {
         orderedItems: true,
-        orderedAt: true, // For grouping by month
+        orderedAt: true,
       },
     });
 
     const monthlyRevenueMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
       const orderMonth = startOfMonth(order.orderedAt).toISOString();
 
-      for (const orderedItem of orderedItems) {
-        const { productId, quantity } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: {
-            id: true,
-            sellerId: true,
             price: true,
+            sellerId: true,
           },
         });
 
         if (product && product.sellerId === sellerId) {
-          const revenue = product.price * quantity;
-
+          const revenue = product.price * item.quantity;
           const currentRevenue = monthlyRevenueMap.get(orderMonth) || 0;
           monthlyRevenueMap.set(orderMonth, currentRevenue + revenue);
         }
@@ -125,43 +134,38 @@ export class AnalyticsService {
     return { data: result };
   }
 
-  // Total unique users
-  private async getTotalUniqueUsers(sellerId: number) {
+  private async getTotalUniqueUsers(
+    sellerId: number,
+    startDate?: Date,
+    endDate?: Date,
+  ) {
     const orders = await this.prisma.order.findMany({
       where: {
         orderedAt: {
-          gte: new Date('2000-01-01'), // Fetch all orders (no date restriction for this query)
+          gte: startDate || new Date('2000-01-01'),
+          lte: endDate || new Date(),
         },
       },
       select: {
         userId: true,
-        orderedItems: true, // We need orderedItems to filter by seller
+        orderedItems: true,
       },
     });
 
     const uniqueUserIds = new Set<number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
         if (product && product.sellerId === sellerId) {
           uniqueUserIds.add(order.userId);
+          break;
         }
       }
     }
@@ -169,7 +173,6 @@ export class AnalyticsService {
     return { data: { totalUsers: uniqueUserIds.size } };
   }
 
-  // Percentage of orders lost
   private async getPercentageOrdersLost(
     sellerId: number,
     startDate: Date,
@@ -184,7 +187,6 @@ export class AnalyticsService {
       endDate,
       'Cancelled',
     );
-
     const previousOrdersCount = await this.countOrdersByStatus(
       sellerId,
       previousStartDate,
@@ -200,7 +202,6 @@ export class AnalyticsService {
     return { data: { percentageOrdersLost: percentageLost } };
   }
 
-  // Percentage of orders gained
   private async getPercentageOrdersGained(
     sellerId: number,
     startDate: Date,
@@ -215,7 +216,6 @@ export class AnalyticsService {
       endDate,
       'Completed',
     );
-
     const previousOrdersCount = await this.countOrdersByStatus(
       sellerId,
       previousStartDate,
@@ -231,7 +231,6 @@ export class AnalyticsService {
     return { data: { percentageOrdersGained: percentageGained } };
   }
 
-  // Helper to count orders by status (Cancelled or Completed)
   private async countOrdersByStatus(
     sellerId: number,
     startDate: Date,
@@ -254,21 +253,11 @@ export class AnalyticsService {
     let count = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
@@ -292,7 +281,6 @@ export class AnalyticsService {
     return ((currentCount - previousCount) / previousCount) * 100;
   }
 
-  // Total products for seller
   private async getTotalProducts(sellerId: number) {
     const totalProducts = await this.prisma.product.count({
       where: { sellerId },
@@ -300,12 +288,11 @@ export class AnalyticsService {
     return { data: { totalProducts } };
   }
 
-  // Weekly orders
   private async getWeeklyOrders(sellerId: number) {
     const now = new Date();
     const startOfWeek = subDays(now, 7);
 
-    const weeklyOrders = await this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: {
         orderedAt: {
           gte: startOfWeek,
@@ -319,22 +306,12 @@ export class AnalyticsService {
 
     let orderCount = 0;
 
-    for (const order of weeklyOrders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+    for (const order of orders) {
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
@@ -348,7 +325,6 @@ export class AnalyticsService {
     return { data: { weeklyOrders: orderCount } };
   }
 
-  // Fulfilled orders (grouped by month, last 6 months if no date provided)
   private async getFulfilledOrders(
     sellerId: number,
     startDate: Date,
@@ -371,22 +347,12 @@ export class AnalyticsService {
     const monthlyFulfilledMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
       const orderMonth = startOfMonth(order.orderedAt).toISOString();
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
@@ -408,52 +374,29 @@ export class AnalyticsService {
     return { data: result };
   }
 
-  // Recent orders (last 10 orders)
   private async getRecentOrders(sellerId: number) {
-    const recentOrders = await this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: {},
       orderBy: {
         orderedAt: 'desc',
       },
       take: 10,
-      select: {
-        orderedItems: true,
-        orderedAt: true,
-      },
     });
 
-    const filteredOrders = [];
-
-    for (const order of recentOrders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
-
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+    const filteredOrders = orders.filter((order) => {
+      const orderedItems = parseOrderedItems(order.orderedItems);
+      return orderedItems.some(async (item) => {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
-
-        if (product && product.sellerId === sellerId) {
-          filteredOrders.push(order);
-          break;
-        }
-      }
-    }
+        return product?.sellerId === sellerId;
+      });
+    });
 
     return { data: { recentOrders: filteredOrders } };
   }
 
-  // Total revenue for a specific time period
   private async getTotalRevenue(
     sellerId: number,
     startDate: Date,
@@ -468,36 +411,25 @@ export class AnalyticsService {
       },
       select: {
         orderedItems: true,
-        totalItemCost: true,
       },
     });
 
     let totalRevenue = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId, quantity } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: {
-            sellerId: true,
             price: true,
+            sellerId: true,
           },
         });
 
         if (product && product.sellerId === sellerId) {
-          totalRevenue += product.price * quantity;
+          totalRevenue += product.price * item.quantity;
         }
       }
     }
@@ -505,7 +437,6 @@ export class AnalyticsService {
     return { data: { totalRevenue } };
   }
 
-  // Average monthly revenue
   private async getAverageMonthlyRevenue(
     sellerId: number,
     startDate: Date,
@@ -526,7 +457,6 @@ export class AnalyticsService {
     return { data: { averageMonthlyRevenue: averageRevenue } };
   }
 
-  // Total orders fulfilled
   private async getTotalOrdersFulfilled(
     sellerId: number,
     startDate: Date,
@@ -548,21 +478,11 @@ export class AnalyticsService {
     let fulfilledCount = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
@@ -576,7 +496,6 @@ export class AnalyticsService {
     return { data: { totalOrdersFulfilled: fulfilledCount } };
   }
 
-  // Total orders cancelled
   private async getTotalOrdersCancelled(
     sellerId: number,
     startDate: Date,
@@ -598,21 +517,11 @@ export class AnalyticsService {
     let cancelledCount = 0;
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
@@ -626,7 +535,6 @@ export class AnalyticsService {
     return { data: { totalOrdersCancelled: cancelledCount } };
   }
 
-  // Top 5 revenue-generating products (considering totalItemCost)
   private async getTopRevenueGeneratingProduct(
     sellerId: number,
     startDate: Date,
@@ -647,32 +555,23 @@ export class AnalyticsService {
     const productRevenueMap = new Map<string, number>();
 
     for (const order of orders) {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId, quantity } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: {
             sellerId: true,
             price: true,
-            id: true,
           },
         });
 
         if (product && product.sellerId === sellerId) {
-          const productRevenue = product.price * quantity;
-          const currentRevenue = productRevenueMap.get(product.id) || 0;
-          productRevenueMap.set(product.id, currentRevenue + productRevenue);
+          const revenue = product.price * item.quantity;
+          productRevenueMap.set(
+            item.productId,
+            (productRevenueMap.get(item.productId) || 0) + revenue,
+          );
         }
       }
     }
@@ -684,7 +583,6 @@ export class AnalyticsService {
     return { data: { topRevenueGeneratingProducts: sortedProducts } };
   }
 
-  // Top 5 selling products
   private async getTopSellingProduct(
     sellerId: number,
     startDate: Date,
@@ -704,31 +602,21 @@ export class AnalyticsService {
 
     const productSalesMap = new Map<string, number>();
 
-    orders.forEach(async (order) => {
-      const orderedItems = order.orderedItems as Array<{
-        productId: string;
-        quantity: number;
-      }>;
+    for (const order of orders) {
+      const orderedItems = parseOrderedItems(order.orderedItems);
 
-      for (const orderedItem of orderedItems) {
-        const { productId, quantity } = orderedItem;
-
-        if (!productId) {
-          console.error('Missing productId for orderedItem:', orderedItem);
-          continue;
-        }
-
+      for (const item of orderedItems) {
         const product = await this.prisma.product.findUnique({
-          where: { id: productId },
+          where: { id: item.productId },
           select: { sellerId: true },
         });
 
         if (product && product.sellerId === sellerId) {
-          const currentSales = productSalesMap.get(productId) || 0;
-          productSalesMap.set(productId, currentSales + quantity);
+          const currentSales = productSalesMap.get(item.productId) || 0;
+          productSalesMap.set(item.productId, currentSales + item.quantity);
         }
       }
-    });
+    }
 
     const sortedProducts = Array.from(productSalesMap.entries())
       .sort(([, salesA], [, salesB]) => salesB - salesA)
