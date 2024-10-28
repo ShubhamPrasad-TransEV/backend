@@ -104,10 +104,6 @@ export class AdminService {
       companyName: admin.admin.companyName,
       contactPerson: admin.admin.contactPerson,
       address: admin.admin.address,
-      role: {
-        id: admin.admin.role.id,
-        name: admin.admin.role.name,
-      },
     };
 
     return result;
