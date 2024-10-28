@@ -79,7 +79,11 @@ export class CartService {
     return { message: 'Item removed from cart successfully' };
   }
 
-  async updateCartItemQuantity(userId: number, productId: string, quantity: number) {
+  async updateCartItemQuantity(
+    userId: number,
+    productId: string,
+    quantity: number,
+  ) {
     const result = await this.prisma.cart.updateMany({
       where: {
         userId,

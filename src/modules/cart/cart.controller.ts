@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Delete, Patch, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Patch,
+  Body,
+  Param,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 
@@ -10,7 +18,7 @@ export class CartController {
   async addToCart(
     @Param('userId') userId: number,
     @Param('productId') productId: string,
-    @Body('quantity') quantity: number = 1 
+    @Body('quantity') quantity: number = 1,
   ) {
     const addToCartDto: AddToCart = { userId, productId };
     return this.cartService.addToCart(addToCartDto, quantity);
