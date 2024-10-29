@@ -73,8 +73,9 @@ model Product {
   Wishlist       Wishlist[]
   quantity       Int        @default(1)
   Unit           Unit[]
-  mostlysearched  MostlySearched[]
   cart Cart[]
+  mostlysearched  MostlySearched[]
+  mostlyViewed   mostlyViewed?
   @@index([sellerId])
 }
 
@@ -223,9 +224,8 @@ model MostlySearched{
   id          Int     @id @default(autoincrement())
   productid String?
   product Product? @relation(fields: [productid],references: [id],onDelete: Cascade)
-
   numberofsearch BigInt?
-    createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
 }
@@ -237,3 +237,10 @@ model MostlySearched{
 //   orderdetails Order @relation(fields: [orderid],references: [id],onDelete: Cascade)
 // }
 
+// }
+
+model mostlyViewed {
+  productId String  @id @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  views     Int     @default(1)
+}
