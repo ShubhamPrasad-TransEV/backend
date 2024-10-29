@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, NotFoundException, ParseIntPipe } from '@nestjs/common';
 import {
   CreateMostlySearchedDto,
   CreateMostlyViewedDto,
@@ -46,7 +46,7 @@ export class MostlyViewedController {
 
   // Endpoint to get all Mostly Viewed entries, sorted by views in descending order
   @Get()
-  async findAll(@Query('limit') limit?: number) {
+  async findAll(@Query('limit', ParseIntPipe) limit?: number) {
     return this.mostlyViewedService.getAllMostlyViewed(limit);
   }
 }
