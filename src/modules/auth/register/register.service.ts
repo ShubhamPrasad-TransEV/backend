@@ -58,7 +58,8 @@ export class RegisterService {
 
   // Fetch all users
   async getAllUsers() {
-    return this.prisma.user.findMany({ include: { role: true } });
+    // return this.prisma.user.findMany({ include: { role: true } });
+    return this.prisma.user.findMany();
   }
 
   // Update user details and create Seller entry if role is seller
