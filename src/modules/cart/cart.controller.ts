@@ -13,43 +13,51 @@ import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 @Controller('cart')
 export class CartController {
   constructor(private readonly cartService: CartService) {}
-
-  @Post('add/:userId/:productId') // Updated route
+  
+  
+  @Post('add/product/') // Updated route
   async addToCart(
-    @Param('userId') userId: number,
-    @Param('productId') productId: string,
-    @Body() body: { quantity?: number }, // Fetching quantity from body
+    @Body() body: { userId: number; productId: string; quantity?: number } // Fetching userId, productId, and quantity from body
   ) {
-    const quantity = body.quantity || 1; // Default to 1 if not provided
+    const { userId, productId } = body; // Destructuring userId and productId from body
+    const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided
+  
     const addToCartDto: AddToCart = { userId, productId };
     return this.cartService.addToCart(addToCartDto, quantity);
   }
 
-  @Get(':userId') // Updated route
-  async getCartItems(@Param('userId') userId: number) {
+//get cart items using userid
+  @Get('/getcartitems') // Updated route to remove userId from params
+  async getCartItems(@Body() body: { userId: number }) {
+    const { userId } = body; // Extract userId from the request body
     return this.cartService.getCartItems(userId);
   }
 
-  @Delete(':userId/product/:productId') // Updated route
+  //remove from cart route
+  @Delete('/removefromcart') // Updated route
   async removeFromCart(
-    @Param('userId') userId: number,
-    @Param('productId') productId: string,
+    @Body() body:{userId:number; productId:string}
   ) {
+    const {userId,productId}=body;
     return this.cartService.removeFromCart(userId, productId);
   }
 
-  @Patch('product/:userId/:productId/quantity') // Updated route
+//update route
+  @Patch('/updatecart') // Updated route
   async updateCartItemQuantity(
-    @Param('userId') userId: number,
-    @Param('productId') productId: string,
-    @Body() body: { quantity: number }, // Fetching quantity from body
+    @Body() body: { userId:number,productId:string,quantity: number }, // Fetching quantity from body
   ) {
-    const { quantity } = body; // Destructure quantity from body
+    const { userId,productId,quantity } = body; // Destructure quantity from body
     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
   }
 
-  @Delete(':userId/clear') // Updated route
-  async clearCart(@Param('userId') userId: number) {
+  //remove from cart
+  @Delete('/removeproductcart') // Updated route
+  async clearCart(
+   // @Param('userId') userId: number
+   @Body() body:{userId:number}
+  ) {
+    const {userId}=body
     return this.cartService.clearCart(userId);
   }
 }
