@@ -206,11 +206,19 @@ CREATE TABLE `Wishlist` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Cart` (
+    `userId` INTEGER NOT NULL,
+    `productId` VARCHAR(191) NOT NULL,
+    `quantity` INTEGER NOT NULL DEFAULT 1,
+
+    PRIMARY KEY (`userId`, `productId`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `_CategoryParentChild` (
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
 
-    PRIMARY KEY (`A`, `B`),  -- Add composite primary key
     UNIQUE INDEX `_CategoryParentChild_AB_unique`(`A`, `B`),
     INDEX `_CategoryParentChild_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -220,7 +228,6 @@ CREATE TABLE `_ProductCategories` (
     `A` INTEGER NOT NULL,
     `B` VARCHAR(191) NOT NULL,
 
-    PRIMARY KEY (`A`, `B`),  -- Add composite primary key
     UNIQUE INDEX `_ProductCategories_AB_unique`(`A`, `B`),
     INDEX `_ProductCategories_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -272,6 +279,12 @@ ALTER TABLE `Wishlist` ADD CONSTRAINT `Wishlist_userId_fkey` FOREIGN KEY (`userI
 
 -- AddForeignKey
 ALTER TABLE `Wishlist` ADD CONSTRAINT `Wishlist_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Cart` ADD CONSTRAINT `Cart_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Cart` ADD CONSTRAINT `Cart_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_A_fkey` FOREIGN KEY (`A`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

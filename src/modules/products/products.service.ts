@@ -185,8 +185,9 @@ export class ProductsService {
     });
 
     return {
-      ...product,
-      images: imagesWithBase64,
+      product,
+      // ...product,
+      // images: imagesWithBase64,
     };
   }
 
@@ -535,5 +536,29 @@ export class ProductsService {
     });
 
     return differingFields;
+  }
+
+  async getProductsByCategory(categoryName: string) {
+    const products = await this.prisma.product.findMany({
+      where: {
+        categories: {
+          some: {
+            name: categoryName,
+          },
+        },
+      },
+      include: {
+        images: true,
+        categories: true,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No products found for category ${categoryName}`,
+      );
+    }
+
+    return products;
   }
 }

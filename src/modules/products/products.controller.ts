@@ -159,4 +159,9 @@ export class ProductsController {
 
     return this.productsService.getVarieties(productId, productName);
   }
+
+  @Get('category/:categoryName')
+  async getProductsByCategory(@Param('categoryName') categoryName: string) {
+    return await this.productsService.getProductsByCategory(categoryName);
+  }
 }
