@@ -19,7 +19,7 @@ export class CreateMostlyViewedDto {
   productId?: string; // Optional field for product ID
 
   @IsOptional()
-  @IsInt() // Use integer for views as Prisma supports integers better
+  @IsBigInt() // Use integer for views as Prisma supports integers better
   views?: number; // Optional field for number of views
 
   @IsOptional()
