@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 
@@ -9,20 +9,31 @@ export class CartService {
   async addToCart(addToCartDto: AddToCart, quantity: number) {
     const { userId, productId } = addToCartDto;
 
-    // Check if the product exists before adding to the cart
-    const productExists = await this.prisma.product.findUnique({
+    // Ensure userId is an integer
+    const userIdInt = Number(userId);
+    if (isNaN(userIdInt)) {
+      throw new NotFoundException('Invalid user ID');
+    }
+
+    // Check if the product exists
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
-    if (!productExists) {
+    if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    // Check if the requested quantity exceeds available quantity
+    if (quantity > product.quantity) {
+      throw new BadRequestException('Not enough stock available');
     }
 
     // Check if the item already exists in the cart
     const existingItem = await this.prisma.cart.findUnique({
       where: {
         userId_productId: {
-          userId,
+          userId: userIdInt,
           productId,
         },
       },
@@ -30,21 +41,28 @@ export class CartService {
 
     if (existingItem) {
       // If it exists, update the quantity instead of creating a new entry
+      const newQuantity = existingItem.quantity + quantity;
+
+      // Check if the updated quantity exceeds available stock
+      if (newQuantity > product.quantity) {
+        throw new BadRequestException('Not enough stock available');
+      }
+
       return this.prisma.cart.update({
         where: {
           userId_productId: {
-            userId,
+            userId: userIdInt,
             productId,
           },
         },
-        data: { quantity: existingItem.quantity + quantity }, // Increment the existing quantity
+        data: { quantity: newQuantity }, // Increment the existing quantity
       });
     }
 
     // Create a new entry in the cart
     return this.prisma.cart.create({
       data: {
-        userId,
+        userId: userIdInt,
         productId,
         quantity,
       },
@@ -52,8 +70,13 @@ export class CartService {
   }
 
   async getCartItems(userId: number) {
+    const userIdInt = Number(userId);
+    // if (isNaN(userIdInt)) {
+    //   throw new NotFoundException('Invalid user ID');
+    // }
+
     const cartItems = await this.prisma.cart.findMany({
-      where: { userId },
+      where: { userId: userIdInt },
       include: { product: true }, // Include product details if needed
     });
 
@@ -65,9 +88,14 @@ export class CartService {
   }
 
   async removeFromCart(userId: number, productId: string) {
+    const userIdInt = Number(userId);
+    // if (isNaN(userIdInt)) {
+    //   throw new NotFoundException('Invalid user ID');
+    // }
+
     const result = await this.prisma.cart.deleteMany({
       where: {
-        userId,
+        userId: userIdInt,
         productId,
       },
     });
@@ -80,13 +108,19 @@ export class CartService {
   }
 
   async updateCartItemQuantity(userId: number, productId: string, quantity: number) {
+    const userIdInt = Number(userId);
+    const quantityInt = Number(quantity)
+    // if (isNaN(userIdInt)) {
+    //   throw new NotFoundException('Invalid user ID');
+    // }
+
     const result = await this.prisma.cart.updateMany({
       where: {
-        userId,
+        userId: userIdInt,
         productId,
       },
       data: {
-        quantity, // Update to the new quantity
+        quantity:quantityInt, // Update to the new quantity
       },
     });
 
@@ -98,8 +132,13 @@ export class CartService {
   }
 
   async clearCart(userId: number) {
+    const userIdInt = Number(userId);
+    // if (isNaN(userIdInt)) {
+    //   throw new NotFoundException('Invalid user ID');
+    // }
+
     await this.prisma.cart.deleteMany({
-      where: { userId },
+      where: { userId: userIdInt },
     });
 
     return { message: 'Cart cleared successfully' };
