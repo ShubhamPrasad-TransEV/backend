@@ -1,5 +1,5 @@
-import { IsOptional, IsString, IsInt } from 'class-validator';
-import { IsBigInt } from './isbigint.validator'; // Adjust the path as necessary
+import { IsOptional, IsString, IsInt, Min } from 'class-validator'; // Import IsInt and Min
+// Remove the import for IsBigInt since it's no longer needed
 
 export class CreateMostlySearchedDto {
   @IsOptional()
@@ -7,8 +7,9 @@ export class CreateMostlySearchedDto {
   productid?: string; // Optional field for product ID
 
   @IsOptional()
-  @IsBigInt() // Use custom BigInt validator
-  numberofsearch?: bigint; // Optional field for number of searches
+  @IsInt() // Use IsInt for integer validation
+  @Min(0) // Ensure that the number of searches is a non-negative integer
+  numberofsearch?: number; // Change type to number for integer
 
   // createdAt and updatedAt are typically managed by the database
 }
@@ -19,7 +20,7 @@ export class CreateMostlyViewedDto {
   productId?: string; // Optional field for product ID
 
   @IsOptional()
-  @IsBigInt() // Use integer for views as Prisma supports integers better
+  @IsInt() // Use integer for views as Prisma supports integers better
   views?: number; // Optional field for number of views
 
   @IsOptional()
