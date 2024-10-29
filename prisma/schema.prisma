@@ -73,7 +73,8 @@ model Product {
   Wishlist       Wishlist[]
   quantity       Int        @default(1)
   Unit           Unit[]
-  cart Cart[]
+  cart           Cart[]
+  mostlyViewed   mostlyViewed?
   @@index([sellerId])
 }
 
@@ -212,4 +213,10 @@ model Cart {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity       Int        @default(1)
   @@id([userId, productId]) // Composite primary key to ensure uniqueness
+}
+
+model mostlyViewed {
+  productId String  @id @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  views     Int     @default(1)
 }
