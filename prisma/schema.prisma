@@ -74,9 +74,9 @@ model Product {
   quantity       Int        @default(1)
   Unit           Unit[]
   cart           Cart[]
-  mostlysearched  MostlySearched[]
+  mostlysearched MostlySearched[]
   mostlyViewed   mostlyViewed?
-  mostwishlist  MostlyWishlist[]
+  mostwishlist   MostlyWishlist[]
   @@index([sellerId])
 }
 
@@ -131,9 +131,8 @@ model CartItem {
   sellerId  Int
   productId String
   quantity  Int    @default(1)
-
-  user    User    @relation(fields: [sellerId], references: [id])
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [sellerId], references: [id])
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model PasswordReset {
@@ -213,21 +212,22 @@ model Wishlist {
 model Cart {
   userId    Int     
   productId String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity       Int        @default(1)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int             @default(1)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
   @@id([userId, productId]) // Composite primary key to ensure uniqueness
-    createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
 
 model MostlySearched{
-  id          Int     @id @default(autoincrement())
-  productid String? @unique
-  product Product? @relation(fields: [productid],references: [id],onDelete: Cascade)
+  id             Int      @id @default(autoincrement())
+  productid      String?  @unique
+  product        Product? @relation(fields: [productid],references: [id],onDelete: Cascade)
   numberofsearch Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
 }
 
@@ -243,7 +243,7 @@ model MostlySearched{
 model mostlyViewed {
   productId String  @id @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  views     Int  @default(1)
+  views     Int     @default(1)
 }
 
 model MostlyWishlist{
