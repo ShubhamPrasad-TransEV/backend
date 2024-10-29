@@ -73,7 +73,7 @@ model Product {
   Wishlist       Wishlist[]
   quantity       Int        @default(1)
   Unit           Unit[]
-  cart Cart[]
+  cart           Cart[]
   mostlysearched  MostlySearched[]
   mostlyViewed   mostlyViewed?
   @@index([sellerId])

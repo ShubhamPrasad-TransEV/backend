@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateMostlySearchedDto, CreateMostlyViewedDto } from './dto/popularanalytics.dto';
+import {
+  CreateMostlySearchedDto,
+  CreateMostlyViewedDto,
+} from './dto/popularanalytics.dto';
 
 @Injectable()
 export class MostlySearchedService {
@@ -48,28 +51,49 @@ export class MostlySearchedService {
     });
 
     if (!entry) {
-      throw new NotFoundException(`Mostly searched entry with ID ${id} not found`);
+      throw new NotFoundException(
+        `Mostly searched entry with ID ${id} not found`,
+      );
     }
 
     return entry;
   }
 
   // Method to get popular categories and brands
-  async getPopularCategoriesAndBrands(): Promise<{ popularCategories: string[]; popularBrands: string[] }> {
+  async getPopularCategoriesAndBrands(): Promise<{
+    popularCategories: string[];
+    popularBrands: string[];
+  }> {
     const orders = await this.prisma.order.findMany({
       select: {
         orderedItems: true,
       },
     });
 
+    console.log('Orders fetched:', orders);
+
     const productIds: string[] = [];
+
     for (const order of orders) {
-      const items = order.orderedItems as Record<string, number>;
-      productIds.push(...Object.keys(items));
+      const itemsArray = order.orderedItems as Array<{
+        productId: string;
+        quantity: number;
+      }>;
+
+      // Log structure of each item
+      console.log('orderedItems structure:', itemsArray);
+
+      itemsArray.forEach((item) => {
+        if (item.productId) {
+          productIds.push(item.productId); // Extract and push productId
+        }
+      });
     }
 
+    console.log('Extracted product IDs:', productIds);
+
     if (productIds.length === 0) {
-      return { popularCategories: [], popularBrands: [] }; // Early return if no products found
+      return { popularCategories: [], popularBrands: [] };
     }
 
     const products = await this.prisma.product.findMany({
@@ -78,21 +102,28 @@ export class MostlySearchedService {
       },
       include: {
         categories: true,
-        seller: true,
       },
     });
 
-    const categoryCount: Record<string, number> = {}; // Initialize as a record of string keys and number values
-    const brandCount: Record<string, number> = {}; // Initialize as a record of string keys and number values
+    console.log('Products fetched:', products);
+
+    const categoryCount: Record<string, number> = {};
+    const brandCount: Record<string, number> = {};
 
     products.forEach((product) => {
-      product.categories.forEach(category => {
-        const categoryId = category.id.toString(); // Ensure category ID is treated as a string
-        categoryCount[categoryId] = (categoryCount[categoryId] ?? 0) + 1; // Use nullish coalescing operator
+      // Count categories
+      product.categories.forEach((category) => {
+        const categoryId = category.id.toString();
+        categoryCount[categoryId] = (categoryCount[categoryId] ?? 0) + 1;
       });
-      
-      const sellerId = product.sellerId.toString(); // Ensure seller ID is treated as a string
-      brandCount[sellerId] = (brandCount[sellerId] ?? 0) + 1; // Use nullish coalescing operator
+
+      // Parse productDetails to access brand
+      const details = product.productDetails as Record<string, any>;
+      const brand = details?.brand;
+
+      if (brand) {
+        brandCount[brand] = (brandCount[brand] ?? 0) + 1;
+      }
     });
 
     const popularCategories = Object.entries(categoryCount)
@@ -103,7 +134,7 @@ export class MostlySearchedService {
     const popularBrands = Object.entries(brandCount)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([id]) => id);
+      .map(([brand]) => brand);
 
     return { popularCategories, popularBrands };
   }
@@ -114,7 +145,9 @@ export class MostlyViewedService {
   constructor(private readonly prisma: PrismaService) {}
 
   // Method to update or create a Mostly Viewed entry
-  async incrementMostlyViewed(data: CreateMostlyViewedDto): Promise<MostlyViewed> {
+  async incrementMostlyViewed(
+    data: CreateMostlyViewedDto,
+  ): Promise<MostlyViewed> {
     if (!data.productId) {
       throw new NotFoundException('Product ID must be provided');
     }

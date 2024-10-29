@@ -1,8 +1,21 @@
 // src/modules/popularanalytics/popularanalytics.controller.ts
 
-import { Controller, Post, Body, Get, Query, NotFoundException } from '@nestjs/common';
-import { MostlySearchedService, MostlyViewedService } from './popularanalytics.services';
-import { CreateMostlySearchedDto, CreateMostlyViewedDto } from './dto/popularanalytics.dto';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  MostlySearchedService,
+  MostlyViewedService,
+} from './popularanalytics.services';
+import {
+  CreateMostlySearchedDto,
+  CreateMostlyViewedDto,
+} from './dto/popularanalytics.dto';
 import { MostlySearched, MostlyViewed } from './popularanalytics.services'; // Ensure these are imported
 
 @Controller('mostlysearch')
@@ -10,7 +23,9 @@ export class MostlySearchedController {
   constructor(private readonly mostlySearchedService: MostlySearchedService) {}
 
   @Post('track')
-  async trackClick(@Body() body: CreateMostlySearchedDto): Promise<MostlySearched> {
+  async trackClick(
+    @Body() body: CreateMostlySearchedDto,
+  ): Promise<MostlySearched> {
     if (!body.productid) {
       throw new NotFoundException('Product ID must be provided');
     }
@@ -38,7 +53,9 @@ export class MostlyViewedController {
   constructor(private readonly mostlyViewedService: MostlyViewedService) {}
 
   @Post()
-  async createOrIncrement(@Body() data: CreateMostlyViewedDto): Promise<MostlyViewed> {
+  async createOrIncrement(
+    @Body() data: CreateMostlyViewedDto,
+  ): Promise<MostlyViewed> {
     if (!data.productId) {
       throw new NotFoundException('Product ID must be provided');
     }
