@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, Param, Query, NotFoundException, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  NotFoundException,
+  ParseIntPipe,
+} from '@nestjs/common';
 import {
   CreateMostlySearchedDto,
   CreateMostlyViewedDto,

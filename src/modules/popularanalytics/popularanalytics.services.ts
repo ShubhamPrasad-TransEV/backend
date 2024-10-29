@@ -43,9 +43,9 @@ export class MostlySearchedService {
       },
     });
   }
-  
-   // Method to get a specific Mostly Searched entry by ID
-   async getMostlySearchedById(id: number) {
+
+  // Method to get a specific Mostly Searched entry by ID
+  async getMostlySearchedById(id: number) {
     const entry = await this.prisma.mostlySearched.findUnique({
       where: { id },
       include: {
