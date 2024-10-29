@@ -38,7 +38,7 @@ import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanaly
     OrderModule,
     WishlistModule,
     AnalyticsModule,
-    PopularAnalyticsModule
+    PopularAnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

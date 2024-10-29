@@ -41,7 +41,9 @@ export class MostlySearchedService {
     });
 
     if (!entry) {
-      throw new NotFoundException(`Mostly searched entry with ID ${id} not found`);
+      throw new NotFoundException(
+        `Mostly searched entry with ID ${id} not found`,
+      );
     }
 
     return entry;

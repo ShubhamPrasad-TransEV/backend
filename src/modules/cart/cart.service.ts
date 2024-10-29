@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 
@@ -107,9 +111,13 @@ export class CartService {
     return { message: 'Item removed from cart successfully' };
   }
 
-  async updateCartItemQuantity(userId: number, productId: string, quantity: number) {
+  async updateCartItemQuantity(
+    userId: number,
+    productId: string,
+    quantity: number,
+  ) {
     const userIdInt = Number(userId);
-    const quantityInt = Number(quantity)
+    const quantityInt = Number(quantity);
     // if (isNaN(userIdInt)) {
     //   throw new NotFoundException('Invalid user ID');
     // }
@@ -120,7 +128,7 @@ export class CartService {
         productId,
       },
       data: {
-        quantity:quantityInt, // Update to the new quantity
+        quantity: quantityInt, // Update to the new quantity
       },
     });
 

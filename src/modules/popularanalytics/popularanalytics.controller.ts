@@ -9,7 +9,9 @@ export class MostlySearchedController {
   // POST endpoint to create a new Mostly Searched entry
   @Post()
   async create(@Body() createMostlySearchedDto: CreateMostlySearchedDto) {
-    return this.mostlySearchedService.createMostlySearched(createMostlySearchedDto);
+    return this.mostlySearchedService.createMostlySearched(
+      createMostlySearchedDto,
+    );
   }
 
   // GET endpoint to retrieve all Mostly Searched entries
