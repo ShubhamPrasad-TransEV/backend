@@ -561,4 +561,29 @@ export class ProductsService {
 
     return products;
   }
+
+  async getProductByUnitId(unitId: string) {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { productId: true },
+    });
+
+    if (!unit) {
+      throw new NotFoundException(`Unit with ID ${unitId} not found`);
+    }
+
+    const product = await this.prisma.product.findUnique({
+      where: { id: unit.productId },
+      include: {
+        images: true,
+        categories: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product for Unit ID ${unitId} not found`);
+    }
+
+    return product;
+  }
 }
