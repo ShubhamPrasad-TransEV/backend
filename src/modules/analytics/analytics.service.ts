@@ -11,17 +11,32 @@ interface OrderedItem {
   quantity: number;
 }
 
+// Type guard to check if an object is an OrderedItem
+function isOrderedItem(item: any): item is OrderedItem {
+  return (
+    typeof item === 'object' &&
+    item !== null &&
+    typeof item.productId === 'string' &&
+    typeof item.quantity === 'number'
+  );
+}
+
 // Helper function to parse orderedItems safely
 function parseOrderedItems(orderedItems: unknown): OrderedItem[] {
   if (typeof orderedItems === 'string') {
     try {
-      return JSON.parse(orderedItems) as OrderedItem[];
+      const parsed = JSON.parse(orderedItems);
+      if (Array.isArray(parsed) && parsed.every(isOrderedItem)) {
+        return parsed;
+      }
+      console.error('Parsed orderedItems is not a valid array of OrderedItems:', parsed);
+      return [];
     } catch (error) {
       console.error('Error parsing orderedItems:', error);
       return [];
     }
-  } else if (Array.isArray(orderedItems)) {
-    return orderedItems as OrderedItem[];
+  } else if (Array.isArray(orderedItems) && orderedItems.every(isOrderedItem)) {
+    return orderedItems;
   } else {
     console.error('Invalid type for orderedItems:', orderedItems);
     return [];
