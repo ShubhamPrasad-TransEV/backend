@@ -185,8 +185,9 @@ export class ProductsService {
     });
 
     return {
-      ...product,
-      images: imagesWithBase64,
+      product,
+      // ...product,
+      // images: imagesWithBase64,
     };
   }
 
