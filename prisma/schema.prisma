@@ -242,5 +242,5 @@ model MostlySearched{
 model mostlyViewed {
   productId String  @id @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  views     Int     @default(1)
+  views     BigInt  @default(1)
 }
