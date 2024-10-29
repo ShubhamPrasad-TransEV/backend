@@ -113,8 +113,8 @@ export class MostlySearchedService {
     products.forEach((product) => {
       // Count categories
       product.categories.forEach((category) => {
-        const categoryId = category.id.toString();
-        categoryCount[categoryId] = (categoryCount[categoryId] ?? 0) + 1;
+        const categoryName = category.name.toString();
+        categoryCount[categoryName] = (categoryCount[categoryName] ?? 0) + 1;
       });
 
       // Parse productDetails to access brand
