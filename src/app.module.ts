@@ -17,6 +17,7 @@ import { StoreModule } from './modules/store/store.module';
 import { AdminSettingsModule } from './modules/admin-settings/admin-settings.module'; // New module for admin settings
 import { OperationalSettingsModule } from './modules/operational-settings/operational-settings.module'; // Import OperationalSettingsModule
 import { OrderModule } from './modules/orders/order.module';
+import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanalytics.modules';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { OrderModule } from './modules/orders/order.module';
     OrderModule,
     WishlistModule,
     AnalyticsModule,
+    PopularAnalyticsModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
