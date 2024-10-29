@@ -14,22 +14,23 @@ import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @Post(':userId/cart/add/:productId') // Updated route
+  @Post('add/:userId/:productId') // Updated route
   async addToCart(
     @Param('userId') userId: number,
     @Param('productId') productId: string,
-    @Body('quantity') quantity: number = 1,
+    @Body() body: { quantity?: number } // Fetching quantity from body
   ) {
+    const quantity = body.quantity || 1; // Default to 1 if not provided
     const addToCartDto: AddToCart = { userId, productId };
     return this.cartService.addToCart(addToCartDto, quantity);
   }
 
-  @Get(':userId/cart') // Updated route
+  @Get(':userId') // Updated route
   async getCartItems(@Param('userId') userId: number) {
     return this.cartService.getCartItems(userId);
   }
 
-  @Delete(':userId/cart/product/:productId') // Updated route
+  @Delete(':userId/product/:productId') // Updated route
   async removeFromCart(
     @Param('userId') userId: number,
     @Param('productId') productId: string,
@@ -37,16 +38,17 @@ export class CartController {
     return this.cartService.removeFromCart(userId, productId);
   }
 
-  @Patch(':userId/cart/product/:productId/quantity') // Updated route
+  @Patch('product/:userId/:productId/quantity') // Updated route
   async updateCartItemQuantity(
     @Param('userId') userId: number,
     @Param('productId') productId: string,
-    @Body('quantity') quantity: number,
+    @Body() body: { quantity: number }, // Fetching quantity from body
   ) {
+    const { quantity } = body; // Destructure quantity from body
     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
   }
 
-  @Delete(':userId/cart/clear') // Updated route
+  @Delete(':userId/clear') // Updated route
   async clearCart(@Param('userId') userId: number) {
     return this.cartService.clearCart(userId);
   }
