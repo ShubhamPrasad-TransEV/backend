@@ -6,20 +6,30 @@ import { CreateMostlySearchedDto } from './dto/popularanalytics.dto'; // Adjust 
 export class MostlySearchedService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Method to create a new Mostly Searched entry
-  async createMostlySearched(data: CreateMostlySearchedDto) {
-    // Check if productid is provided
-    if (!data.productid) {
-      throw new NotFoundException('Product ID must be provided');
-    }
-
-    // Create a new entry in the MostlySearched model
-    return this.prisma.mostlySearched.create({
-      data: {
-        productid: data.productid,
-        numberofsearch: data.numberofsearch || 1, // Default to 1 if not provided
-      },
+  // Method to track product clicks
+  async trackProductClick(productId: string) {
+    // Check if the product entry already exists
+    const existingEntry = await this.prisma.mostlySearched.findUnique({
+      where: { productid: productId },
     });
+
+    if (existingEntry) {
+      // If it exists, increment the number of searches
+      return this.prisma.mostlySearched.update({
+        where: { id: existingEntry.id }, // Use the existing entry's ID
+        data: {
+          numberofsearch: existingEntry.numberofsearch + 1, // Increment count
+        },
+      });
+    } else {
+      // If it doesn't exist, create a new entry with number of searches set to 1
+      return this.prisma.mostlySearched.create({
+        data: {
+          productid: productId,
+          numberofsearch: 1, // Initial count
+        },
+      });
+    }
   }
 
   // Method to get all Mostly Searched entries
@@ -30,13 +40,13 @@ export class MostlySearchedService {
       },
     });
   }
-
-  // Method to get a specific Mostly Searched entry by ID
-  async getMostlySearchedById(id: number) {
+  
+   // Method to get a specific Mostly Searched entry by ID
+   async getMostlySearchedById(id: number) {
     const entry = await this.prisma.mostlySearched.findUnique({
       where: { id },
       include: {
-        product: true, // Include related product details if needed
+        product: true,
       },
     });
 
