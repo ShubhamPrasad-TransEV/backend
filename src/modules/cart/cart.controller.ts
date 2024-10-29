@@ -18,7 +18,7 @@ export class CartController {
   async addToCart(
     @Param('userId') userId: number,
     @Param('productId') productId: string,
-    @Body() body: { quantity?: number } // Fetching quantity from body
+    @Body() body: { quantity?: number }, // Fetching quantity from body
   ) {
     const quantity = body.quantity || 1; // Default to 1 if not provided
     const addToCartDto: AddToCart = { userId, productId };
