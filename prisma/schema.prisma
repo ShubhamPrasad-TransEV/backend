@@ -76,6 +76,7 @@ model Product {
   cart           Cart[]
   mostlysearched  MostlySearched[]
   mostlyViewed   mostlyViewed?
+  mostwishlist  MostlyWishlist[]
   @@index([sellerId])
 }
 
@@ -243,4 +244,11 @@ model mostlyViewed {
   productId String  @id @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   views     Int  @default(1)
+}
+
+
+model MostlyWishlist{
+   productId String  @id @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mostwish     Int  @default(1)
 }
