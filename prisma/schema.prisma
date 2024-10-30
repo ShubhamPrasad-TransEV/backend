@@ -70,7 +70,7 @@ model Product {
   images         Image[]
   cartItems      CartItem[]
   categories     Category[]       @relation("ProductCategories")
-  productDetails Json?
+  productDetails Json
   Wishlist       Wishlist[]
   quantity       Int?             @default(1)
   Unit           Unit[]
