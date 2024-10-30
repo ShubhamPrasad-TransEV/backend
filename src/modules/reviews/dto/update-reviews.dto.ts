@@ -21,4 +21,16 @@ export class UpdateReviewsDto {
   @Min(0)
   @Max(5)
   ratings?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  deliveryRatings: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  dispatchRatings: number;
 }
