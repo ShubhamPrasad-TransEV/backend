@@ -263,11 +263,13 @@ model mostlyWishlisted {
 }
 
 model Reviews {
-  id        String  @id @unique @default(uuid())
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  review    String?
-  ratings   Float
+  id              String  @id @unique @default(uuid())
+  userId          Int
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review          String? @db.VarChar(5000)
+  ratings         Float
+  deliveryRatings Float
+  dispatchRatings Float
 }
