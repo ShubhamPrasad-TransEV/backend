@@ -7,6 +7,12 @@ export class WishlistService {
 
   // Method to add a single product to a user's wishlist
   async addToWishlist(userId: number, productId: string) {
+    await this.prisma.mostlyWishlisted.upsert({
+      where: { productId },
+      update: { numberOfTimesWishlisted: { increment: 1 } },
+      create: { productId, numberOfTimesWishlisted: 1 },
+    });
+
     return this.prisma.wishlist.create({
       data: {
         userId,
@@ -45,6 +51,18 @@ export class WishlistService {
       where: {
         userId,
         productId,
+      },
+    });
+  }
+
+  async getMostlyWishlisted(limit?: number) {
+    return this.prisma.mostlyWishlisted.findMany({
+      orderBy: {
+        numberOfTimesWishlisted: 'desc',
+      },
+      take: limit, // Only fetch up to the specified limit, if provided
+      include: {
+        product: true, // Include product details; adjust fields as needed
       },
     });
   }
