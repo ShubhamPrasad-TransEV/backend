@@ -459,4 +459,14 @@ export class CategoriesService {
 
     return category;
   }
+
+  async getTopLevelCategories() {
+    return this.prisma.category.findMany({
+      where: {
+        parentCategories: {
+          none: {}, // Ensures no parent categories are linked
+        },
+      },
+    });
+  }
 }

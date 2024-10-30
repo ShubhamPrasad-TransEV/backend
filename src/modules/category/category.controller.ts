@@ -54,7 +54,12 @@ export class CategoriesController {
     return this.categoriesService.getSubcategories(name);
   }
 
-  // New endpoint to process the file and create categories
+  // New endpoint to fetch top-level categories
+  @Get('top-level')
+  async getTopLevelCategories() {
+    return this.categoriesService.getTopLevelCategories();
+  }
+
   @Post('import')
   @ApiBody({
     schema: {
