@@ -128,4 +128,84 @@ export class ReviewsService {
     const averageRating = totalRatings / reviews.length;
     return { productId, averageRating };
   }
+
+  async getProductsAboveRating(
+    ratingThreshold: number,
+    rangeStart: number,
+    rangeEnd: number,
+  ) {
+    const products = await this.prisma.product.findMany({
+      include: {
+        Reviews: {
+          select: { ratings: true },
+        },
+      },
+    });
+
+    const filteredProducts = products
+      .map((product) => {
+        const averageRating =
+          product.Reviews.reduce((sum, review) => sum + review.ratings, 0) /
+            product.Reviews.length || 0;
+        return { ...product, averageRating };
+      })
+      .filter(
+        (product) =>
+          product.averageRating > ratingThreshold &&
+          product.Reviews.some((r) => r.ratings > 0),
+      ) // Exclude unrated products
+      .sort((a, b) => b.averageRating - a.averageRating);
+
+    return filteredProducts.slice(rangeStart - 1, rangeEnd);
+  }
+
+  async getProductsBelowRating(
+    ratingThreshold: number,
+    rangeStart: number,
+    rangeEnd: number,
+  ) {
+    const products = await this.prisma.product.findMany({
+      include: {
+        Reviews: {
+          select: { ratings: true },
+        },
+      },
+    });
+
+    const filteredProducts = products
+      .map((product) => {
+        const averageRating =
+          product.Reviews.reduce((sum, review) => sum + review.ratings, 0) /
+            product.Reviews.length || 0;
+        return { ...product, averageRating };
+      })
+      .filter(
+        (product) =>
+          product.averageRating < ratingThreshold &&
+          product.Reviews.some((r) => r.ratings > 0),
+      ) // Exclude unrated products
+      .sort((a, b) => a.averageRating - b.averageRating);
+
+    return filteredProducts.slice(rangeStart - 1, rangeEnd);
+  }
+
+  async getUnratedProducts(rangeStart: number, rangeEnd: number) {
+    const products = await this.prisma.product.findMany({
+      where: {
+        OR: [
+          { Reviews: { none: {} } }, // No reviews exist
+          {
+            Reviews: {
+              every: { ratings: 0 }, // All reviews have a rating of 0
+            },
+          },
+        ],
+      },
+      orderBy: {
+        name: 'asc', // Alphabetical order by product name
+      },
+    });
+
+    return products.slice(rangeStart - 1, rangeEnd);
+  }
 }

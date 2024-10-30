@@ -7,8 +7,15 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewsDto } from './dto/create-reviews.dto';
 import { UpdateReviewsDto } from './dto/update-reviews.dto';
@@ -127,5 +134,64 @@ export class ReviewsController {
     @Param('productId') productId: string,
   ) {
     return this.reviewsService.deleteReviewByUserAndProduct(userId, productId);
+  }
+
+  @Get('products-above-rating')
+  @ApiOperation({
+    summary: 'Get products with an average rating above a threshold',
+  })
+  @ApiQuery({
+    name: 'ratingThreshold',
+    type: Number,
+    required: true,
+    example: 4.0,
+  })
+  @ApiQuery({ name: 'rangeStart', type: Number, required: true, example: 1 })
+  @ApiQuery({ name: 'rangeEnd', type: Number, required: true, example: 10 })
+  async getProductsAboveRating(
+    @Query('ratingThreshold', ParseIntPipe) ratingThreshold: number,
+    @Query('rangeStart', ParseIntPipe) rangeStart: number,
+    @Query('rangeEnd', ParseIntPipe) rangeEnd: number,
+  ) {
+    return this.reviewsService.getProductsAboveRating(
+      ratingThreshold,
+      rangeStart,
+      rangeEnd,
+    );
+  }
+
+  @Get('products-below-rating')
+  @ApiOperation({
+    summary: 'Get products with an average rating below a threshold',
+  })
+  @ApiQuery({
+    name: 'ratingThreshold',
+    type: Number,
+    required: true,
+    example: 2.0,
+  })
+  @ApiQuery({ name: 'rangeStart', type: Number, required: true, example: 1 })
+  @ApiQuery({ name: 'rangeEnd', type: Number, required: true, example: 10 })
+  async getProductsBelowRating(
+    @Query('ratingThreshold', ParseIntPipe) ratingThreshold: number,
+    @Query('rangeStart', ParseIntPipe) rangeStart: number,
+    @Query('rangeEnd', ParseIntPipe) rangeEnd: number,
+  ) {
+    return this.reviewsService.getProductsBelowRating(
+      ratingThreshold,
+      rangeStart,
+      rangeEnd,
+    );
+  }
+
+  @Get('unrated-products')
+  @ApiOperation({ summary: 'Get unrated products in alphabetical order' })
+  @ApiQuery({ name: 'rangeStart', type: Number, required: true, example: 1 })
+  @ApiQuery({ name: 'rangeEnd', type: Number, required: true, example: 10 })
+  async getUnratedProducts(
+    @Query('rangeStart', ParseIntPipe) rangeStart: number,
+    @Query('rangeEnd', ParseIntPipe) rangeEnd: number,
+  ) {
+    return this.reviewsService.getUnratedProducts(rangeStart, rangeEnd);
   }
 }
