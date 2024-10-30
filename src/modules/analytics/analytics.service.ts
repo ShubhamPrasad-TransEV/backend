@@ -29,7 +29,10 @@ function parseOrderedItems(orderedItems: unknown): OrderedItem[] {
       if (Array.isArray(parsed) && parsed.every(isOrderedItem)) {
         return parsed;
       }
-      console.error('Parsed orderedItems is not a valid array of OrderedItems:', parsed);
+      console.error(
+        'Parsed orderedItems is not a valid array of OrderedItems:',
+        parsed,
+      );
       return [];
     } catch (error) {
       console.error('Error parsing orderedItems:', error);

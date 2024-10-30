@@ -18,6 +18,7 @@ import { AdminSettingsModule } from './modules/admin-settings/admin-settings.mod
 import { OperationalSettingsModule } from './modules/operational-settings/operational-settings.module'; // Import OperationalSettingsModule
 import { OrderModule } from './modules/orders/order.module';
 import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanalytics.modules';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanaly
     WishlistModule,
     AnalyticsModule,
     PopularAnalyticsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
