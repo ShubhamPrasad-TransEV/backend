@@ -185,8 +185,9 @@ export class ProductsService {
     });
 
     return {
-      ...product,
-      images: imagesWithBase64,
+      product,
+      // ...product,
+      // images: imagesWithBase64,
     };
   }
 
@@ -535,5 +536,54 @@ export class ProductsService {
     });
 
     return differingFields;
+  }
+
+  async getProductsByCategory(categoryName: string) {
+    const products = await this.prisma.product.findMany({
+      where: {
+        categories: {
+          some: {
+            name: categoryName,
+          },
+        },
+      },
+      include: {
+        images: true,
+        categories: true,
+      },
+    });
+
+    if (!products || products.length === 0) {
+      throw new NotFoundException(
+        `No products found for category ${categoryName}`,
+      );
+    }
+
+    return products;
+  }
+
+  async getProductByUnitId(unitId: string) {
+    const unit = await this.prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { productId: true },
+    });
+
+    if (!unit) {
+      throw new NotFoundException(`Unit with ID ${unitId} not found`);
+    }
+
+    const product = await this.prisma.product.findUnique({
+      where: { id: unit.productId },
+      include: {
+        images: true,
+        categories: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product for Unit ID ${unitId} not found`);
+    }
+
+    return product;
   }
 }
