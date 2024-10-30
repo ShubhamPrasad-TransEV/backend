@@ -61,22 +61,23 @@ model Role {
 }
 
 model Product {
-  id             String     @id @default(uuid())
+  id             String             @id @default(uuid())
   name           String
   price          Float
   sellerId       Int
-  seller         Seller     @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  seller         Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
   images         Image[]
   cartItems      CartItem[]
-  categories     Category[] @relation("ProductCategories")
+  categories     Category[]         @relation("ProductCategories")
   productDetails Json
   Wishlist       Wishlist[]
-  quantity       Int        @default(1)
+  quantity       Int                @default(1)
   Unit           Unit[]
   cart           Cart[]
   mostlysearched MostlySearched[]
   mostlyViewed   mostlyViewed?
-  mostwishlist   MostlyWishlist[]
+  mostwishlisted mostlyWishlisted[]
+
   @@index([sellerId])
 }
 
@@ -113,9 +114,9 @@ model Order {
   orderedAt              DateTime  @default(now()) // Timestamp when the order was placed
   orderFulfilledAt       DateTime? // Timestamp when the order was fulfilled (can be null)
 
-  @@index([userId])
-
   // Inventory Inventory[]
+
+  @@index([userId])
 }
 
 model Image {
@@ -127,12 +128,12 @@ model Image {
 }
 
 model CartItem {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   sellerId  Int
   productId String
-  quantity  Int      @default(1)
-  user      User     @relation(fields: [sellerId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+  user      User    @relation(fields: [sellerId], references: [id])
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model PasswordReset {
@@ -186,7 +187,7 @@ model AdminSettings {
 }
 
 model OperationalSettings {
-  adminId               Int     @id  @unique // This ensures each admin can have only one operational settings entry
+  adminId               Int     @id @unique // This ensures each admin can have only one operational settings entry
   admin                 Admins  @relation(fields: [adminId], references: [adminId], onDelete: Cascade)
   timeZone              String
   currency              String
@@ -201,7 +202,7 @@ model OperationalSettings {
 }
 
 model Wishlist {
-  userId    Int     
+  userId    Int
   productId String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -210,25 +211,24 @@ model Wishlist {
 }
 
 model Cart {
-  userId    Int     
+  userId    Int
   productId String
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int             @default(1)
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@id([userId, productId]) // Composite primary key to ensure uniqueness
 }
 
-model MostlySearched{
+model MostlySearched {
   id             Int      @id @default(autoincrement())
   productid      String?  @unique
-  product        Product? @relation(fields: [productid],references: [id],onDelete: Cascade)
+  product        Product? @relation(fields: [productid], references: [id], onDelete: Cascade)
   numberofsearch Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
 }
 
 // model Inventory{
@@ -246,8 +246,8 @@ model mostlyViewed {
   views     Int     @default(1)
 }
 
-model MostlyWishlist{
-  productId String  @id @unique
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  mostwish  Int     @default(1)
+model mostlyWishlisted {
+  productId               String  @id @unique
+  product                 Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  numberOfTimesWishlisted Int     @default(1)
 }
