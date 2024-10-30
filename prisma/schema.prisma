@@ -30,6 +30,7 @@ model User {
   Wishlist      Wishlist[]
   description   String?
   cart          Cart[]
+  Reviews       Reviews[]
 
   @@index([username, email])
 }
@@ -77,17 +78,17 @@ model Product {
   mostlysearched MostlySearched[]
   mostlyViewed   mostlyViewed?
   mostwishlisted mostlyWishlisted[]
+  Reviews        Reviews[]
 
   @@index([sellerId])
 }
 
-
-model quantitymanagement{
-    id             String     @id @default(uuid())
-    currentquantity Int?   
-    afterupdatequantity Int?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+model quantitymanagement {
+  id                  String   @id @default(uuid())
+  currentquantity     Int?
+  afterupdatequantity Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Unit {
@@ -259,4 +260,14 @@ model mostlyWishlisted {
   productId               String  @id @unique
   product                 Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   numberOfTimesWishlisted Int     @default(1)
+}
+
+model Reviews {
+  id        String  @id @unique @default(uuid())
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  review    String?
+  ratings   Float
 }
