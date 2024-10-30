@@ -38,7 +38,7 @@ export class CartController {
     const { userId, productId } = body;
     return this.cartService.removeFromCart(userId, productId);
   }
-
+  
   //update route
   @Patch('/updatecart') // Updated route
   async updateCartItemQuantity(
@@ -48,7 +48,8 @@ export class CartController {
     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
   }
 
-  //remove from cart
+  
+  //remove from cart 
   @Delete('/removeproductcart') // Updated route
   async clearCart(
     // @Param('userId') userId: number
