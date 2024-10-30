@@ -11,8 +11,36 @@ import { UpdateReviewsDto } from './dto/update-reviews.dto';
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Create a new review
+  // Create a new review, ensuring no duplicate review exists for the same user and product
   async createReview(createReviewsDto: CreateReviewsDto) {
+    const { userId, productId } = createReviewsDto;
+
+    const userExists = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!userExists) {
+      throw new BadRequestException('User does not exist');
+    }
+
+    // Check if product exists
+    const productExists = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!productExists) {
+      throw new BadRequestException('Product does not exist');
+    }
+
+    // Check if a review already exists for the user and product
+    const existingReview = await this.prisma.reviews.findFirst({
+      where: { userId, productId },
+    });
+
+    if (existingReview) {
+      throw new BadRequestException(
+        'A review already exists for this user and product',
+      );
+    }
+
     return this.prisma.reviews.create({
       data: createReviewsDto,
     });
@@ -34,10 +62,8 @@ export class ReviewsService {
 
   // Get a review by user ID and product ID
   async getReviewByUserAndProduct(userId: number, productId: string) {
-    const review = await this.prisma.reviews.findUnique({
-      where: {
-        userId_productId: { userId, productId },
-      },
+    const review = await this.prisma.reviews.findFirst({
+      where: { userId, productId },
     });
     if (!review) {
       throw new NotFoundException(
@@ -53,10 +79,8 @@ export class ReviewsService {
     productId: string,
     updateReviewsDto: UpdateReviewsDto,
   ) {
-    const existingReview = await this.prisma.reviews.findUnique({
-      where: {
-        userId_productId: { userId, productId },
-      },
+    const existingReview = await this.prisma.reviews.findFirst({
+      where: { userId, productId },
     });
     if (!existingReview) {
       throw new NotFoundException(
@@ -65,19 +89,15 @@ export class ReviewsService {
     }
 
     return this.prisma.reviews.update({
-      where: {
-        userId_productId: { userId, productId },
-      },
+      where: { id: existingReview.id },
       data: updateReviewsDto,
     });
   }
 
   // Delete a review by user ID and product ID
   async deleteReviewByUserAndProduct(userId: number, productId: string) {
-    const existingReview = await this.prisma.reviews.findUnique({
-      where: {
-        userId_productId: { userId, productId },
-      },
+    const existingReview = await this.prisma.reviews.findFirst({
+      where: { userId, productId },
     });
     if (!existingReview) {
       throw new NotFoundException(
@@ -86,9 +106,7 @@ export class ReviewsService {
     }
 
     return this.prisma.reviews.delete({
-      where: {
-        userId_productId: { userId, productId },
-      },
+      where: { id: existingReview.id },
     });
   }
 
