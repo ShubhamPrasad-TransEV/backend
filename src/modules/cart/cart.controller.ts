@@ -48,7 +48,6 @@ export class CartController {
     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
   }
 
-  
   //remove from cart 
   @Delete('/removeproductcart') // Updated route
   async clearCart(

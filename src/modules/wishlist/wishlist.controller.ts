@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { WishlistService } from './wishlist.service';
 import { AddToWishlistDto } from './dto/wishlist.dto';
@@ -48,5 +49,12 @@ export class WishlistController {
     @Param('productId') productId: string,
   ) {
     return this.wishlistService.removeFromWishlist(userId, productId);
+  }
+
+  @Get('mostly-wishlisted')
+  @ApiOperation({ summary: 'Get mostly wishlisted items' })
+  @ApiResponse({ status: 200, description: 'List of mostly wishlisted items.' })
+  async getMostlyWishlisted(@Query('limit') limit?: number) {
+    return this.wishlistService.getMostlyWishlisted(limit);
   }
 }
