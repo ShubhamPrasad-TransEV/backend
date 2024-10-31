@@ -459,4 +459,18 @@ export class CategoriesService {
 
     return category;
   }
+
+  async getTopLevelCategories() {
+    const topLevelCategories = await this.prisma.category.findMany({
+      where: {
+        parentCategories: {
+          none: {},
+        },
+      },
+      select: { name: true }, // Select only the name field
+    });
+
+    // Return an array of names only
+    return topLevelCategories.map((category) => category.name);
+  }
 }

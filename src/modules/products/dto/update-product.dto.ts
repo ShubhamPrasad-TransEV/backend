@@ -24,12 +24,20 @@ export class UpdateProductDto {
   @IsString({ each: true })
   categories?: string[];
 
-  @ApiProperty({ type: 'object', required: false })
+  @ApiProperty({
+    type: 'object',
+    properties: {
+      key1: { type: 'string' }, // Example property
+      key2: { type: 'number' }, // Example property
+    },
+    required: [], // Specify required fields if any, or leave empty for none
+    nullable: true,
+  })
   @IsOptional()
   @IsObject()
   productDetails?: object;
 
-  @ApiProperty({ type: 'array', items: { type: 'string' } })
+  @ApiProperty({ type: 'array', items: { type: 'string' }, required: false })
   @IsOptional()
   images?: Express.Multer.File[];
 
