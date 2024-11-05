@@ -28,7 +28,6 @@ export class SupportService {
   async getTicketsByUser(user_id: number) {
     return this.prisma.supportTicket.findMany({
       where: { userId: Number(user_id) },
-      include: { user: true },
     });
   }
 
@@ -57,8 +56,11 @@ export class SupportService {
     const { ticket_id, status } = updateStatusDto;
 
     return this.prisma.supportTicket.update({
-      where: { id: ticket_id },
-      data: { status },
-    });
+        where: { id: ticket_id },
+        data: { 
+          status,
+          updatedAt: new Date(), // Explicitly set updatedAt to the current date and time
+        },
+      });
   }
 }
