@@ -24,26 +24,25 @@ export class SupportController {
 
   @Post('create')
   @ApiOperation({ summary: 'Create a new support ticket' })
-  @ApiBody({ type: CreateSupportTicketDto })
+  @ApiBody({
+    type: CreateSupportTicketDto,
+    description: 'Support ticket creation data',
+  })
   async createSupportTicket(
-    @Body('userId') userId: number,
     @Body() createSupportTicketDto: CreateSupportTicketDto,
   ) {
-    return this.supportService.createSupportTicket(
-      userId,
-      createSupportTicketDto,
-    );
+    return this.supportService.createSupportTicket(createSupportTicketDto);
   }
 
   @Get('by-user')
   @ApiOperation({ summary: 'Get all support tickets by user ID' })
   @ApiQuery({
-    name: 'userId',
+    name: 'user_id',
     description: 'ID of the user to filter tickets by',
     required: true,
   })
-  async getTicketsByUser(@Query('userId') userId: number) {
-    return this.supportService.getTicketsByUser(userId);
+  async getTicketsByUser(@Query('user_id') user_id: number) {
+    return this.supportService.getTicketsByUser(user_id);
   }
 
   @Get('by-created-date')
@@ -68,24 +67,20 @@ export class SupportController {
     return this.supportService.getTicketsByUpdatedDate(updatedAt);
   }
 
-  @Get(':ticketId')
+  @Get(':ticket_id')
   @ApiOperation({ summary: 'Get a support ticket by its ID' })
-  @ApiParam({ name: 'ticketId', description: 'ID of the support ticket' })
-  async getTicketById(@Param('ticketId') ticketId: string) {
-    return this.supportService.getTicketById(ticketId);
+  @ApiParam({ name: 'ticket_id', description: 'ID of the support ticket' })
+  async getTicketById(@Param('ticket_id') ticket_id: string) {
+    return this.supportService.getTicketById(ticket_id);
   }
 
-  @Patch(':ticketId/status')
+  @Patch('update-status')
   @ApiOperation({ summary: 'Update the status of a support ticket' })
-  @ApiParam({
-    name: 'ticketId',
-    description: 'ID of the support ticket to update',
+  @ApiBody({
+    type: UpdateStatusDto,
+    description: 'Updated status for the ticket',
   })
-  @ApiBody({ type: UpdateStatusDto })
-  async updateTicketStatus(
-    @Param('ticketId') ticketId: string,
-    @Body() updateStatusDto: UpdateStatusDto,
-  ) {
-    return this.supportService.updateTicketStatus(ticketId, updateStatusDto);
+  async updateTicketStatus(@Body() updateStatusDto: UpdateStatusDto) {
+    return this.supportService.updateTicketStatus(updateStatusDto);
   }
 }

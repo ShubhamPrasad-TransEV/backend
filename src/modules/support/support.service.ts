@@ -1,33 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateSupportTicketDto } from './dto/support.dto';
-import { UpdateStatusDto } from './dto/support.dto';
+import { CreateSupportTicketDto, UpdateStatusDto } from './dto/support.dto';
 
 @Injectable()
 export class SupportService {
   constructor(private prisma: PrismaService) {}
 
-  async createSupportTicket(
-    userId: number,
-    createSupportTicketDto: CreateSupportTicketDto,
-  ) {
+  async createSupportTicket(createSupportTicketDto: CreateSupportTicketDto) {
+    const { user_id, subject, details } = createSupportTicketDto;
+
+    // Create ticket in the database
     const ticket = await this.prisma.supportTicket.create({
       data: {
-        ...createSupportTicketDto,
-        userId,
+        userId: user_id,
+        subject,
+        details,
         status: 'UNOPENED',
       },
       include: { user: true },
     });
 
-    // Send email (email logic here as described earlier)
+    // Send email (email logic here as described previously)
 
     return ticket;
   }
 
-  async getTicketsByUser(userId: number) {
+  async getTicketsByUser(user_id: number) {
     return this.prisma.supportTicket.findMany({
-      where: { userId },
+      where: { userId: Number(user_id) },
       include: { user: true },
     });
   }
@@ -46,17 +46,19 @@ export class SupportService {
     });
   }
 
-  async getTicketById(ticketId: string) {
+  async getTicketById(ticket_id: string) {
     return this.prisma.supportTicket.findUnique({
-      where: { id: ticketId },
+      where: { id: ticket_id },
       include: { user: true },
     });
   }
 
-  async updateTicketStatus(ticketId: string, updateStatusDto: UpdateStatusDto) {
+  async updateTicketStatus(updateStatusDto: UpdateStatusDto) {
+    const { ticket_id, status } = updateStatusDto;
+
     return this.prisma.supportTicket.update({
-      where: { id: ticketId },
-      data: { status: updateStatusDto.status },
+      where: { id: ticket_id },
+      data: { status },
     });
   }
 }
