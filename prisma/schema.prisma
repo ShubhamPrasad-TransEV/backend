@@ -31,6 +31,7 @@ model User {
   description   String?
   cart          Cart[]
   Reviews       Reviews[]
+  SupportTicket SupportTicket[]
 
   @@index([username, email])
 }
@@ -62,17 +63,17 @@ model Role {
 }
 
 model Product {
-  id             String           @id @default(uuid())
-  name           String?          @db.VarChar(255)
+  id             String             @id @default(uuid())
+  name           String?            @db.VarChar(255)
   price          Float?
   sellerId       Int
-  seller         Seller           @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  seller         Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
   images         Image[]
   cartItems      CartItem[]
-  categories     Category[]       @relation("ProductCategories")
+  categories     Category[]         @relation("ProductCategories")
   productDetails Json
   Wishlist       Wishlist[]
-  quantity       Int?             @default(1)
+  quantity       Int?               @default(1)
   Unit           Unit[]
   cart           Cart[]
   mostlysearched MostlySearched[]
@@ -108,20 +109,20 @@ model Order {
   orderedItems           Json? // JSON format to store {productId: quantity}
   shipmentCompany        String?
   shipmentRequestStatus  String?
-  shipmentStatus         String?    @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
+  shipmentStatus         String?   @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
   invoice                String? // Invoice number or reference (Location)
-  refundStatus           String?    @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
+  refundStatus           String?   @default("No Refund") // Possible values: "No Refund", "Refunded", "Partially Refunded"
   refundDetails          String?
-  shippingCost           Float?     @default(0.0) // Shipping cost associated with the order
-  totalOrderCost         Float?     @default(0.0)
-  totalItemCost          Float?     @default(0.0)
-  orderingStatus         String?    @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
-  orderFulfillmentStatus String?    @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
-  prePayment             Boolean    @default(false) // Indicates if pre-payment was made
-  paymentStatus          Boolean    @default(false) // Indicates if the order has been fully paid
-  Seller                 Seller?    @relation(fields: [sellerId], references: [id])
+  shippingCost           Float?    @default(0.0) // Shipping cost associated with the order
+  totalOrderCost         Float?    @default(0.0)
+  totalItemCost          Float?    @default(0.0)
+  orderingStatus         String?   @default("Pending") // Possible values: "Pending", "Completed", "Cancelled"
+  orderFulfillmentStatus String?   @default("Unfulfilled") // Possible values: "Unfulfilled", "Fulfilled"
+  prePayment             Boolean   @default(false) // Indicates if pre-payment was made
+  paymentStatus          Boolean   @default(false) // Indicates if the order has been fully paid
+  Seller                 Seller?   @relation(fields: [sellerId], references: [id])
   sellerId               Int?
-  orderedAt              DateTime   @default(now()) // Timestamp when the order was placed
+  orderedAt              DateTime  @default(now()) // Timestamp when the order was placed
   orderFulfilledAt       DateTime? // Timestamp when the order was fulfilled (can be null)
 
   // Inventory Inventory[]
@@ -133,7 +134,7 @@ model Image {
   id        Int     @id @default(autoincrement())
   filename  String? @db.VarChar(255)
   path      String? @db.VarChar(255)
-  productId String  @db.VarChar(255) 
+  productId String  @db.VarChar(255)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade) // Relation to Product
 }
 
@@ -178,7 +179,7 @@ model Store {
   name        String?  @db.VarChar(255)
   logo        String?  @db.VarChar(255)
   address     String?  @db.VarChar(255)
-  email       String?  @unique  @db.VarChar(255)
+  email       String?  @unique @db.VarChar(255)
   phoneNumber String?  @db.VarChar(255)
   aboutUs     String?  @db.VarChar(255)
   createdAt   DateTime @default(now())
@@ -272,4 +273,22 @@ model Reviews {
   ratings         Float
   deliveryRatings Float
   dispatchRatings Float
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid()) // UUID for Support Ticket Number
+  subject   String   @db.VarChar(255)
+  details   String   @db.Text
+  status    Status   @default(UNOPENED)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Status {
+  UNOPENED
+  IN_PROGRESS
+  RESOLVED
+  ESCALATED
 }

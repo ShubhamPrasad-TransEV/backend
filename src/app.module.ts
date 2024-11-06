@@ -19,6 +19,7 @@ import { OperationalSettingsModule } from './modules/operational-settings/operat
 import { OrderModule } from './modules/orders/order.module';
 import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanalytics.modules';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { SupportModule } from './modules/support/support.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     AnalyticsModule,
     PopularAnalyticsModule,
     ReviewsModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
