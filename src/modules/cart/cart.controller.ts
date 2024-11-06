@@ -8,7 +8,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
-import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
+import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary 
 
 @Controller('cart')
 export class CartController {
@@ -19,7 +19,7 @@ export class CartController {
     @Body() body: { userId: number; productId: string; quantity?: number }, // Fetching userId, productId, and quantity from body
   ) {
     const { userId, productId } = body; // Destructuring userId and productId from body
-    const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided
+    const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided 
 
     const addToCartDto: AddToCart = { userId, productId };
     return this.cartService.addToCart(addToCartDto, quantity);
