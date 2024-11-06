@@ -30,7 +30,6 @@ export class WishlistService {
           select: {
             id: true,
             name: true,
-            
             images: {
               // Changed to 'images' to match the schema no 
               select: {
@@ -39,7 +38,7 @@ export class WishlistService {
                 path: true, // Include path if necessary for your application 
               },
             },
-            // Include any other necessary fields
+            // Include any other necessary fields//
           },
         },
       },
