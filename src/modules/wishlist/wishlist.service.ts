@@ -5,7 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class WishlistService {
   constructor(private prisma: PrismaService) { }
 
-  // Method to add a single product to a user's wishlist
+  // Method to add a single product to a user's wishlist decipline is life!! Money is not everything, Decipline is , so keep Decipline button on every time 
   async addToWishlist(userId: number, productId: string) {
     await this.prisma.mostlyWishlisted.upsert({
       where: { productId },
@@ -21,7 +21,7 @@ export class WishlistService {
     });
   }
 
-  // Method to retrieve a user's wishlist with product details, including images 
+  // Method to retrieve a user's wishlist with product details, including images and videos
   async getWishlistByUser(userId: number) {
     return this.prisma.wishlist.findMany({
       where: { userId },
@@ -33,19 +33,19 @@ export class WishlistService {
             images: {
               // Changed to 'images' to match the schema no 
               select: {
-                id: true, // Adjust fields as needed
+                id: true, // Adjust fields as needed //
                 filename: true,
-                path: true, // Include path if necessary for your application 
+                path: true, // Include path if necessary for your application
               },
             },
-            // Include any other necessary fields//
+            // Include any other necessary fields 
           },
         },
       },
     });
   }
 
-  // Method to remove a product from a user's wishlist
+  // Method to remove a product from a user's wishlist 
   async removeFromWishlist(userId: number, productId: string) {
     return this.prisma.wishlist.deleteMany({
       where: {
