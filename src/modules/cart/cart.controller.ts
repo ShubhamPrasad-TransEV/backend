@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Delete,
-  Patch,
-  Body,
-  Param,
-} from '@nestjs/common';
+import {  Controller,Post,  Get,  Delete, Patch, Body,  Param, } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary 
 
@@ -14,11 +6,12 @@ import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
+
   @Post('add/product/') // Updated route
   async addToCart(
     @Body() body: { userId: number; productId: string; quantity?: number }, // Fetching userId, productId, and quantity from body
   ) {
-    const { userId, productId } = body; // Destructuring userId and productId from body
+    const { userId, productId } = body; // Destructuring userId and productId from body 
     const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided 
 
     const addToCartDto: AddToCart = { userId, productId };
@@ -42,13 +35,13 @@ export class CartController {
   //update route
   @Patch('/updatecart') // Updated route
   async updateCartItemQuantity(
-    @Body() body: { userId: number; productId: string; quantity: number }, // Fetching quantity from body
+    @Body() body: { userId: number; productId: string; quantity: number }, // Fetching quantity from body 
   ) {
     const { userId, productId, quantity } = body; // Destructure quantity from body
     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
   }
 
-  //remove from cart 
+  //remove from cart //
   @Delete('/removeproductcart') // Updated route
   async clearCart(
     // @Param('userId') userId: number
