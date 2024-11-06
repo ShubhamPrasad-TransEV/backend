@@ -6,6 +6,8 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -54,7 +56,12 @@ export class CategoriesController {
     return this.categoriesService.getSubcategories(name);
   }
 
-  // New endpoint to process the file and create categories
+  // New endpoint to fetch top-level categories
+  @Get('top-level')
+  async getTopLevelCategories() {
+    return this.categoriesService.getTopLevelCategories();
+  }
+
   @Post('import')
   @ApiBody({
     schema: {
@@ -70,5 +77,13 @@ export class CategoriesController {
   })
   async createCategoriesFromFile(@Body('filePath') filePath: string) {
     return this.categoriesService.createCategoriesFromFile(filePath);
+  }
+
+  @Get('search/name')
+  async searchProducts(@Query('term') term: string) {
+    if (!term || term.trim() === '') {
+      throw new BadRequestException('Search term cannot be empty');
+    }
+    return this.categoriesService.searchCategories(term);
   }
 }

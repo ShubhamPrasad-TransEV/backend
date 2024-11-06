@@ -38,7 +38,16 @@ export class CreateProductDto {
   @IsNotEmpty({ each: true })
   categories: string[] | string;
 
-  @ApiProperty({ type: 'object', required: false })
+  // Update here with properties defined
+  @ApiProperty({
+    type: 'object',
+    properties: {
+      // Define properties of productDetails here
+      key1: { type: 'string' }, // Example property
+      key2: { type: 'number' }, // Example property
+    },
+    nullable: true,
+  })
   @IsOptional()
   @IsJSON()
   productDetails?: object;

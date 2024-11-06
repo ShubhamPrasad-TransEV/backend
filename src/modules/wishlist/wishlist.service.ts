@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ParseIntPipe } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class WishlistService {
   constructor(private prisma: PrismaService) { }
 
-  // Method to add a single product to a user's wishlist 
+  // Method to add a single product to a user's wishlist
   async addToWishlist(userId: number, productId: string) {
     await this.prisma.mostlyWishlisted.upsert({
       where: { productId },
@@ -30,6 +30,7 @@ export class WishlistService {
           select: {
             id: true,
             name: true,
+            
             images: {
               // Changed to 'images' to match the schema no 
               select: {
@@ -62,7 +63,7 @@ export class WishlistService {
       },
       take: limit, // Only fetch up to the specified limit, if provided
       include: {
-        product: true, // Include product details; adjust fields as needed
+        product: true, // Include product details; adjust fields as needed 
       },
     });
   }
