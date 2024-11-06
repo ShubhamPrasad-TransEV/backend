@@ -3,10 +3,12 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import * as stringSimilarity from 'string-similarity';
 
 @Injectable()
 export class CategoriesService {
@@ -472,5 +474,82 @@ export class CategoriesService {
 
     // Return an array of names only
     return topLevelCategories.map((category) => category.name);
+  }
+
+  async searchCategories(
+    term: string,
+  ): Promise<{ id: number; name: string; similarity: number }[]> {
+    if (!term || term.trim() === '') {
+      throw new BadRequestException('Search term cannot be empty');
+    }
+
+    const searchTerm = term.toLowerCase();
+
+    const categories = await this.prisma.category.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    const rankedCategories = categories.map((category) => {
+      if (!category.name) {
+        return { id: category.id, name: '', similarity: 0 };
+      }
+
+      const similarity = this.partialOrFuzzyMatch(
+        category.name.toLowerCase(),
+        searchTerm,
+      );
+
+      return {
+        id: category.id,
+        name: category.name,
+        similarity,
+      };
+    });
+
+    rankedCategories.sort((a, b) => b.similarity - a.similarity);
+
+    return rankedCategories.filter((category) => category.similarity > 0.2);
+  }
+
+  private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
+    const normalizedProductName = this.normalizeString(productName);
+    const normalizedSearchTerm = this.normalizeString(searchTerm);
+
+    const productNgrams = this.createNgrams(normalizedProductName, 2);
+    const searchNgrams = this.createNgrams(normalizedSearchTerm, 2);
+
+    const matchedNgrams = searchNgrams.filter((ngram) =>
+      productNgrams.includes(ngram),
+    );
+    const matchRatio = matchedNgrams.length / searchNgrams.length;
+
+    const matchLengthScore =
+      matchedNgrams.join('').length / normalizedProductName.length;
+
+    let similarityScore = 0.7 * matchRatio + 0.3 * matchLengthScore;
+
+    if (similarityScore < 0.5) {
+      similarityScore = stringSimilarity.compareTwoStrings(
+        normalizedProductName,
+        normalizedSearchTerm,
+      );
+    }
+
+    return similarityScore;
+  }
+
+  private createNgrams(text: string, n: number): string[] {
+    const ngrams: string[] = [];
+    for (let i = 0; i <= text.length - n; i++) {
+      ngrams.push(text.substring(i, i + n));
+    }
+    return ngrams;
+  }
+
+  private normalizeString(text: string): string {
+    return text.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   }
 }
