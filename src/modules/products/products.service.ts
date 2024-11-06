@@ -6,7 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import stringSimilarity from 'string-similarity';
+import * as stringSimilarity from 'string-similarity';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mime from 'mime-types'; // Import mime-types to get the MIME type based on file extension

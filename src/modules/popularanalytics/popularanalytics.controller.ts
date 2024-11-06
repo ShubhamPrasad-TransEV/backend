@@ -1,42 +1,50 @@
+// src/modules/popularanalytics/popularanalytics.controller.ts
+
 import {
   Controller,
   Post,
   Body,
   Get,
-  Param,
   Query,
   NotFoundException,
-  ParseIntPipe,
 } from '@nestjs/common';
-import {
-  CreateMostlySearchedDto,
-  CreateMostlyViewedDto,
-} from './dto/popularanalytics.dto'; // Adjust the path as necessary
 import {
   MostlySearchedService,
   MostlyViewedService,
-} from './popularanalytics.services'; // Adjust the path as necessary
+} from './popularanalytics.services';
+import {
+  CreateMostlySearchedDto,
+  CreateMostlyViewedDto,
+} from './dto/popularanalytics.dto';
+import { MostlySearched, MostlyViewed } from './popularanalytics.services'; // Ensure these are imported
 
 @Controller('mostlysearch')
 export class MostlySearchedController {
   constructor(private readonly mostlySearchedService: MostlySearchedService) {}
 
-  // POST endpoint to track product clicks
   @Post('track')
-  async trackClick(@Body() body: { productid: string }) {
+  async trackClick(
+    @Body() body: CreateMostlySearchedDto,
+  ): Promise<MostlySearched> {
+    if (!body.productid) {
+      throw new NotFoundException('Product ID must be provided');
+    }
     return this.mostlySearchedService.trackProductClick(body.productid);
   }
 
-  // GET endpoint to retrieve all Mostly Searched entries
   @Get('/getallmostlysearchproducts')
-  async findAll() {
+  async findAll(): Promise<MostlySearched[]> {
     return this.mostlySearchedService.getAllMostlySearched();
   }
 
-  // GET endpoint to retrieve a specific Mostly Searched entry by ID
-  @Post('getSingleItem') // Renamed route
-  async getSingleItem(@Body() body: { id: string }) {
-    return this.mostlySearchedService.getMostlySearchedById(+body.id); // Convert string ID to number
+  @Post('getSingleItem')
+  async getSingleItem(@Body() body: { id: number }): Promise<MostlySearched> {
+    return this.mostlySearchedService.getMostlySearchedById(body.id);
+  }
+
+  @Get('popularcb')
+  async getPopularCategoriesAndBrands(): Promise<any> {
+    return this.mostlySearchedService.getPopularCategoriesAndBrands();
   }
 }
 
@@ -44,18 +52,18 @@ export class MostlySearchedController {
 export class MostlyViewedController {
   constructor(private readonly mostlyViewedService: MostlyViewedService) {}
 
-  // Endpoint to increment views or create a Mostly Viewed entry
   @Post()
-  async createOrIncrement(@Body() data: CreateMostlyViewedDto) {
+  async createOrIncrement(
+    @Body() data: CreateMostlyViewedDto,
+  ): Promise<MostlyViewed> {
     if (!data.productId) {
       throw new NotFoundException('Product ID must be provided');
     }
     return this.mostlyViewedService.incrementMostlyViewed(data);
   }
 
-  // Endpoint to get all Mostly Viewed entries, sorted by views in descending order
   @Get()
-  async findAll(@Query('limit', ParseIntPipe) limit?: number) {
+  async findAll(@Query('limit') limit?: number): Promise<MostlyViewed[]> {
     return this.mostlyViewedService.getAllMostlyViewed(limit);
   }
 }

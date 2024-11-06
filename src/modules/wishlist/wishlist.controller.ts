@@ -6,9 +6,11 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { WishlistService } from './wishlist.service';
-import { AddToWishlistDto } from './dto/wishlist.dto';
+import { AddToWishlistDto, MostlyWishlistedDto } from './dto/wishlist.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('wishlist')
@@ -48,5 +50,13 @@ export class WishlistController {
     @Param('productId') productId: string,
   ) {
     return this.wishlistService.removeFromWishlist(userId, productId);
+  }
+
+  @Post('mostly-wishlisted')
+  @ApiOperation({ summary: 'Get mostly wishlisted items' })
+  @ApiResponse({ status: 200, description: 'List of mostly wishlisted items.' })
+  async getMostlyWishlisted(@Body() { limit }: MostlyWishlistedDto) {
+    const parsedLimit = limit ?? undefined; // If limit is not provided, it will be undefined
+    return this.wishlistService.getMostlyWishlisted(parsedLimit);
   }
 }
