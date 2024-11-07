@@ -18,7 +18,7 @@ model User {
   seller        Seller?
   companyName   String?         @db.VarChar(255)
   contactPerson String?         @db.VarChar(255)
-  addresses     Json            @default("[]")
+  addresses     String          
   roleId        Int?            @default(2)
   aboutUs       String?         @db.Text
   logo          String?         @db.VarChar(255)

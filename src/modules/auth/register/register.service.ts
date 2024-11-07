@@ -11,7 +11,6 @@ import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { AddressDto } from './dto/address.dto';
 import { Address } from './types/address.type';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RegisterService {
@@ -20,7 +19,6 @@ export class RegisterService {
     private readonly emailService: EmailService,
   ) {}
 
-  // Register a new user
   async register(createUserDto: CreateUserDto) {
     const { name, username, password, email, phoneNumber } = createUserDto;
 
@@ -46,7 +44,6 @@ export class RegisterService {
     return user;
   }
 
-  // Find a user by ID
   async findOne(id: number) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
@@ -55,12 +52,10 @@ export class RegisterService {
     return user;
   }
 
-  // Fetch all users
   async getAllUsers() {
     return this.prisma.user.findMany();
   }
 
-  // Update user details (excluding addresses)
   async updateUser(updateUserDto: UpdateUserDto) {
     const {
       id,
@@ -109,7 +104,6 @@ export class RegisterService {
     return updatedUser;
   }
 
-  // Delete a user by ID
   async deleteUser(userId: number) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
@@ -124,13 +118,12 @@ export class RegisterService {
     return { message: 'User deleted successfully' };
   }
 
-  // Fetch all sellers excluding those with an admin role
   async getAllSellers() {
     const userDetails = await this.prisma.seller.findMany({
       where: {
         user: {
           role: {
-            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+            NOT: { id: 1 },
           },
         },
       },
@@ -142,14 +135,13 @@ export class RegisterService {
     return userDetails.map((seller) => seller.user);
   }
 
-  // Get a seller by ID, excluding those with an admin role
   async getSellerById(id: number) {
     const seller = await this.prisma.seller.findFirst({
       where: {
         id,
         user: {
           role: {
-            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+            NOT: { id: 1 },
           },
         },
       },
@@ -163,7 +155,6 @@ export class RegisterService {
     return seller;
   }
 
-  // Update seller details
   async updateSeller(updateSellerDto: UpdateSellerDto) {
     const { id, aboutUs, logo } = updateSellerDto;
 
@@ -197,83 +188,83 @@ export class RegisterService {
     });
   }
 
-  // Address Management Methods
-
-  // Add or update an address with the specified identifier
   async addAddress(userId: number, addressDto: AddressDto) {
     const user = await this.findOne(userId);
 
-    // Convert `user.addresses` from `JsonObject` to `{ [key: string]: Address }`
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    // Parse `addresses` as an array, initializing it as an empty array if undefined or invalid
+    let addresses: Address[] = [];
+    try {
+      addresses = JSON.parse(user.addresses) || [];
+      if (!Array.isArray(addresses)) addresses = [];
+    } catch (error) {
+      addresses = [];
+    }
 
-    // Check for duplicate identifier
-    if (addresses[addressDto.identifier]) {
+    if (addresses.some((addr) => addr.identifier === addressDto.identifier)) {
       throw new BadRequestException(
         `Address with identifier "${addressDto.identifier}" already exists.`,
       );
     }
 
-    // Check if there's already a default address
-    if (
-      addressDto.default &&
-      Object.values(addresses).some((addr) => addr.default)
-    ) {
-      throw new BadRequestException(
-        'An address is already set as default. Use PATCH to update the default address.',
-      );
-    }
+    // Ensure that only the PATCH endpoint can set an address as default
+    const addressToAdd = { ...addressDto, default: false };
 
-    // Add the new address
-    addresses[addressDto.identifier] = {
-      identifier: addressDto.identifier,
-      address: addressDto.address,
-      default: addressDto.default,
-    };
+    addresses.push(addressToAdd);
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { addresses: addresses as unknown as Prisma.JsonObject },
+      data: { addresses: JSON.stringify(addresses) },
     });
   }
 
-  // Delete an address from the user's address list by identifier
   async deleteAddress(userId: number, identifier: string) {
     const user = await this.findOne(userId);
 
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    let addresses: Address[] = [];
+    try {
+      addresses = JSON.parse(user.addresses) || [];
+      if (!Array.isArray(addresses)) addresses = [];
+    } catch (error) {
+      addresses = [];
+    }
 
-    if (!(identifier in addresses)) {
+    const addressIndex = addresses.findIndex(
+      (addr) => addr.identifier === identifier,
+    );
+
+    if (addressIndex === -1) {
       throw new NotFoundException(
         `Address with identifier ${identifier} not found`,
       );
     }
 
-    delete addresses[identifier];
+    addresses.splice(addressIndex, 1);
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { addresses: addresses as unknown as Prisma.JsonObject },
+      data: { addresses: JSON.stringify(addresses) },
     });
   }
 
-  // Retrieve all addresses for a user
-  async getAllAddresses(userId: number): Promise<{ [key: string]: Address }> {
+  async getAllAddresses(userId: number): Promise<Address[]> {
     const user = await this.findOne(userId);
-    return (user.addresses as unknown as { [key: string]: Address }) || {};
+    let addresses: Address[] = [];
+    try {
+      addresses = JSON.parse(user.addresses) || [];
+      if (!Array.isArray(addresses)) addresses = [];
+    } catch (error) {
+      addresses = [];
+    }
+    return addresses;
   }
 
-  // Retrieve a specific address by identifier
   async getAddressByIdentifier(
     userId: number,
     identifier: string,
   ): Promise<Address> {
-    const user = await this.findOne(userId);
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    const addresses = await this.getAllAddresses(userId);
 
-    const address = addresses[identifier];
+    const address = addresses.find((addr) => addr.identifier === identifier);
     if (!address) {
       throw new NotFoundException(
         `Address with identifier ${identifier} not found`,
@@ -282,7 +273,6 @@ export class RegisterService {
     return address;
   }
 
-  // Update an address by identifier
   async updateAddressByIdentifier(
     userId: number,
     identifier: string,
@@ -290,60 +280,73 @@ export class RegisterService {
   ) {
     const user = await this.findOne(userId);
 
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    let addresses: Address[] = [];
+    try {
+      addresses = JSON.parse(user.addresses) || [];
+      if (!Array.isArray(addresses)) addresses = [];
+    } catch (error) {
+      addresses = [];
+    }
 
-    if (!(identifier in addresses)) {
+    const addressIndex = addresses.findIndex(
+      (addr) => addr.identifier === identifier,
+    );
+
+    if (addressIndex === -1) {
       throw new NotFoundException(
         `Address with identifier ${identifier} not found`,
       );
     }
 
-    addresses[identifier] = {
-      identifier: addressDto.identifier,
-      address: addressDto.address,
-      default: addressDto.default,
+    // Prevent updates to the default field except through the setDefaultAddress method
+    addresses[addressIndex] = {
+      ...addressDto,
+      default: addresses[addressIndex].default,
     };
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { addresses: addresses as unknown as Prisma.JsonObject },
+      data: { addresses: JSON.stringify(addresses) },
     });
   }
 
-  // Set the specified address as default
   async setDefaultAddress(userId: number, identifier: string) {
     const user = await this.findOne(userId);
 
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    let addresses: Address[] = [];
+    try {
+      addresses = JSON.parse(user.addresses) || [];
+      if (!Array.isArray(addresses)) addresses = [];
+    } catch (error) {
+      addresses = [];
+    }
 
-    if (!(identifier in addresses)) {
+    const addressIndex = addresses.findIndex(
+      (addr) => addr.identifier === identifier,
+    );
+
+    if (addressIndex === -1) {
       throw new NotFoundException(
         `Address with identifier ${identifier} not found`,
       );
     }
 
-    for (const key in addresses) {
-      const address = addresses[key];
-      address.default = key === identifier;
-    }
+    // Set the specified address as default, unsetting any other defaults
+    addresses = addresses.map((addr, index) => ({
+      ...addr,
+      default: index === addressIndex,
+    }));
 
     return this.prisma.user.update({
       where: { id: userId },
-      data: { addresses: addresses as unknown as Prisma.JsonObject },
+      data: { addresses: JSON.stringify(addresses) },
     });
   }
 
-  // Get default address for a user
   async getDefaultAddress(userId: number): Promise<Address> {
-    const user = await this.findOne(userId);
-    const addresses =
-      (user.addresses as unknown as { [key: string]: Address }) || {};
+    const addresses = await this.getAllAddresses(userId);
 
-    const defaultAddress = Object.values(addresses).find(
-      (addr) => addr.default,
-    );
+    const defaultAddress = addresses.find((addr) => addr.default);
     if (!defaultAddress) {
       throw new NotFoundException('No default address found for this user');
     }
