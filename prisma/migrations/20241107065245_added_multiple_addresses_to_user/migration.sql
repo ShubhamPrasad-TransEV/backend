@@ -9,7 +9,7 @@ CREATE TABLE `User` (
     `isSeller` BOOLEAN NOT NULL DEFAULT false,
     `companyName` VARCHAR(255) NULL,
     `contactPerson` VARCHAR(255) NULL,
-    `address` TEXT NULL,
+    `address` JSON NOT NULL,
     `roleId` INTEGER NULL DEFAULT 2,
     `aboutUs` TEXT NULL,
     `logo` VARCHAR(255) NULL,
@@ -87,6 +87,7 @@ CREATE TABLE `Unit` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `address` VARCHAR(191) NOT NULL DEFAULT '',
     `orderedItems` JSON NULL,
     `shipmentCompany` VARCHAR(191) NULL,
     `shipmentRequestStatus` VARCHAR(191) NULL,

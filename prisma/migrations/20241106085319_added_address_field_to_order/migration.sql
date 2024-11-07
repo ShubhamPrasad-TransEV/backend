@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `order` ADD COLUMN `address` VARCHAR(191) NOT NULL DEFAULT '';
