@@ -279,4 +279,34 @@ export class RegisterService {
     }
     return defaultAddress;
   }
+
+  async setDefaultAddress(userId: number, identifier: string) {
+    const user = await this.findOne(userId);
+    const addresses = JSON.parse(
+      user.addresses as unknown as string,
+    ) as Address[];
+
+    // Find the address to set as default
+    const addressIndex = addresses.findIndex(
+      (addr) => addr.identifier === identifier,
+    );
+    if (addressIndex === -1) {
+      throw new NotFoundException(
+        `Address with identifier ${identifier} not found`,
+      );
+    }
+
+    // Update any existing default address to false
+    addresses.forEach((addr) => {
+      if (addr.default) addr.default = false;
+    });
+
+    // Set the specified address's default to true
+    addresses[addressIndex].default = true;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { addresses: JSON.stringify(addresses) },
+    });
+  }
 }

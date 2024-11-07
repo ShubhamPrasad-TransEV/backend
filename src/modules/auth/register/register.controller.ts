@@ -340,4 +340,27 @@ export class RegisterController {
     }
     return defaultAddress;
   }
+
+  @Patch(':id/address/:identifier/set-default')
+  @ApiOperation({ summary: 'Set an address as the default address for a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Address set as default successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Address not found for the specified identifier.',
+  })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Address identifier (e.g., Home, Office)',
+    example: 'Home',
+  })
+  async setDefaultAddress(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('identifier') identifier: string,
+  ) {
+    return this.registerService.setDefaultAddress(id, identifier);
+  }
 }
