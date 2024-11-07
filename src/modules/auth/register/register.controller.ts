@@ -23,7 +23,7 @@ import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
-import { AddressDto } from "./dto/address.dto"
+import { AddressDto } from './dto/address.dto';
 
 @ApiTags('Users')
 @Controller('user')

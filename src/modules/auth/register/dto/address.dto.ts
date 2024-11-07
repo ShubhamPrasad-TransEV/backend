@@ -1,5 +1,5 @@
 export class AddressDto {
-    identifier: string;
-    address: string;
-    default: boolean;
-  }
+  identifier: string;
+  address: string;
+  default: boolean;
+}
