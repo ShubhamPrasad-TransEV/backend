@@ -173,9 +173,30 @@ export class RegisterController {
     return seller;
   }
 
-  // Add address to user profile
   @Post(':id/address')
   @ApiOperation({ summary: 'Add a new address to user profile' })
+  @ApiBody({
+    description: 'Address details to add to the user profile',
+    type: AddressDto,
+    examples: {
+      example1: {
+        summary: 'Home Address',
+        value: {
+          identifier: 'Home',
+          address: '123 Main St, Springfield, USA',
+          default: true,
+        },
+      },
+      example2: {
+        summary: 'Office Address',
+        value: {
+          identifier: 'Office',
+          address: '456 Elm St, Springfield, USA',
+          default: false,
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Address successfully added.' })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   async addAddress(
@@ -208,6 +229,20 @@ export class RegisterController {
   @ApiResponse({
     status: 200,
     description: 'List of all addresses for the user.',
+    schema: {
+      example: [
+        {
+          identifier: 'Home',
+          address: '123 Main St, Springfield, USA',
+          default: true,
+        },
+        {
+          identifier: 'Office',
+          address: '456 Elm St, Springfield, USA',
+          default: false,
+        },
+      ],
+    },
   })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   async getAllAddresses(@Param('id', ParseIntPipe) id: number) {
@@ -220,6 +255,13 @@ export class RegisterController {
   @ApiResponse({
     status: 200,
     description: 'Address details for the specified identifier.',
+    schema: {
+      example: {
+        identifier: 'Home',
+        address: '123 Main St, Springfield, USA',
+        default: true,
+      },
+    },
   })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   @ApiParam({
@@ -237,6 +279,20 @@ export class RegisterController {
   // Update address by identifier for a user
   @Patch(':id/address/:identifier')
   @ApiOperation({ summary: 'Update an address by identifier for a user' })
+  @ApiBody({
+    description: 'Updated address details',
+    type: AddressDto,
+    examples: {
+      example1: {
+        summary: 'Updated Home Address',
+        value: {
+          identifier: 'Home',
+          address: '789 New Address St, Springfield, USA',
+          default: true,
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Address successfully updated.' })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   @ApiParam({
@@ -262,6 +318,13 @@ export class RegisterController {
   @ApiResponse({
     status: 200,
     description: 'Default address for the user.',
+    schema: {
+      example: {
+        identifier: 'Home',
+        address: '123 Main St, Springfield, USA',
+        default: true,
+      },
+    },
   })
   @ApiResponse({
     status: 404,
