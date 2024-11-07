@@ -332,6 +332,8 @@ export class RegisterController {
   })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   async getDefaultAddress(@Param('id', ParseIntPipe) id: number) {
+    console.log(`Controller: Fetching default address for user ID: ${id}`);
+
     const defaultAddress = await this.registerService.getDefaultAddress(id);
     if (!defaultAddress) {
       throw new NotFoundException(
