@@ -14,7 +14,7 @@ import * as stringSimilarity from 'string-similarity';
 export class CategoriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Create a category and associate parents and children
+  // Create a category and associate parents and childrens
   async createCategory(createCategoryDto: CreateCategoryDto) {
     const { name, parentCategoryNames, childCategoryNames } = createCategoryDto;
 
