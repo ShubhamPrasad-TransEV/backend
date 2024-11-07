@@ -106,6 +106,7 @@ model Order {
   id                     Int       @id @default(autoincrement())
   userId                 Int
   user                   User      @relation(fields: [userId], references: [id])
+  address                String    @default("")
   orderedItems           Json? // JSON format to store {productId: quantity}
   shipmentCompany        String?
   shipmentRequestStatus  String?
