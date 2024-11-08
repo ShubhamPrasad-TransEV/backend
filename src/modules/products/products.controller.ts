@@ -125,11 +125,28 @@ export class ProductsController {
   }
 
   @Get('search/name')
-  async searchProducts(@Query('term') term: string) {
+  async searchProducts(
+    @Query('term') term: string,
+    @Query('pagination') pagination?: string,
+  ) {
     if (!term || term.trim() === '') {
       throw new BadRequestException('Search term cannot be empty');
     }
-    return this.productsService.searchProducts(term);
+
+    // Default values for pagination
+    let skip = 0;
+    let take = 10;
+
+    // Parse the pagination parameter if provided
+    if (pagination) {
+      const [start, end] = pagination.split('-').map(Number);
+      if (!isNaN(start) && !isNaN(end) && start > 0 && end >= start) {
+        skip = start - 1; // Convert to zero-based index
+        take = end - start + 1;
+      }
+    }
+
+    return this.productsService.searchProducts(term, skip, take);
   }
 
   @Get('seller/:sellerId')
@@ -161,8 +178,28 @@ export class ProductsController {
   }
 
   @Get('category/:categoryName')
-  async getProductsByCategory(@Param('categoryName') categoryName: string) {
-    return await this.productsService.getProductsByCategory(categoryName);
+  async getProductsByCategory(
+    @Param('categoryName') categoryName: string,
+    @Query('pagination') pagination?: string,
+  ) {
+    // Default values for pagination
+    let skip = 0;
+    let take = 10;
+
+    // Parse the pagination parameter if provided
+    if (pagination) {
+      const [start, end] = pagination.split('-').map(Number);
+      if (!isNaN(start) && !isNaN(end) && start > 0 && end >= start) {
+        skip = start - 1; // Convert to zero-based index
+        take = end - start + 1;
+      }
+    }
+
+    return await this.productsService.getProductsByCategory(
+      categoryName,
+      skip,
+      take,
+    );
   }
 
   @Get('unit/:unitId')
