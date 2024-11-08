@@ -184,7 +184,6 @@ export class RegisterController {
         value: {
           identifier: 'Home',
           address: '123 Main St, Springfield, USA',
-          default: true,
         },
       },
       example2: {
@@ -192,7 +191,6 @@ export class RegisterController {
         value: {
           identifier: 'Office',
           address: '456 Elm St, Springfield, USA',
-          default: false,
         },
       },
     },
@@ -288,7 +286,6 @@ export class RegisterController {
         value: {
           identifier: 'Home',
           address: '789 New Address St, Springfield, USA',
-          default: true,
         },
       },
     },
@@ -310,37 +307,6 @@ export class RegisterController {
       identifier,
       addressDto,
     );
-  }
-
-  // Get default address for a user
-  @Get(':id/address/default')
-  @ApiOperation({ summary: 'Get default address for a user' })
-  @ApiResponse({
-    status: 200,
-    description: 'Default address for the user.',
-    schema: {
-      example: {
-        identifier: 'Home',
-        address: '123 Main St, Springfield, USA',
-        default: true,
-      },
-    },
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'No default address found for this user.',
-  })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  async getDefaultAddress(@Param('id', ParseIntPipe) id: number) {
-    console.log(`Controller: Fetching default address for user ID: ${id}`);
-
-    const defaultAddress = await this.registerService.getDefaultAddress(id);
-    if (!defaultAddress) {
-      throw new NotFoundException(
-        `No default address found for user with ID ${id}`,
-      );
-    }
-    return defaultAddress;
   }
 
   @Patch(':id/address/:identifier/set-default')
