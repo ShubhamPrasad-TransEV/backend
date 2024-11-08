@@ -375,6 +375,8 @@ export class ProductsService {
 
   async searchProducts(
     term: string,
+    skip: number,
+    take: number,
   ): Promise<{ id: string; name: string; similarity: number }[]> {
     if (!term || term.trim() === '') {
       throw new BadRequestException('Search term cannot be empty');
@@ -402,9 +404,15 @@ export class ProductsService {
       };
     });
 
+    // Sort products by similarity score in descending order
     rankedProducts.sort((a, b) => b.similarity - a.similarity);
 
-    return rankedProducts.filter((product) => product.similarity > 0.2);
+    // Filter by similarity threshold and apply pagination
+    const filteredProducts = rankedProducts.filter(
+      (product) => product.similarity > 0.2,
+    );
+
+    return filteredProducts.slice(skip, skip + take);
   }
 
   private partialOrFuzzyMatch(productName: string, searchTerm: string): number {
@@ -538,7 +546,11 @@ export class ProductsService {
     return differingFields;
   }
 
-  async getProductsByCategory(categoryName: string) {
+  async getProductsByCategory(
+    categoryName: string,
+    skip: number,
+    take: number,
+  ) {
     const products = await this.prisma.product.findMany({
       where: {
         categories: {
@@ -551,6 +563,8 @@ export class ProductsService {
         images: true,
         categories: true,
       },
+      skip: skip,
+      take: take,
     });
 
     if (!products || products.length === 0) {
@@ -561,7 +575,6 @@ export class ProductsService {
 
     return products;
   }
-
   async getProductByUnitId(unitId: string) {
     const unit = await this.prisma.unit.findUnique({
       where: { id: unitId },
