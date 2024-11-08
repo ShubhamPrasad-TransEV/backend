@@ -37,12 +37,12 @@ model User {
 }
 
 model Address {
-  id         String  @unique @default(uuid())
-  identifier String // e.g., 'Home', 'Office'
-  address    String // Full address
-  default    Boolean @default(false) // To mark the default address
-  userId     Int // Foreign key linking to User
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @unique @default(uuid())
+  identifier        String // e.g., 'Home', 'Office'
+  address           String // Full address
+  defaultAddress    Boolean @default(false) // To mark the default address
+  userId            Int // Foreign key linking to User
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, identifier]) // Ensure unique identifier per user
 }
