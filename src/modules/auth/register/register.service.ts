@@ -56,11 +56,11 @@ export class RegisterService {
 
   // Add a new address for a user
   async addAddress(userId: number, addressDto: AddressDto) {
-    // If this new address should be the default, set others to false
-    if (addressDto.default) {
+    // If this new address should be the defaultAddress, set others to false
+    if (addressDto.defaultAddress) {
       await this.prisma.address.updateMany({
-        where: { userId, default: true },
-        data: { default: false },
+        where: { userId, defaultAddress: true },
+        data: { defaultAddress: false },
       });
     }
 
@@ -69,7 +69,7 @@ export class RegisterService {
       data: {
         identifier: addressDto.identifier,
         address: addressDto.address,
-        default: addressDto.default || false,
+        defaultAddress: addressDto.defaultAddress || false,
         userId,
       },
     });
@@ -80,26 +80,6 @@ export class RegisterService {
     return await this.prisma.address.findMany({
       where: { userId },
     });
-  }
-
-  // Get the default address for a user
-  async getDefaultAddress(userId: number): Promise<Address> {
-    console.log(`Fetching default address for user ID: ${userId}`);
-
-    // Attempt to find the address marked as default for this user
-    const defaultAddress = await this.prisma.address.findFirst({
-      where: { userId, default: true },
-    });
-
-    // Log the result to confirm the data structure
-    console.log('Default address found:', defaultAddress);
-
-    if (!defaultAddress) {
-      console.error(`No default address found for user with ID ${userId}`);
-      throw new NotFoundException('No default address found for this user');
-    }
-
-    return defaultAddress;
   }
 
   // Get address by identifier
@@ -136,8 +116,11 @@ export class RegisterService {
       );
     }
 
-    // Ensure only `setDefaultAddress` can set an address as default
-    const dataToUpdate = { ...addressDto, default: address.default };
+    // Ensure only `setDefaultAddress` can set an address as defaultAddress
+    const dataToUpdate = {
+      ...addressDto,
+      defaultAddress: address.defaultAddress,
+    };
 
     return await this.prisma.address.update({
       where: { id: address.id },
@@ -145,7 +128,7 @@ export class RegisterService {
     });
   }
 
-  // Set an address as default
+  // Set an address as defaultAddress
   async setDefaultAddress(userId: number, identifier: string) {
     // Fetch the address by userId and identifier, not by id
     const address = await this.prisma.address.findFirst({
@@ -161,16 +144,16 @@ export class RegisterService {
       throw new NotFoundException('Address not found');
     }
 
-    // Unset other default addresses for the user
+    // Unset other defaultAddress addresses for the user
     const unsetResult = await this.prisma.address.updateMany({
-      where: { userId, default: true },
-      data: { default: false },
+      where: { userId, defaultAddress: true },
+      data: { defaultAddress: false },
     });
 
-    // Set the specified address as default
+    // Set the specified address as defaultAddress
     const updateResult = await this.prisma.address.update({
       where: { id: address.id },
-      data: { default: true },
+      data: { defaultAddress: true },
     });
 
     return updateResult;
