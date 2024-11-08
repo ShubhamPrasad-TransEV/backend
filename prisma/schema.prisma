@@ -18,7 +18,7 @@ model User {
   seller        Seller?
   companyName   String?         @db.VarChar(255)
   contactPerson String?         @db.VarChar(255)
-  address       String?         @db.Text
+  addresses     Address[]
   roleId        Int?            @default(2)
   aboutUs       String?         @db.Text
   logo          String?         @db.VarChar(255)
@@ -34,6 +34,17 @@ model User {
   SupportTicket SupportTicket[]
 
   @@index([username, email])
+}
+
+model Address {
+  id         String  @unique @default(uuid())
+  identifier String // e.g., 'Home', 'Office'
+  address    String // Full address
+  default    Boolean @default(false) // To mark the default address
+  userId     Int // Foreign key linking to User
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, identifier]) // Ensure unique identifier per user
 }
 
 model Seller {
@@ -106,6 +117,7 @@ model Order {
   id                     Int       @id @default(autoincrement())
   userId                 Int
   user                   User      @relation(fields: [userId], references: [id])
+  address                String    @default("")
   orderedItems           Json? // JSON format to store {productId: quantity}
   shipmentCompany        String?
   shipmentRequestStatus  String?

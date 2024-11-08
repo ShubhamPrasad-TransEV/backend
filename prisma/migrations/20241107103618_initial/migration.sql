@@ -9,7 +9,6 @@ CREATE TABLE `User` (
     `isSeller` BOOLEAN NOT NULL DEFAULT false,
     `companyName` VARCHAR(255) NULL,
     `contactPerson` VARCHAR(255) NULL,
-    `address` TEXT NULL,
     `roleId` INTEGER NULL DEFAULT 2,
     `aboutUs` TEXT NULL,
     `logo` VARCHAR(255) NULL,
@@ -19,6 +18,18 @@ CREATE TABLE `User` (
     UNIQUE INDEX `User_email_key`(`email`),
     INDEX `User_username_email_idx`(`username`, `email`),
     PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Address` (
+    `id` VARCHAR(191) NOT NULL,
+    `identifier` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `default` BOOLEAN NOT NULL DEFAULT false,
+    `userId` INTEGER NOT NULL,
+
+    UNIQUE INDEX `Address_id_key`(`id`),
+    UNIQUE INDEX `Address_userId_identifier_key`(`userId`, `identifier`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -87,6 +98,7 @@ CREATE TABLE `Unit` (
 CREATE TABLE `Order` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `address` VARCHAR(191) NOT NULL DEFAULT '',
     `orderedItems` JSON NULL,
     `shipmentCompany` VARCHAR(191) NULL,
     `shipmentRequestStatus` VARCHAR(191) NULL,
@@ -272,6 +284,19 @@ CREATE TABLE `Reviews` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `SupportTicket` (
+    `id` VARCHAR(191) NOT NULL,
+    `subject` VARCHAR(255) NOT NULL,
+    `details` TEXT NOT NULL,
+    `status` ENUM('UNOPENED', 'IN_PROGRESS', 'RESOLVED', 'ESCALATED') NOT NULL DEFAULT 'UNOPENED',
+    `userId` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `_CategoryParentChild` (
     `A` INTEGER NOT NULL,
     `B` INTEGER NOT NULL,
@@ -291,6 +316,9 @@ CREATE TABLE `_ProductCategories` (
 
 -- AddForeignKey
 ALTER TABLE `User` ADD CONSTRAINT `User_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Address` ADD CONSTRAINT `Address_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Seller` ADD CONSTRAINT `Seller_id_fkey` FOREIGN KEY (`id`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -357,6 +385,9 @@ ALTER TABLE `Reviews` ADD CONSTRAINT `Reviews_userId_fkey` FOREIGN KEY (`userId`
 
 -- AddForeignKey
 ALTER TABLE `Reviews` ADD CONSTRAINT `Reviews_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SupportTicket` ADD CONSTRAINT `SupportTicket_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `_CategoryParentChild` ADD CONSTRAINT `_CategoryParentChild_A_fkey` FOREIGN KEY (`A`) REFERENCES `Category`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
