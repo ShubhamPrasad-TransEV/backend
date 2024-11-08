@@ -261,7 +261,6 @@ model MostlySearched {
 //   orderdetails Order @relation(fields: [orderid],references: [id],onDelete: Cascade)
 // }
 
-// }
 
 model mostlyViewed {
   productId String  @id @unique
