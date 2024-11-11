@@ -282,8 +282,8 @@ model Reviews {
   product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   review          String? @db.VarChar(5000)
   ratings         Float
-  deliveryRatings Float
-  dispatchRatings Float
+  deliveryRatings Float?
+  dispatchRatings Float?
 }
 
 model SupportTicket {
