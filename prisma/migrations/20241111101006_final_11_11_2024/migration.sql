@@ -66,6 +66,7 @@ CREATE TABLE `Product` (
     `price` DOUBLE NULL,
     `sellerId` INTEGER NOT NULL,
     `productDetails` JSON NOT NULL,
+    `description` VARCHAR(255) NOT NULL,
     `quantity` INTEGER NULL DEFAULT 1,
 
     INDEX `Product_sellerId_idx`(`sellerId`),
