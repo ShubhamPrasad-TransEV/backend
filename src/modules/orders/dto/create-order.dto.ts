@@ -31,19 +31,28 @@ export class OrderedItemDto {
   @IsArray()
   @IsString({ each: true })
   assignedUnits: string[];
+
+  @ApiProperty({
+    example: 20.5,
+    description: 'The price of the product after discount (if any)',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  priceAfterDiscount?: number;
 }
 
 export class CreateOrderDto {
   @ApiProperty({
     example: 1,
-    description: 'User ID who is placing the order',
+    description: 'User ID of the person placing the order',
   })
   @IsNumber()
   userId: number;
 
   @ApiProperty({
     description:
-      'List of ordered items including productId, quantity, and assignedUnits',
+      'List of ordered items including productId, quantity, assignedUnits, and priceAfterDiscount',
     type: [OrderedItemDto],
   })
   @ValidateNested({ each: true })
@@ -106,7 +115,7 @@ export class CreateOrderDto {
 
   @ApiProperty({
     example: 10.5,
-    description: 'Shipping cost for the order',
+    description: 'Shipping cost associated with the order',
     required: false,
   })
   @IsOptional()
@@ -133,15 +142,33 @@ export class CreateOrderDto {
 
   @ApiProperty({
     example: false,
-    description: 'Whether pre-payment was made',
+    description: 'Indicates if pre-payment was made',
   })
   @IsBoolean()
   prePayment: boolean;
 
   @ApiProperty({
     example: false,
-    description: 'Whether the order has been paid for',
+    description: 'Indicates if the order has been fully paid',
   })
   @IsBoolean()
   paymentStatus: boolean;
+
+  @ApiProperty({
+    example: 100.0,
+    description: 'Total item cost after discounts, if applicable',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  totalItemCost?: number;
+
+  @ApiProperty({
+    example: 110.0,
+    description: 'Total order cost including shipping and discounts',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  totalOrderCost?: number;
 }
