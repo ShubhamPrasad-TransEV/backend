@@ -20,6 +20,7 @@ import { OrderModule } from './modules/orders/order.module';
 import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanalytics.modules';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
+import { OfferModule } from './modules/offer/offer.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SupportModule } from './modules/support/support.module';
     PopularAnalyticsModule,
     ReviewsModule,
     SupportModule,
+    OfferModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
