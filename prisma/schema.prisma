@@ -74,25 +74,26 @@ model Role {
 }
 
 model Product {
-  id             String             @id @default(uuid())
-  name           String?            @db.VarChar(255)
-  price          Float?
-  sellerId       Int
-  seller         Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
-  images         Image[]
-  cartItems      CartItem[]
-  categories     Category[]         @relation("ProductCategories")
-  productDetails Json
-  Wishlist       Wishlist[]
-  quantity       Int?               @default(1)
-  Unit           Unit[]
-  cart           Cart[]
-  mostlysearched MostlySearched[]
-  mostlyViewed   mostlyViewed?
-  mostwishlisted mostlyWishlisted[]
-  Reviews        Reviews[]
-  offersAsBuyProduct  Offer[]           @relation("BuyProductRelation")
-  offersAsGetProduct  Offer[]           @relation("GetProductRelation")// Relation for offers providing this product as free
+  id                 String             @id @default(uuid())
+  name               String?            @db.VarChar(255)
+  price              Float?
+  sellerId           Int
+  seller             Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  images             Image[]
+  cartItems          CartItem[]
+  categories         Category[]         @relation("ProductCategories")
+  productDetails     Json
+  description        String             @db.VarChar(255)
+  Wishlist           Wishlist[]
+  quantity           Int?               @default(1)
+  Unit               Unit[]
+  cart               Cart[]
+  mostlysearched     MostlySearched[]
+  mostlyViewed       mostlyViewed?
+  mostwishlisted     mostlyWishlisted[]
+  Reviews            Reviews[]
+  offersAsBuyProduct Offer[]            @relation("BuyProductRelation")
+  offersAsGetProduct Offer[]            @relation("GetProductRelation") // Relation for offers providing this product as free
 
   @@index([sellerId])
 }
@@ -145,28 +146,27 @@ model Order {
 }
 
 model Offer {
-  id             String     @id @default(uuid())
-  name           String?
-  type           OfferType  // Type of the offer (e.g., Buy N of X, Get M of Y Free or Discounted)
-  buyQuantity    Int?       // Quantity to buy to activate the offer (N)
-  getQuantity    Int?       // Quantity to get as part of the offer (M)
-  discount       Float?     // Discount percentage for discounted offers
-  buyProduct     Product?   @relation("BuyProductRelation", fields: [buyProductId], references: [id])
-  buyProductId   String?    // Specific product that needs to be bought
-  buyCategory    Category?  @relation("BuyCategoryRelation", fields: [buyCategoryId], references: [id])
-  buyCategoryId  Int?       // Category that needs to be bought (optional)
-  getProduct     Product?   @relation("GetProductRelation", fields: [getProductId], references: [id])
-  getProductId   String?    // Specific product to get for free or discounted (optional)
-  getCategory    Category?  @relation("GetCategoryRelation", fields: [getCategoryId], references: [id])
-  getCategoryId  Int?       // Category to get for free or discounted (optional)
-  validFrom      DateTime   // Offer start date
-  validUntil     DateTime   // Offer end date
-  sellerId       Int        // Seller creating the offer
-  description    String?    @db.Text // Description of the offer
+  id            String    @id @default(uuid())
+  name          String?
+  type          OfferType // Type of the offer (e.g., Buy N of X, Get M of Y Free or Discounted)
+  buyQuantity   Int? // Quantity to buy to activate the offer (N)
+  getQuantity   Int? // Quantity to get as part of the offer (M)
+  discount      Float? // Discount percentage for discounted offers
+  buyProduct    Product?  @relation("BuyProductRelation", fields: [buyProductId], references: [id])
+  buyProductId  String? // Specific product that needs to be bought
+  buyCategory   Category? @relation("BuyCategoryRelation", fields: [buyCategoryId], references: [id])
+  buyCategoryId Int? // Category that needs to be bought (optional)
+  getProduct    Product?  @relation("GetProductRelation", fields: [getProductId], references: [id])
+  getProductId  String? // Specific product to get for free or discounted (optional)
+  getCategory   Category? @relation("GetCategoryRelation", fields: [getCategoryId], references: [id])
+  getCategoryId Int? // Category to get for free or discounted (optional)
+  validFrom     DateTime // Offer start date
+  validUntil    DateTime // Offer end date
+  sellerId      Int // Seller creating the offer
+  description   String?   @db.Text // Description of the offer
 
   @@index([sellerId])
 }
-
 
 enum OfferType {
   BUY_N_GET_M_FREE_PRODUCT
