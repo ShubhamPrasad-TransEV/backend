@@ -25,7 +25,7 @@ CREATE TABLE `Address` (
     `id` VARCHAR(191) NOT NULL,
     `identifier` VARCHAR(191) NOT NULL,
     `address` VARCHAR(191) NOT NULL,
-    `default` BOOLEAN NOT NULL DEFAULT false,
+    `defaultAddress` BOOLEAN NOT NULL DEFAULT false,
     `userId` INTEGER NOT NULL,
 
     UNIQUE INDEX `Address_id_key`(`id`),
@@ -118,6 +118,27 @@ CREATE TABLE `Order` (
     `orderFulfilledAt` DATETIME(3) NULL,
 
     INDEX `Order_userId_idx`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Offer` (
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NULL,
+    `type` ENUM('BUY_N_GET_M_FREE_PRODUCT', 'BUY_N_GET_M_FREE_CATEGORY', 'BUY_N_GET_M_DISCOUNT_PRODUCT', 'BUY_N_GET_M_DISCOUNT_CATEGORY', 'FLAT_DISCOUNT_PRODUCT', 'FLAT_DISCOUNT_CATEGORY', 'SIMPLE_FLAT_DISCOUNT') NOT NULL,
+    `buyQuantity` INTEGER NULL,
+    `getQuantity` INTEGER NULL,
+    `discount` DOUBLE NULL,
+    `buyProductId` VARCHAR(191) NULL,
+    `buyCategoryId` INTEGER NULL,
+    `getProductId` VARCHAR(191) NULL,
+    `getCategoryId` INTEGER NULL,
+    `validFrom` DATETIME(3) NOT NULL,
+    `validUntil` DATETIME(3) NOT NULL,
+    `sellerId` INTEGER NOT NULL,
+    `description` TEXT NULL,
+
+    INDEX `Offer_sellerId_idx`(`sellerId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -337,6 +358,18 @@ ALTER TABLE `Order` ADD CONSTRAINT `Order_userId_fkey` FOREIGN KEY (`userId`) RE
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_sellerId_fkey` FOREIGN KEY (`sellerId`) REFERENCES `Seller`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Offer` ADD CONSTRAINT `Offer_buyProductId_fkey` FOREIGN KEY (`buyProductId`) REFERENCES `Product`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Offer` ADD CONSTRAINT `Offer_buyCategoryId_fkey` FOREIGN KEY (`buyCategoryId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Offer` ADD CONSTRAINT `Offer_getProductId_fkey` FOREIGN KEY (`getProductId`) REFERENCES `Product`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Offer` ADD CONSTRAINT `Offer_getCategoryId_fkey` FOREIGN KEY (`getCategoryId`) REFERENCES `Category`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Image` ADD CONSTRAINT `Image_productId_fkey` FOREIGN KEY (`productId`) REFERENCES `Product`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
