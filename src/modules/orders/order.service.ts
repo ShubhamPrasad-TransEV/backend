@@ -70,13 +70,13 @@ export class OrderService {
       );
     }
 
-    let totalItemCost = 0;
     const orderItemsWithUnits: OrderedItemDto[] = [];
+    let totalItemCost = 0;
 
     for (const orderedItem of createOrderDto.orderedItems) {
-      const { productId, quantity } = orderedItem;
+      const { productId, quantity, priceAfterDiscount } = orderedItem;
 
-      // Fetch the product price
+      // Fetch the product price if `priceAfterDiscount` is not provided
       const product = await this.prisma.product.findUnique({
         where: { id: productId },
         select: { price: true },
@@ -86,6 +86,11 @@ export class OrderService {
         throw new BadRequestException(`Product with ID ${productId} not found`);
       }
 
+      // Use `priceAfterDiscount` if provided; otherwise, calculate it
+      const itemCost = priceAfterDiscount ?? product.price * quantity;
+      totalItemCost += itemCost;
+
+      // Fetch available units for the product
       const availableUnits = await this.prisma.unit.findMany({
         where: { productId },
         take: quantity,
@@ -98,36 +103,41 @@ export class OrderService {
       }
 
       const assignedUnits = availableUnits.map((unit) => unit.id);
-      orderItemsWithUnits.push({ productId, quantity, assignedUnits });
+      orderItemsWithUnits.push({
+        productId,
+        quantity,
+        assignedUnits,
+        priceAfterDiscount: itemCost,
+      });
 
-      // Update product quantity
+      // Update product quantity in inventory
       await this.prisma.product.update({
         where: { id: productId },
         data: { quantity: { decrement: quantity } },
       });
 
-      // Delete assigned units
+      // Delete assigned units from the inventory
       await this.prisma.unit.deleteMany({
         where: { id: { in: assignedUnits } },
       });
-
-      // Calculate total item cost for this product (price * quantity)
-      totalItemCost += product.price * quantity;
     }
 
-    // Calculate totalOrderCost = totalItemCost + shippingCost
-    const totalOrderCost = totalItemCost + (createOrderDto.shippingCost || 0);
+    // Use provided `totalItemCost` and `totalOrderCost` if available, otherwise calculate
+    const finalTotalItemCost = createOrderDto.totalItemCost ?? totalItemCost;
+    const shippingCost = createOrderDto.shippingCost || 0;
+    const finalTotalOrderCost =
+      createOrderDto.totalOrderCost ?? finalTotalItemCost + shippingCost;
 
     const order = await this.prisma.order.create({
       data: {
         user: { connect: { id: createOrderDto.userId } },
-        orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue, // Use unknown first, then cast to Prisma.JsonValue
+        orderedItems: orderItemsWithUnits as unknown as Prisma.JsonValue, // Convert ordered items to JSON
         shipmentCompany: createOrderDto.shipmentCompany,
         shipmentStatus: createOrderDto.shipmentStatus,
         paymentStatus: createOrderDto.paymentStatus,
-        shippingCost: createOrderDto.shippingCost,
-        totalItemCost: totalItemCost, // Store total item cost
-        totalOrderCost: totalOrderCost, // Store total order cost
+        shippingCost: shippingCost,
+        totalItemCost: finalTotalItemCost, // Use the final calculated or passed total item cost
+        totalOrderCost: finalTotalOrderCost, // Use the final calculated or passed total order cost
       },
     });
 

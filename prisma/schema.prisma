@@ -37,12 +37,12 @@ model User {
 }
 
 model Address {
-  id                String  @unique @default(uuid())
-  identifier        String // e.g., 'Home', 'Office'
-  address           String // Full address
-  defaultAddress    Boolean @default(false) // To mark the default address
-  userId            Int // Foreign key linking to User
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String  @unique @default(uuid())
+  identifier     String // e.g., 'Home', 'Office'
+  address        String // Full address
+  defaultAddress Boolean @default(false) // To mark the default address
+  userId         Int // Foreign key linking to User
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, identifier]) // Ensure unique identifier per user
 }
@@ -91,6 +91,8 @@ model Product {
   mostlyViewed   mostlyViewed?
   mostwishlisted mostlyWishlisted[]
   Reviews        Reviews[]
+  offersAsBuyProduct  Offer[]           @relation("BuyProductRelation")
+  offersAsGetProduct  Offer[]           @relation("GetProductRelation")// Relation for offers providing this product as free
 
   @@index([sellerId])
 }
@@ -142,6 +144,40 @@ model Order {
   @@index([userId])
 }
 
+model Offer {
+  id             String     @id @default(uuid())
+  name           String?
+  type           OfferType  // Type of the offer (e.g., Buy N of X, Get M of Y Free or Discounted)
+  buyQuantity    Int?       // Quantity to buy to activate the offer (N)
+  getQuantity    Int?       // Quantity to get as part of the offer (M)
+  discount       Float?     // Discount percentage for discounted offers
+  buyProduct     Product?   @relation("BuyProductRelation", fields: [buyProductId], references: [id])
+  buyProductId   String?    // Specific product that needs to be bought
+  buyCategory    Category?  @relation("BuyCategoryRelation", fields: [buyCategoryId], references: [id])
+  buyCategoryId  Int?       // Category that needs to be bought (optional)
+  getProduct     Product?   @relation("GetProductRelation", fields: [getProductId], references: [id])
+  getProductId   String?    // Specific product to get for free or discounted (optional)
+  getCategory    Category?  @relation("GetCategoryRelation", fields: [getCategoryId], references: [id])
+  getCategoryId  Int?       // Category to get for free or discounted (optional)
+  validFrom      DateTime   // Offer start date
+  validUntil     DateTime   // Offer end date
+  sellerId       Int        // Seller creating the offer
+  description    String?    @db.Text // Description of the offer
+
+  @@index([sellerId])
+}
+
+
+enum OfferType {
+  BUY_N_GET_M_FREE_PRODUCT
+  BUY_N_GET_M_FREE_CATEGORY
+  BUY_N_GET_M_DISCOUNT_PRODUCT
+  BUY_N_GET_M_DISCOUNT_CATEGORY
+  FLAT_DISCOUNT_PRODUCT
+  FLAT_DISCOUNT_CATEGORY
+  SIMPLE_FLAT_DISCOUNT
+}
+
 model Image {
   id        Int     @id @default(autoincrement())
   filename  String? @db.VarChar(255)
@@ -170,11 +206,13 @@ model PasswordReset {
 }
 
 model Category {
-  id               Int        @id @default(autoincrement())
-  name             String?    @unique @db.VarChar(255)
-  parentCategories Category[] @relation("CategoryParentChild")
-  childCategories  Category[] @relation("CategoryParentChild")
-  products         Product[]  @relation("ProductCategories")
+  id                  Int        @id @default(autoincrement())
+  name                String?    @unique @db.VarChar(255)
+  parentCategories    Category[] @relation("CategoryParentChild")
+  childCategories     Category[] @relation("CategoryParentChild")
+  products            Product[]  @relation("ProductCategories")
+  offersAsBuyCategory Offer[]    @relation("BuyCategoryRelation") // Opposite relation for buyCategory in Offer
+  offersAsGetCategory Offer[]    @relation("GetCategoryRelation") // Opposite relation for getCategory in Offer
 }
 
 model Notification {
