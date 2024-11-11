@@ -7,7 +7,7 @@ export class WishlistService {
 
   // Method to add a single product to a user's wishlist
   async addToWishlist(userId: number, productId: string) {
-    const userintid = Number(userId)
+    const userintid = Number(userId);
     await this.prisma.mostlyWishlisted.upsert({
       where: { productId },
       update: { numberOfTimesWishlisted: { increment: 1 } },
@@ -16,7 +16,7 @@ export class WishlistService {
 
     return this.prisma.wishlist.create({
       data: {
-        userId:userintid,
+        userId: userintid,
         productId,
       },
     });
@@ -24,9 +24,9 @@ export class WishlistService {
 
   // Method to retrieve a user's wishlist with product details, including images
   async getWishlistByUser(userId: number) {
-    const userintid = Number(userId)
+    const userintid = Number(userId);
     return this.prisma.wishlist.findMany({
-      where: { userId:userintid },
+      where: { userId: userintid },
       include: {
         product: {
           select: {
@@ -49,10 +49,10 @@ export class WishlistService {
 
   // Method to remove a product from a user's wishlist
   async removeFromWishlist(userId: number, productId: string) {
-    const userintid = Number(userId)
+    const userintid = Number(userId);
     return this.prisma.wishlist.deleteMany({
       where: {
-        userId:userintid,
+        userId: userintid,
         productId,
       },
     });
