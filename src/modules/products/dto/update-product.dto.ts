@@ -13,6 +13,11 @@ export class UpdateProductDto {
   @IsString()
   name?: string;
 
+  @ApiProperty({ type: 'string', required: false })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
   @ApiProperty({ type: 'number', required: false })
   @IsOptional()
   @IsNumber()

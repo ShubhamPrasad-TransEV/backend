@@ -83,7 +83,8 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     imagePaths: { filename: string; path: string }[],
   ) {
-    const { sellerId, name, price, categories, quantity } = createProductDto;
+    const { sellerId, name, price, categories, quantity, description } =
+      createProductDto;
 
     const parsedSellerId = Number(sellerId);
     if (isNaN(parsedSellerId)) {
@@ -140,9 +141,11 @@ export class ProductsService {
     const product = await this.prisma.product.create({
       data: {
         name,
+        description,
         price: parsedPrice,
         sellerId: parsedSellerId,
         productDetails: productDetails || {},
+
         images: {
           create: imagePaths.map((file) => ({
             filename: file.filename,
@@ -206,8 +209,15 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    const { price, images, categories, productDetails, quantity, ...rest } =
-      updateProductDto;
+    const {
+      price,
+      images,
+      categories,
+      productDetails,
+      description,
+      quantity,
+      ...rest
+    } = updateProductDto;
 
     let updatedQuantity = product.quantity;
 
@@ -288,6 +298,7 @@ export class ProductsService {
         price,
         productDetails: productDetails ?? product.productDetails,
         quantity: updatedQuantity,
+        description,
         images: images
           ? {
               create: images.map((file) => ({
