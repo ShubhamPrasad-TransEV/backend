@@ -56,7 +56,6 @@ export class AdminService {
         companyName: createAdminDto.companyName,
         contactPerson: createAdminDto.contactPerson,
         phoneNumber: createAdminDto.phoneNumber,
-        address: createAdminDto.address,
       },
     });
 
@@ -103,7 +102,6 @@ export class AdminService {
       phoneNumber: admin.admin.phoneNumber,
       companyName: admin.admin.companyName,
       contactPerson: admin.admin.contactPerson,
-      address: admin.admin.address,
       role: {
         id: admin.admin.role.id,
         name: admin.admin.role.name,

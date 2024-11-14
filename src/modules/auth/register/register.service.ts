@@ -9,6 +9,8 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { AddressDto } from './dto/address.dto';
+import { Address } from '@prisma/client';
 
 @Injectable()
 export class RegisterService {
@@ -21,7 +23,6 @@ export class RegisterService {
   async register(createUserDto: CreateUserDto) {
     const { name, username, password, email, phoneNumber } = createUserDto;
 
-    // Check if the user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -29,15 +30,12 @@ export class RegisterService {
       throw new BadRequestException('User already exists');
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user
     const user = await this.prisma.user.create({
       data: { name, username, email, password: hashedPassword, phoneNumber },
     });
 
-    // Send welcome email
     await this.emailService.sendMail(
       user.email,
       'Welcome to Our Service',
@@ -56,13 +54,134 @@ export class RegisterService {
     return user;
   }
 
+  // Add a new address for a user
+  async addAddress(userId: number, addressDto: AddressDto) {
+    // If this new address should be the defaultAddress, set others to false
+    if (addressDto.defaultAddress) {
+      await this.prisma.address.updateMany({
+        where: { userId, defaultAddress: true },
+        data: { defaultAddress: false },
+      });
+    }
+
+    // Create and return the new address
+    return await this.prisma.address.create({
+      data: {
+        identifier: addressDto.identifier,
+        address: addressDto.address,
+        defaultAddress: addressDto.defaultAddress || false,
+        userId,
+      },
+    });
+  }
+
+  // Get all addresses for a user
+  async getAllAddresses(userId: number): Promise<Address[]> {
+    return await this.prisma.address.findMany({
+      where: { userId },
+    });
+  }
+
+  // Get address by identifier
+  async getAddressByIdentifier(
+    userId: number,
+    identifier: string,
+  ): Promise<Address> {
+    const address = await this.prisma.address.findFirst({
+      where: { userId, identifier },
+    });
+
+    if (!address) {
+      throw new NotFoundException(
+        `Address with identifier ${identifier} not found`,
+      );
+    }
+
+    return address;
+  }
+
+  // Update an address by identifier
+  async updateAddressByIdentifier(
+    userId: number,
+    identifier: string,
+    addressDto: AddressDto,
+  ) {
+    const address = await this.prisma.address.findFirst({
+      where: { userId, identifier },
+    });
+
+    if (!address) {
+      throw new NotFoundException(
+        `Address with identifier ${identifier} not found`,
+      );
+    }
+
+    // Ensure only `setDefaultAddress` can set an address as defaultAddress
+    const dataToUpdate = {
+      ...addressDto,
+      defaultAddress: address.defaultAddress,
+    };
+
+    return await this.prisma.address.update({
+      where: { id: address.id },
+      data: dataToUpdate,
+    });
+  }
+
+  // Set an address as defaultAddress
+  async setDefaultAddress(userId: number, identifier: string) {
+    // Fetch the address by userId and identifier, not by id
+    const address = await this.prisma.address.findFirst({
+      where: { userId, identifier },
+    });
+
+    // Log the address object to verify it was retrieved correctly
+
+    if (!address) {
+      console.error(
+        `Address with identifier "${identifier}" not found for user ID ${userId}.`,
+      );
+      throw new NotFoundException('Address not found');
+    }
+
+    // Unset other defaultAddress addresses for the user
+    const unsetResult = await this.prisma.address.updateMany({
+      where: { userId, defaultAddress: true },
+      data: { defaultAddress: false },
+    });
+
+    // Set the specified address as defaultAddress
+    const updateResult = await this.prisma.address.update({
+      where: { id: address.id },
+      data: { defaultAddress: true },
+    });
+
+    return updateResult;
+  }
+
+  // Delete an address by ID
+  async deleteAddress(userId: number, addressId: string) {
+    const address = await this.prisma.address.findUnique({
+      where: { id: addressId },
+    });
+
+    if (!address || address.userId !== userId) {
+      throw new NotFoundException(
+        'Address not found or does not belong to the user',
+      );
+    }
+
+    return await this.prisma.address.delete({
+      where: { id: addressId },
+    });
+  }
+
   // Fetch all users
   async getAllUsers() {
-    // return this.prisma.user.findMany({ include: { role: true } });
     return this.prisma.user.findMany();
   }
 
-  // Update user details and create Seller entry if role is seller
+  // Update user details and handle Seller entry based on role
   async updateUser(updateUserDto: UpdateUserDto) {
     const {
       id,
@@ -70,60 +189,42 @@ export class RegisterService {
       roleId,
       companyName,
       contactPerson,
-      address,
       phoneNumber,
       email,
       description,
     } = updateUserDto;
 
-    // Ensure id is an integer
     const userId = parseInt(id.toString(), 10);
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Prepare the update object
     const dataToUpdate: any = {
       username: username ?? undefined,
       email: email ?? undefined,
       isSeller: roleId === 3 ? true : undefined,
       companyName: companyName ?? undefined,
       contactPerson: contactPerson ?? undefined,
-      address: address ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
       description: description ?? undefined,
     };
 
-    // If `roleId` is provided, update the role using nested relation
     if (roleId) {
-      dataToUpdate.role = {
-        connect: { id: roleId },
-      };
+      dataToUpdate.role = { connect: { id: roleId } };
     }
 
-    // Update the user
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: dataToUpdate,
     });
 
-    // If the user becomes a seller, create a seller entry
     if (roleId === 3 && !user.isSeller) {
-      await this.prisma.seller.create({
-        data: {
-          id: updatedUser.id,
-        },
-      });
+      await this.prisma.seller.create({ data: { id: updatedUser.id } });
     }
 
-    // If the user is no longer a seller, remove the seller entry
     if (user.isSeller && roleId !== 3) {
-      await this.prisma.seller.delete({
-        where: {
-          id: updatedUser.id,
-        },
-      });
+      await this.prisma.seller.delete({ where: { id: userId } });
     }
 
     return updatedUser;
@@ -135,7 +236,7 @@ export class RegisterService {
       where: {
         user: {
           role: {
-            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+            NOT: { id: 1 },
           },
         },
       },
@@ -144,7 +245,6 @@ export class RegisterService {
       },
     });
 
-    // Map to return only the user details from each result
     return userDetails.map((seller) => seller.user);
   }
 
@@ -155,7 +255,7 @@ export class RegisterService {
         id,
         user: {
           role: {
-            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+            NOT: { id: 1 },
           },
         },
       },
@@ -169,46 +269,10 @@ export class RegisterService {
     return seller;
   }
 
-  // Delete a user by ID
-  async deleteUser(userId: number) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Delete seller if the user is a seller
-    if (user.isSeller) {
-      await this.prisma.seller.delete({
-        where: { id: userId },
-      });
-    }
-
-    await this.prisma.user.delete({ where: { id: userId } });
-    return { message: 'User deleted successfully' };
-  }
-
-  // Delete a seller by ID
-  async deleteSeller(sellerId: number) {
-    const seller = await this.prisma.seller.findUnique({
-      where: { id: sellerId },
-    });
-    if (!seller) {
-      throw new NotFoundException('Seller not found');
-    }
-
-    // Delete seller entry, user deletion can be handled separately if needed
-    await this.prisma.seller.delete({
-      where: { id: sellerId },
-    });
-
-    return { message: 'Seller deleted successfully' };
-  }
-
   // Update seller details
   async updateSeller(updateSellerDto: UpdateSellerDto) {
     const { id, aboutUs, logo } = updateSellerDto;
 
-    // Check if ID is provided and ensure it's an integer
     if (!id) {
       throw new BadRequestException('Seller ID is required');
     }
@@ -218,7 +282,7 @@ export class RegisterService {
         id,
         user: {
           role: {
-            NOT: { id: 1 }, // Assuming role ID 1 is for Admins
+            NOT: { id: 1 },
           },
         },
       },
@@ -233,11 +297,24 @@ export class RegisterService {
       logo: logo ?? undefined,
     };
 
-    const updatedSeller = await this.prisma.seller.update({
+    return await this.prisma.seller.update({
       where: { id },
       data: dataToUpdate,
     });
+  }
 
-    return updatedSeller;
+  // Delete a user by ID
+  async deleteUser(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isSeller) {
+      await this.prisma.seller.delete({ where: { id: userId } });
+    }
+
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { message: 'User deleted successfully' };
   }
 }

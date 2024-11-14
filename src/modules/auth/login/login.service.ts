@@ -1,4 +1,3 @@
-// login.service.ts
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,7 +14,7 @@ export class LoginService {
   async validateUser(username: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { username },
-      include: { role: true }, // Include role in the query
+      include: { role: true, seller: true }, // Include seller in the query
     });
 
     Logger.log(`Fetched user: ${JSON.stringify(user)}`, 'LoginService');
@@ -45,10 +44,14 @@ export class LoginService {
 
     const payload = { username: user.username, sub: user.id, role: roleName };
 
+    // Include sellerId if the user is a seller
+    const sellerId = user.seller ? user.seller.id : null;
+
     Logger.log(`JWT Payload: ${JSON.stringify(payload)}`, 'LoginService');
 
     return {
       access_token: this.jwtService.sign(payload), // Generate JWT token
+      sellerId, // Return sellerId if exists
     };
   }
 }

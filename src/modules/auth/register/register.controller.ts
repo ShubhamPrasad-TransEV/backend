@@ -1,3 +1,5 @@
+// src/register/register.controller.ts
+
 import {
   BadRequestException,
   Body,
@@ -10,11 +12,18 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiResponse,
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+} from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
+import { AddressDto } from './dto/address.dto';
 
 @ApiTags('Users')
 @Controller('user')
@@ -46,7 +55,7 @@ export class RegisterController {
   @ApiResponse({
     status: 200,
     description: 'Fetch seller by ID',
-    type: CreateUserDto, // This should match the actual response type
+    type: CreateUserDto,
   })
   @ApiResponse({
     status: 404,
@@ -65,7 +74,7 @@ export class RegisterController {
   @ApiResponse({
     status: 200,
     description: 'Fetch user profile by ID',
-    type: CreateUserDto, // This should match the actual response type
+    type: CreateUserDto,
   })
   @ApiResponse({
     status: 400,
@@ -76,7 +85,7 @@ export class RegisterController {
     description: 'User not found',
   })
   async getProfile(@Param('id') id: string) {
-    const userId = parseInt(id, 10); // Ensure id is an integer
+    const userId = parseInt(id, 10);
     if (isNaN(userId)) {
       throw new BadRequestException('Invalid user ID');
     }
@@ -92,18 +101,6 @@ export class RegisterController {
   @ApiBody({
     description: 'User registration payload',
     type: CreateUserDto,
-    examples: {
-      example1: {
-        summary: 'New user example',
-        value: {
-          name: 'esha ghosal',
-          username: 'newuser',
-          password: 'securepassword',
-          email: 'HkNfZ@example.com',
-          phoneNumber: '876543210',
-        },
-      },
-    },
   })
   @ApiResponse({
     status: 201,
@@ -174,5 +171,164 @@ export class RegisterController {
       throw new NotFoundException('Seller not found');
     }
     return seller;
+  }
+
+  @Post(':id/address')
+  @ApiOperation({ summary: 'Add a new address to user profile' })
+  @ApiBody({
+    description: 'Address details to add to the user profile',
+    type: AddressDto,
+    examples: {
+      example1: {
+        summary: 'Home Address',
+        value: {
+          identifier: 'Home',
+          address: '123 Main St, Springfield, USA',
+        },
+      },
+      example2: {
+        summary: 'Office Address',
+        value: {
+          identifier: 'Office',
+          address: '456 Elm St, Springfield, USA',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Address successfully added.' })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  async addAddress(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() addressDto: AddressDto,
+  ) {
+    return this.registerService.addAddress(id, addressDto);
+  }
+
+  // Delete address from user profile by identifier
+  @Delete(':id/address/:identifier')
+  @ApiOperation({ summary: 'Delete an address from user profile' })
+  @ApiResponse({ status: 200, description: 'Address successfully deleted.' })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Address identifier (e.g., Home, Office)',
+    example: 'Home',
+  })
+  async deleteAddress(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('identifier') identifier: string,
+  ) {
+    return this.registerService.deleteAddress(id, identifier);
+  }
+
+  // Get all addresses for a user
+  @Get(':id/address')
+  @ApiOperation({ summary: 'Get all addresses for a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all addresses for the user.',
+    schema: {
+      example: [
+        {
+          identifier: 'Home',
+          address: '123 Main St, Springfield, USA',
+          default: true,
+        },
+        {
+          identifier: 'Office',
+          address: '456 Elm St, Springfield, USA',
+          default: false,
+        },
+      ],
+    },
+  })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  async getAllAddresses(@Param('id', ParseIntPipe) id: number) {
+    return this.registerService.getAllAddresses(id);
+  }
+
+  // Get address by identifier for a user
+  @Get(':id/address/:identifier')
+  @ApiOperation({ summary: 'Get address by identifier for a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Address details for the specified identifier.',
+    schema: {
+      example: {
+        identifier: 'Home',
+        address: '123 Main St, Springfield, USA',
+        default: true,
+      },
+    },
+  })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Address identifier (e.g., Home, Office)',
+    example: 'Home',
+  })
+  async getAddressByIdentifier(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('identifier') identifier: string,
+  ) {
+    return this.registerService.getAddressByIdentifier(id, identifier);
+  }
+
+  // Update address by identifier for a user
+  @Patch(':id/address/:identifier')
+  @ApiOperation({ summary: 'Update an address by identifier for a user' })
+  @ApiBody({
+    description: 'Updated address details',
+    type: AddressDto,
+    examples: {
+      example1: {
+        summary: 'Updated Home Address',
+        value: {
+          identifier: 'Home',
+          address: '789 New Address St, Springfield, USA',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Address successfully updated.' })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Address identifier (e.g., Home, Office)',
+    example: 'Home',
+  })
+  async updateAddressByIdentifier(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('identifier') identifier: string,
+    @Body() addressDto: AddressDto,
+  ) {
+    return this.registerService.updateAddressByIdentifier(
+      id,
+      identifier,
+      addressDto,
+    );
+  }
+
+  @Patch(':id/address/:identifier/set-default')
+  @ApiOperation({ summary: 'Set an address as the default address for a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Address set as default successfully.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Address not found for the specified identifier.',
+  })
+  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
+  @ApiParam({
+    name: 'identifier',
+    description: 'Address identifier (e.g., Home, Office)',
+    example: 'Home',
+  })
+  async setDefaultAddress(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('identifier') identifier: string,
+  ) {
+    return this.registerService.setDefaultAddress(id, identifier);
   }
 }
