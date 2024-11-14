@@ -21,6 +21,8 @@ import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanaly
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
 import { OfferModule } from './modules/offer/offer.module';
+import { PincodeModule } from './modules/pincode/pincode.module';
+
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { OfferModule } from './modules/offer/offer.module';
     ReviewsModule,
     SupportModule,
     OfferModule,
+    PincodeModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

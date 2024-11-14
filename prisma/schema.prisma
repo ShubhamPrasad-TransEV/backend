@@ -335,6 +335,8 @@ model SupportTicket {
   updatedAt DateTime @updatedAt
 }
 
+
+
 enum Status {
   UNOPENED
   IN_PROGRESS
