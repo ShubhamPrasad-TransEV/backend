@@ -172,3 +172,5 @@ export class CreateOrderDto {
   @IsNumber()
   totalOrderCost?: number;
 }
+
+

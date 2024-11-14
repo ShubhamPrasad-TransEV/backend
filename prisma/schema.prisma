@@ -263,12 +263,11 @@ model OperationalSettings {
 }
 
 model Wishlist {
+  id        String  @id @default(uuid())
   userId    Int
   productId String
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@id([userId, productId]) // Composite primary key to ensure uniqueness
 }
 
 model Cart {

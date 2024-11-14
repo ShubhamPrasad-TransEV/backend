@@ -244,10 +244,11 @@ CREATE TABLE `OperationalSettings` (
 
 -- CreateTable
 CREATE TABLE `Wishlist` (
+    `id` VARCHAR(191) NOT NULL,
     `userId` INTEGER NOT NULL,
     `productId` VARCHAR(191) NOT NULL,
 
-    PRIMARY KEY (`userId`, `productId`)
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
