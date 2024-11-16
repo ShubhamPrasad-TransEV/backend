@@ -13,6 +13,7 @@ CREATE TABLE `User` (
     `aboutUs` TEXT NULL,
     `logo` VARCHAR(255) NULL,
     `description` VARCHAR(191) NULL,
+    `ProfilePic` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_username_key`(`username`),
     UNIQUE INDEX `User_email_key`(`email`),

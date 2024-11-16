@@ -11,6 +11,8 @@ import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { AddressDto } from './dto/address.dto';
 import { Address } from '@prisma/client';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class RegisterService {
@@ -51,6 +53,21 @@ export class RegisterService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Include profile picture as MIME-prefixed Base64 if it exists
+    if (user.ProfilePic) {
+      const filePath = path.resolve(user.ProfilePic);
+      if (fs.existsSync(filePath)) {
+        const mimeType = `image/${path.extname(filePath).slice(1)}`;
+        const fileBuffer = fs.readFileSync(filePath);
+        user.ProfilePic = `data:${mimeType};base64,${fileBuffer.toString(
+          'base64',
+        )}`;
+      } else {
+        user.ProfilePic = null;
+      }
+    }
+
     return user;
   }
 
@@ -130,39 +147,34 @@ export class RegisterService {
 
   // Set an address as defaultAddress
   async setDefaultAddress(userId: number, identifier: string) {
-    // Fetch the address by userId and identifier, not by id
     const address = await this.prisma.address.findFirst({
       where: { userId, identifier },
     });
 
-    // Log the address object to verify it was retrieved correctly
-
     if (!address) {
-      console.error(
-        `Address with identifier "${identifier}" not found for user ID ${userId}.`,
-      );
       throw new NotFoundException('Address not found');
     }
 
-    // Unset other defaultAddress addresses for the user
-    const unsetResult = await this.prisma.address.updateMany({
+    await this.prisma.address.updateMany({
       where: { userId, defaultAddress: true },
       data: { defaultAddress: false },
     });
 
-    // Set the specified address as defaultAddress
-    const updateResult = await this.prisma.address.update({
+    return await this.prisma.address.update({
       where: { id: address.id },
       data: { defaultAddress: true },
     });
-
-    return updateResult;
   }
 
   // Delete an address by ID
-  async deleteAddress(userId: number, addressId: string) {
+  async deleteAddress(userId: number, identifier: string) {
     const address = await this.prisma.address.findUnique({
-      where: { id: addressId },
+      where: {
+        userId_identifier: {
+          userId: userId,
+          identifier: identifier,
+        },
+      },
     });
 
     if (!address || address.userId !== userId) {
@@ -172,7 +184,12 @@ export class RegisterService {
     }
 
     return await this.prisma.address.delete({
-      where: { id: addressId },
+      where: {
+        userId_identifier: {
+          userId: userId,
+          identifier: identifier,
+        },
+      },
     });
   }
 
@@ -181,58 +198,24 @@ export class RegisterService {
     return this.prisma.user.findMany();
   }
 
-  // Update user details and handle Seller entry based on role
+  // Update user details
   async updateUser(updateUserDto: UpdateUserDto) {
-    const {
-      id,
-      username,
-      roleId,
-      companyName,
-      contactPerson,
-      phoneNumber,
-      email,
-      description,
-    } = updateUserDto;
-
-    const userId = parseInt(id.toString(), 10);
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: updateUserDto.id },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const dataToUpdate: any = {
-      username: username ?? undefined,
-      email: email ?? undefined,
-      isSeller: roleId === 3 ? true : undefined,
-      companyName: companyName ?? undefined,
-      contactPerson: contactPerson ?? undefined,
-      phoneNumber: phoneNumber ?? undefined,
-      description: description ?? undefined,
-    };
-
-    if (roleId) {
-      dataToUpdate.role = { connect: { id: roleId } };
-    }
-
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: dataToUpdate,
+    return this.prisma.user.update({
+      where: { id: updateUserDto.id },
+      data: updateUserDto,
     });
-
-    if (roleId === 3 && !user.isSeller) {
-      await this.prisma.seller.create({ data: { id: updatedUser.id } });
-    }
-
-    if (user.isSeller && roleId !== 3) {
-      await this.prisma.seller.delete({ where: { id: userId } });
-    }
-
-    return updatedUser;
   }
 
   // Fetch all sellers excluding those with an admin role
   async getAllSellers() {
-    const userDetails = await this.prisma.seller.findMany({
+    const sellers = await this.prisma.seller.findMany({
       where: {
         user: {
           role: {
@@ -240,15 +223,45 @@ export class RegisterService {
           },
         },
       },
-      select: {
-        user: true,
-      },
+      include: { user: true },
     });
 
-    return userDetails.map((seller) => seller.user);
+    return sellers.map((seller) => seller.user);
   }
 
-  // Get a seller by ID, excluding those with an admin role
+  // Save profile picture path to the database
+  async saveProfilePicturePath(userId: number, filePath: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { ProfilePic: filePath },
+    });
+
+    return { message: 'Profile picture uploaded successfully', filePath };
+  }
+
+  // Retrieve profile picture as MIME-type-prefixed Base64
+  async getProfilePictureBase64(userId: number): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.ProfilePic) {
+      throw new NotFoundException('Profile picture not found');
+    }
+
+    const filePath = path.resolve(user.ProfilePic);
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Profile picture file not found');
+    }
+
+    const mimeType = `image/${path.extname(filePath).slice(1)}`;
+    const fileBuffer = fs.readFileSync(filePath);
+    return `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+  }
+
+  // Fetch seller by ID
   async getSellerById(id: number) {
     const seller = await this.prisma.seller.findFirst({
       where: {
@@ -292,29 +305,24 @@ export class RegisterService {
       throw new NotFoundException('Seller not found or is an admin');
     }
 
-    const dataToUpdate = {
-      aboutUs: aboutUs ?? undefined,
-      logo: logo ?? undefined,
-    };
-
-    return await this.prisma.seller.update({
+    return this.prisma.seller.update({
       where: { id },
-      data: dataToUpdate,
+      data: { aboutUs, logo },
     });
   }
 
-  // Delete a user by ID
-  async deleteUser(userId: number) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  // Delete user
+  async deleteUser(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
     if (user.isSeller) {
-      await this.prisma.seller.delete({ where: { id: userId } });
+      await this.prisma.seller.delete({ where: { id } });
     }
 
-    await this.prisma.user.delete({ where: { id: userId } });
+    await this.prisma.user.delete({ where: { id } });
     return { message: 'User deleted successfully' };
   }
 }

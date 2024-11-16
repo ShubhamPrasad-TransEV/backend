@@ -58,5 +58,3 @@ export class OrderController {
     return this.orderService.remove(orderId);
   }
 }
-
-

@@ -32,6 +32,7 @@ model User {
   cart          Cart[]
   Reviews       Reviews[]
   SupportTicket SupportTicket[]
+  ProfilePic    String?
 
   @@index([username, email])
 }

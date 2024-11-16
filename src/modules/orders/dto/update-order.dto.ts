@@ -73,6 +73,15 @@ export class UpdateOrderDto {
   shipmentStatus?: string;
 
   @ApiProperty({
+    example: '164, Kolkata',
+    description: 'Address',
+    required: true,
+  })
+  @IsString()
+  @IsOptional()
+  address: string;
+
+  @ApiProperty({
     example: 'INV123456',
     description: 'Invoice reference or number',
     required: false,

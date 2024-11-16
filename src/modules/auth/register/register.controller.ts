@@ -1,5 +1,3 @@
-// src/register/register.controller.ts
-
 import {
   BadRequestException,
   Body,
@@ -11,13 +9,19 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
 import {
-  ApiBody,
-  ApiResponse,
   ApiTags,
+  ApiResponse,
+  ApiBody,
   ApiOperation,
   ApiParam,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -173,27 +177,12 @@ export class RegisterController {
     return seller;
   }
 
+  // Add an address for a user
   @Post(':id/address')
   @ApiOperation({ summary: 'Add a new address to user profile' })
   @ApiBody({
     description: 'Address details to add to the user profile',
     type: AddressDto,
-    examples: {
-      example1: {
-        summary: 'Home Address',
-        value: {
-          identifier: 'Home',
-          address: '123 Main St, Springfield, USA',
-        },
-      },
-      example2: {
-        summary: 'Office Address',
-        value: {
-          identifier: 'Office',
-          address: '456 Elm St, Springfield, USA',
-        },
-      },
-    },
   })
   @ApiResponse({ status: 201, description: 'Address successfully added.' })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
@@ -204,131 +193,62 @@ export class RegisterController {
     return this.registerService.addAddress(id, addressDto);
   }
 
-  // Delete address from user profile by identifier
-  @Delete(':id/address/:identifier')
-  @ApiOperation({ summary: 'Delete an address from user profile' })
-  @ApiResponse({ status: 200, description: 'Address successfully deleted.' })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  @ApiParam({
-    name: 'identifier',
-    description: 'Address identifier (e.g., Home, Office)',
-    example: 'Home',
-  })
-  async deleteAddress(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('identifier') identifier: string,
-  ) {
-    return this.registerService.deleteAddress(id, identifier);
-  }
-
-  // Get all addresses for a user
-  @Get(':id/address')
-  @ApiOperation({ summary: 'Get all addresses for a user' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of all addresses for the user.',
-    schema: {
-      example: [
-        {
-          identifier: 'Home',
-          address: '123 Main St, Springfield, USA',
-          default: true,
+  // Upload a profile picture
+  @Post(':id/profile-picture')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads/profile-pictures',
+        filename: (req, file, cb) => {
+          const fileName = `${Date.now()}-${file.originalname}`;
+          cb(null, fileName);
         },
-        {
-          identifier: 'Office',
-          address: '456 Elm St, Springfield, USA',
-          default: false,
-        },
-      ],
-    },
-  })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  async getAllAddresses(@Param('id', ParseIntPipe) id: number) {
-    return this.registerService.getAllAddresses(id);
-  }
-
-  // Get address by identifier for a user
-  @Get(':id/address/:identifier')
-  @ApiOperation({ summary: 'Get address by identifier for a user' })
-  @ApiResponse({
-    status: 200,
-    description: 'Address details for the specified identifier.',
-    schema: {
-      example: {
-        identifier: 'Home',
-        address: '123 Main St, Springfield, USA',
-        default: true,
+      }),
+      limits: { fileSize: 500 * 1024 }, // Limit 500 KB
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/image\/(jpeg|png|gif)/)) {
+          return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
       },
-    },
-  })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  @ApiParam({
-    name: 'identifier',
-    description: 'Address identifier (e.g., Home, Office)',
-    example: 'Home',
-  })
-  async getAddressByIdentifier(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('identifier') identifier: string,
-  ) {
-    return this.registerService.getAddressByIdentifier(id, identifier);
-  }
-
-  // Update address by identifier for a user
-  @Patch(':id/address/:identifier')
-  @ApiOperation({ summary: 'Update an address by identifier for a user' })
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Updated address details',
-    type: AddressDto,
-    examples: {
-      example1: {
-        summary: 'Updated Home Address',
-        value: {
-          identifier: 'Home',
-          address: '789 New Address St, Springfield, USA',
+    description: 'Profile picture upload',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
         },
       },
     },
   })
-  @ApiResponse({ status: 200, description: 'Address successfully updated.' })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  @ApiParam({
-    name: 'identifier',
-    description: 'Address identifier (e.g., Home, Office)',
-    example: 'Home',
+  @ApiResponse({
+    status: 201,
+    description: 'Profile picture uploaded successfully',
   })
-  async updateAddressByIdentifier(
+  async uploadProfilePicture(
     @Param('id', ParseIntPipe) id: number,
-    @Param('identifier') identifier: string,
-    @Body() addressDto: AddressDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.registerService.updateAddressByIdentifier(
-      id,
-      identifier,
-      addressDto,
-    );
+    const filePath = path.join('uploads/profile-pictures', file.filename);
+    return await this.registerService.saveProfilePicturePath(id, filePath);
   }
 
-  @Patch(':id/address/:identifier/set-default')
-  @ApiOperation({ summary: 'Set an address as the default address for a user' })
+  // Get a user's profile picture
+  @Get(':id/profile-picture')
   @ApiResponse({
     status: 200,
-    description: 'Address set as default successfully.',
+    description: 'Returns the profile picture in MIME-prefixed Base64 format',
   })
   @ApiResponse({
     status: 404,
-    description: 'Address not found for the specified identifier.',
+    description: 'Profile picture not found',
   })
-  @ApiParam({ name: 'id', description: 'User ID', example: 123 })
-  @ApiParam({
-    name: 'identifier',
-    description: 'Address identifier (e.g., Home, Office)',
-    example: 'Home',
-  })
-  async setDefaultAddress(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('identifier') identifier: string,
-  ) {
-    return this.registerService.setDefaultAddress(id, identifier);
+  async getProfilePicture(@Param('id', ParseIntPipe) id: number) {
+    return this.registerService.getProfilePictureBase64(id);
   }
 }

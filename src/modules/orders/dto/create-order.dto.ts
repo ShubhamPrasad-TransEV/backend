@@ -87,6 +87,14 @@ export class CreateOrderDto {
   shipmentStatus?: string;
 
   @ApiProperty({
+    example: '164, Kolkata',
+    description: 'Address',
+    required: true,
+  })
+  @IsString()
+  address: string;
+
+  @ApiProperty({
     example: 'INV123456',
     description: 'Invoice reference or number',
     required: false,
@@ -172,5 +180,3 @@ export class CreateOrderDto {
   @IsNumber()
   totalOrderCost?: number;
 }
-
-

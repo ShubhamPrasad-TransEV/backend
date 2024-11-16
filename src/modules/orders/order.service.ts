@@ -137,7 +137,8 @@ export class OrderService {
         paymentStatus: createOrderDto.paymentStatus,
         shippingCost: shippingCost,
         totalItemCost: finalTotalItemCost, // Use the final calculated or passed total item cost
-        totalOrderCost: finalTotalOrderCost, // Use the final calculated or passed total order cost
+        totalOrderCost: finalTotalOrderCost,
+        address: createOrderDto.address, // Use the final calculated or passed total order cost
       },
     });
 
@@ -221,5 +222,3 @@ export class OrderService {
     });
   }
 }
-
-
