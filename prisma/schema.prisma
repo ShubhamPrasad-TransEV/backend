@@ -57,6 +57,7 @@ model Seller {
   Order         Order[] // Sellers handle multiple orders through their products
 }
 
+
 model Admins {
   id                  Int                   @id @default(autoincrement()) // Autoincrementing primary key
   adminId             Int // This will reference the User model where roleId = 1
@@ -78,7 +79,7 @@ model Product {
   name               String?            @db.VarChar(255)
   price              Float?
   sellerId           Int
-  seller             Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  seller             Seller             @relation(fields: [sellerId], references: [id])
   images             Image[]
   cartItems          CartItem[]
   categories         Category[]         @relation("ProductCategories")
@@ -93,10 +94,31 @@ model Product {
   mostwishlisted     mostlyWishlisted[]
   Reviews            Reviews[]
   offersAsBuyProduct Offer[]            @relation("BuyProductRelation")
-  offersAsGetProduct Offer[]            @relation("GetProductRelation") // Relation for offers providing this product as free
+  offersAsGetProduct Offer[]            @relation("GetProductRelation")
+  collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
+  uploadDate         DateTime           @default(now()) @map("uploadAt")
 
   @@index([sellerId])
 }
+
+model Collection {
+  id          Int              @id @default(autoincrement())
+  name        String
+  description String?
+  collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
+}
+
+model CollectionProduct {
+  id           String     @id @default(uuid())
+  collectionId Int
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  createdAt    DateTime   @default(now()) // Timestamp when the product was added to the collection
+}
+
+
+
 
 model quantitymanagement {
   id                  String   @id @default(uuid())
@@ -299,7 +321,6 @@ model MostlySearched {
 //   orderdetails Order @relation(fields: [orderid],references: [id],onDelete: Cascade)
 // }
 
-
 model mostlyViewed {
   productId String  @id @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -334,8 +355,6 @@ model SupportTicket {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-
 
 enum Status {
   UNOPENED
