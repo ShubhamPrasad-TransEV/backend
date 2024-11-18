@@ -22,6 +22,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
 import { OfferModule } from './modules/offer/offer.module';
 import { PincodeModule } from './modules/pincode/pincode.module';
+import { CollectionsModule } from './modules/collections/collections.module';
 
 
 @Module({
@@ -47,7 +48,8 @@ import { PincodeModule } from './modules/pincode/pincode.module';
     ReviewsModule,
     SupportModule,
     OfferModule,
-    PincodeModule
+    PincodeModule,
+    CollectionsModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
