@@ -23,6 +23,7 @@ import { SupportModule } from './modules/support/support.module';
 import { OfferModule } from './modules/offer/offer.module';
 import { PincodeModule } from './modules/pincode/pincode.module';
 import { CollectionsModule } from './modules/collections/collections.module';
+import { TopRatedModule } from './modules/top-rated/top-rated.module';
 
 
 @Module({
@@ -49,7 +50,8 @@ import { CollectionsModule } from './modules/collections/collections.module';
     SupportModule,
     OfferModule,
     PincodeModule,
-    CollectionsModule
+    CollectionsModule,
+    TopRatedModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

@@ -57,7 +57,6 @@ model Seller {
   Order         Order[] // Sellers handle multiple orders through their products
 }
 
-
 model Admins {
   id                  Int                   @id @default(autoincrement()) // Autoincrementing primary key
   adminId             Int // This will reference the User model where roleId = 1
@@ -75,36 +74,47 @@ model Role {
 }
 
 model Product {
-  id                 String             @id @default(uuid())
-  name               String?            @db.VarChar(255)
+  id                 String              @id @default(uuid())
+  name               String?             @db.VarChar(255)
   price              Float?
   sellerId           Int
-  seller             Seller             @relation(fields: [sellerId], references: [id])
+  seller             Seller              @relation(fields: [sellerId], references: [id])
   images             Image[]
   cartItems          CartItem[]
-  categories         Category[]         @relation("ProductCategories")
+  categories         Category[]          @relation("ProductCategories")
+  category           String?
   productDetails     Json
-  description        String             @db.VarChar(255)
+  description        String              @db.VarChar(255)
   Wishlist           Wishlist[]
-  quantity           Int?               @default(1)
+  quantity           Int?                @default(1)
   Unit               Unit[]
   cart               Cart[]
   mostlysearched     MostlySearched[]
   mostlyViewed       mostlyViewed?
   mostwishlisted     mostlyWishlisted[]
   Reviews            Reviews[]
-  offersAsBuyProduct Offer[]            @relation("BuyProductRelation")
-  offersAsGetProduct Offer[]            @relation("GetProductRelation")
+  offersAsBuyProduct Offer[]             @relation("BuyProductRelation")
+  offersAsGetProduct Offer[]             @relation("GetProductRelation")
   collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
-  uploadDate         DateTime           @default(now()) @map("uploadAt")
+  uploadDate         DateTime            @default(now()) @map("uploadAt")
+  topRated           TopRated[]          @relation("ProductTopRated") // One-to-many relation to TopRated
 
   @@index([sellerId])
 }
 
+model TopRated {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  product Product @relation("ProductTopRated", fields: [productId], references: [id]) // Many-to-one relation to Product
+}
+
 model Collection {
-  id          Int              @id @default(autoincrement())
-  name        String
-  description String?
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  description        String?
   collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
 }
 
@@ -116,9 +126,6 @@ model CollectionProduct {
   product      Product    @relation(fields: [productId], references: [id])
   createdAt    DateTime   @default(now()) // Timestamp when the product was added to the collection
 }
-
-
-
 
 model quantitymanagement {
   id                  String   @id @default(uuid())

@@ -1,31 +1,27 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsDateString } from 'class-validator';
+import { Expose } from 'class-transformer';
 
 export class ProductResponseDto {
-  @IsString()
+  @Expose()
   id: string;
 
-  @IsString()
+  @Expose()
   name: string;
 
-  @IsOptional()
-  @IsString()
+  @Expose()
   description: string;
 
-  @IsOptional()
-  @IsNumber()
+  @Expose()
   price: number;
 
-  @IsDateString()
+  @Expose()
   createdAt: string;
 
-  @IsOptional()
-  @IsString()
-  imageUrl: string; // This should map to the image URL/path
+  @Expose()
+  imageUrl: string;
 
-  @IsArray()
-  collections: Array<{
-    id: string;
-    name: string;
-    description: string;
-  }>;
+  @Expose()
+  category: string; // Add this line
+
+  @Expose()
+  collections: Array<{ id: string; name: string; description: string }>;
 }
