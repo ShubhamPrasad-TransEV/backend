@@ -102,7 +102,7 @@ import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   // Fetch all products in collections, ordered by uploadDate (Product)
   async getNewCollections(): Promise<ProductResponseDto[]> {
@@ -131,11 +131,10 @@ export class CollectionsService {
         description: product.description,
         price: product.price,
         createdAt: product.uploadDate.toISOString(), // Ensure it's a string
-        // Fix image URL: Remove the extra /uploads/ if it's already part of the image path
         imageUrl: product.images?.[0]?.path
           ? `${baseUrl}${this.normalizeImagePath(product.images[0].path)}`
           : '',
-
+        category: product.category,  // Add category field to the DTO
         collections: product.collectionProducts.map((cp) => ({
           id: cp.collection.id, // Correct access to the collection relation
           name: cp.collection.name,
@@ -180,10 +179,10 @@ export class CollectionsService {
           description: collectionProduct.product.description,
           price: collectionProduct.product.price,
           createdAt: collectionProduct.product.uploadDate.toISOString(), // Product creation date
-          // Fix image URL for products inside collections
           imageUrl: collectionProduct.product.images?.[0]?.path
             ? `${baseUrl}${this.normalizeImagePath(collectionProduct.product.images[0].path)}`
             : '', // Handle image URL (fallback to empty string if no image)
+          category: collectionProduct.product.category, // Add category field to products
         })),
       })
     );
@@ -195,5 +194,6 @@ export class CollectionsService {
     return imagePath.replace(/\\/g, '/').replace(/^uploads\//, '');
   }
 }
+
 
 
