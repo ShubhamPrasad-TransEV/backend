@@ -45,6 +45,7 @@ export class UpdateOrderDto {
   @Type(() => OrderedItemDto)
   orderedItems?: OrderedItemDto[];
 
+
   @ApiProperty({
     example: 'FedEx',
     description: 'Shipment company handling the order',
@@ -53,6 +54,15 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsString()
   shipmentCompany?: string;
+
+  @ApiProperty({
+    example: 'ABCD1234WXYZ',
+    description: 'Tracking ID for the order provided by the company',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  trackingID?: string;
 
   @ApiProperty({
     example: 'Pending',

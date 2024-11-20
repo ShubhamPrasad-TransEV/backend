@@ -32,6 +32,8 @@ export class OrderedItemDto {
   @IsString({ each: true })
   assignedUnits: string[];
 
+  
+
   @ApiProperty({
     example: 20.5,
     description: 'The price of the product after discount (if any)',
@@ -67,6 +69,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   shipmentCompany?: string;
+
+  @ApiProperty({
+    example: 'Kolkata',
+    description: 'Address of the user',
+    required: false,
+  })
+  @IsString()
+  address: string;
 
   @ApiProperty({
     example: 'Pending',

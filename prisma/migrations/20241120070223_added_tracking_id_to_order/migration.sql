@@ -102,6 +102,7 @@ CREATE TABLE `Order` (
     `address` VARCHAR(191) NOT NULL DEFAULT '',
     `orderedItems` JSON NULL,
     `shipmentCompany` VARCHAR(191) NULL,
+    `trackingId` VARCHAR(191) NULL DEFAULT '',
     `shipmentRequestStatus` VARCHAR(191) NULL,
     `shipmentStatus` VARCHAR(191) NULL DEFAULT 'Pending',
     `invoice` VARCHAR(191) NULL,

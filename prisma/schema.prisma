@@ -123,6 +123,7 @@ model Order {
   address                String    @default("")
   orderedItems           Json? // JSON format to store {productId: quantity}
   shipmentCompany        String?
+  trackingId             String?   @default("")
   shipmentRequestStatus  String?
   shipmentStatus         String?   @default("Pending") // Possible values: "Pending", "Shipped", "Delivered"
   invoice                String? // Invoice number or reference (Location)
