@@ -523,7 +523,7 @@ export class ProductsService {
     );
 
     return {
-      varieties,
+      products
     };
   }
 
