@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-// import {  Controller,Post,  Get,  Delete, Patch, Body,  Param, } from '@nestjs/common';
-// import { CartService } from './cart.service';
-// import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary 
-=======
 // import {
 //   Controller,
 //   Post,
@@ -14,27 +9,17 @@
 // } from '@nestjs/common';
 // import { CartService } from './cart.service';
 // import { AddToCart } from './dto/cart.dto'; // Adjust the path as necessary
->>>>>>> b37ada0d96deb886a39fbe2af7f215e812c7c13a
 
 // @Controller('cart')
 // export class CartController {
 //   constructor(private readonly cartService: CartService) {}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b37ada0d96deb886a39fbe2af7f215e812c7c13a
 //   @Post('add/product/') // Updated route
 //   async addToCart(
 //     @Body() body: { userId: number; productId: string; quantity?: number }, // Fetching userId, productId, and quantity from body
 //   ) {
-<<<<<<< HEAD
-//     const { userId, productId } = body; // Destructuring userId and productId from body 
-//     const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided 
-=======
 //     const { userId, productId } = body; // Destructuring userId and productId from body
 //     const quantity = Number(body.quantity) || 1; // Default to 1 if quantity is not provided
->>>>>>> b37ada0d96deb886a39fbe2af7f215e812c7c13a
 
 //     const addToCartDto: AddToCart = { userId, productId };
 //     return this.cartService.addToCart(addToCartDto, quantity);
@@ -53,29 +38,17 @@
 //     const { userId, productId } = body;
 //     return this.cartService.removeFromCart(userId, productId);
 //   }
-<<<<<<< HEAD
-  
-//   //update route
-//   @Patch('/updatecart') // Updated route
-//   async updateCartItemQuantity(
-//     @Body() body: { userId: number; productId: string; quantity: number }, // Fetching quantity from body 
-=======
 
 //   //update route
 //   @Patch('/updatecart') // Updated route
 //   async updateCartItemQuantity(
 //     @Body() body: { userId: number; productId: string; quantity: number }, // Fetching quantity from body
->>>>>>> b37ada0d96deb886a39fbe2af7f215e812c7c13a
 //   ) {
 //     const { userId, productId, quantity } = body; // Destructure quantity from body
 //     return this.cartService.updateCartItemQuantity(userId, productId, quantity);
 //   }
 
-<<<<<<< HEAD
-//   //remove from cart //
-=======
 //   //remove from cart
->>>>>>> b37ada0d96deb886a39fbe2af7f215e812c7c13a
 //   @Delete('/removeproductcart') // Updated route
 //   async clearCart(
 //     // @Param('userId') userId: number
