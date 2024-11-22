@@ -32,8 +32,6 @@ export class OrderedItemDto {
   @IsString({ each: true })
   assignedUnits: string[];
 
-  
-
   @ApiProperty({
     example: 20.5,
     description: 'The price of the product after discount (if any)',

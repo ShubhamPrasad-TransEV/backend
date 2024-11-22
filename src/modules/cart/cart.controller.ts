@@ -59,7 +59,15 @@
 //   }
 // }
 
-import { Controller, Get, Query, Post, Body, Delete, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Body,
+  Delete,
+  Patch,
+} from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCart } from './dto/cart.dto'; // Adjust path as necessary
 
@@ -106,4 +114,3 @@ export class CartController {
     return this.cartService.clearCart(userId);
   }
 }
-

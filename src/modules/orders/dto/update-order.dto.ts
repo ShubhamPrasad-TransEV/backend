@@ -45,7 +45,6 @@ export class UpdateOrderDto {
   @Type(() => OrderedItemDto)
   orderedItems?: OrderedItemDto[];
 
-
   @ApiProperty({
     example: 'FedEx',
     description: 'Shipment company handling the order',

@@ -51,12 +51,11 @@ export class SupportService {
       include: { user: true },
     });
   }
-async getAllTickets() {
-  return this.prisma.supportTicket.findMany({
-    include: { user: true },
-  });
-}
-
+  async getAllTickets() {
+    return this.prisma.supportTicket.findMany({
+      include: { user: true },
+    });
+  }
 
   async updateTicketStatus(updateStatusDto: UpdateStatusDto) {
     const { ticket_id, status } = updateStatusDto;
@@ -70,5 +69,3 @@ async getAllTickets() {
     });
   }
 }
-
-
