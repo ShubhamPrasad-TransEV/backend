@@ -221,4 +221,24 @@ export class OrderService {
       where: { id },
     });
   }
+
+  async findByUserId(userId: number) {
+    // Check if the user exists
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Fetch orders for the user
+    const orders = await this.prisma.order.findMany({
+      where: { userId },
+      include: { user: true }, // Include user details if needed
+    });
+
+    if (!orders.length) {
+      throw new NotFoundException(`No orders found for User ID ${userId}`);
+    }
+
+    return orders;
+  }
 }
