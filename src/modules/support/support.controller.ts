@@ -83,4 +83,13 @@ export class SupportController {
   async updateTicketStatus(@Body() updateStatusDto: UpdateStatusDto) {
     return this.supportService.updateTicketStatus(updateStatusDto);
   }
+
+
+@Get()
+@ApiOperation({ summary: 'Get all support tickets' })
+async getAllTickets() {
+  return this.supportService.getAllTickets();
 }
+
+}
+
