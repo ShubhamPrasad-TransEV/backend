@@ -7,8 +7,8 @@ import {
   SellerAnalyticsResponseDto,
 } from './dto/admin-analytics.dto';
 
-@Controller('analytics')
-export class AnalyticsController {
+@Controller('admin_analytics')
+export class AdminAnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get()
