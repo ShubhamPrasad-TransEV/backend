@@ -160,22 +160,33 @@ export class RegisterService {
   }
 
   // Delete an address by ID
-  async deleteAddress(userId: number, addressId: string) {
+  async deleteAddressByIdentifier(userId: number, identifier: string) {
+    // Find the address by userId and identifier
     const address = await this.prisma.address.findUnique({
-      where: { id: addressId },
+      where: {
+        userId_identifier: {
+          userId,
+          identifier,
+        },
+      },
     });
 
-    if (!address || address.userId !== userId) {
+    if (!address) {
       throw new NotFoundException(
-        'Address not found or does not belong to the user',
+        `Address with identifier '${identifier}' not found for the user.`,
       );
     }
 
+    // Delete the address
     return await this.prisma.address.delete({
-      where: { id: addressId },
+      where: {
+        userId_identifier: {
+          userId,
+          identifier,
+        },
+      },
     });
   }
-
   // Fetch all users
   async getAllUsers() {
     return this.prisma.user.findMany();

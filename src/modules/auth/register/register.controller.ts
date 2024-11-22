@@ -206,7 +206,7 @@ export class RegisterController {
 
   // Delete address from user profile by identifier
   @Delete(':id/address/:identifier')
-  @ApiOperation({ summary: 'Delete an address from user profile' })
+  @ApiOperation({ summary: 'Delete an address by identifier for a user' })
   @ApiResponse({ status: 200, description: 'Address successfully deleted.' })
   @ApiParam({ name: 'id', description: 'User ID', example: 123 })
   @ApiParam({
@@ -214,11 +214,11 @@ export class RegisterController {
     description: 'Address identifier (e.g., Home, Office)',
     example: 'Home',
   })
-  async deleteAddress(
+  async deleteAddressByIdentifier(
     @Param('id', ParseIntPipe) id: number,
     @Param('identifier') identifier: string,
   ) {
-    return this.registerService.deleteAddress(id, identifier);
+    return this.registerService.deleteAddressByIdentifier(id, identifier);
   }
 
   // Get all addresses for a user
