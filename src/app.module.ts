@@ -21,6 +21,7 @@ import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanaly
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
 import { OfferModule } from './modules/offer/offer.module';
+import { AdminAnalyticsModule } from './modules/admin-analytics/admin-analytics.modules';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { OfferModule } from './modules/offer/offer.module';
     OrderModule,
     WishlistModule,
     AnalyticsModule,
+    AdminAnalyticsModule,
     PopularAnalyticsModule,
     ReviewsModule,
     SupportModule,

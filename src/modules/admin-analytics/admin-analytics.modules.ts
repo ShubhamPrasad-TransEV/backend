@@ -10,4 +10,4 @@ import { PrismaService } from '../../prisma/prisma.service'; // Assuming PrismaS
   controllers: [AnalyticsController],
   providers: [AnalyticsService, PrismaService],
 })
-export class AnalyticsModule {}
+export class AdminAnalyticsModule {}
