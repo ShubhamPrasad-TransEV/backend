@@ -9,7 +9,9 @@ export class TopRatedController {
   constructor(private readonly topRatedService: TopRatedService) {}
 
   @Post()
-  async create(@Body() createTopRatedDto: CreateTopRatedDto): Promise<TopRated> {
+  async create(
+    @Body() createTopRatedDto: CreateTopRatedDto,
+  ): Promise<TopRated> {
     return this.topRatedService.create(createTopRatedDto);
   }
 

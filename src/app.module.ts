@@ -24,7 +24,7 @@ import { OfferModule } from './modules/offer/offer.module';
 import { PincodeModule } from './modules/pincode/pincode.module';
 import { CollectionsModule } from './modules/collections/collections.module';
 import { TopRatedModule } from './modules/top-rated/top-rated.module';
-
+import { AdminAnalyticsModule } from './modules/admin-analytics/admin-analytics.modules';
 
 @Module({
   imports: [
@@ -52,7 +52,7 @@ import { TopRatedModule } from './modules/top-rated/top-rated.module';
     OfferModule,
     PincodeModule,
     CollectionsModule,
-    TopRatedModule
+    TopRatedModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

@@ -4,7 +4,6 @@ import { CollectionsService } from './collections.service';
 import { CollectionsController } from './collections.controller';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-
 @Module({
   imports: [],
   controllers: [CollectionsController],

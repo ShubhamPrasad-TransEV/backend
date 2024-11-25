@@ -9,7 +9,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import * as stringSimilarity from 'string-similarity';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as mime from 'mime-types'; // Import mime-types to get the MIME type based on file extension 
+import * as mime from 'mime-types'; // Import mime-types to get the MIME type based on file extension
 
 @Injectable()
 export class ProductsService {

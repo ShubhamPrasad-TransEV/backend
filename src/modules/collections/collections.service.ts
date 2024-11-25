@@ -1,5 +1,3 @@
-
-
 // import { Injectable } from '@nestjs/common';
 // import { PrismaService } from 'src/prisma/prisma.service';
 // import { ProductResponseDto } from './dto/product-response.dto';
@@ -111,7 +109,8 @@ export class CollectionsService {
         uploadDate: 'desc', // Sort by uploadDate (Product's created timestamp)
       },
       include: {
-        collectionProducts: { // Join table linking products and collections
+        collectionProducts: {
+          // Join table linking products and collections
           include: {
             collection: true, // Explicitly include the collection object
           },
@@ -134,13 +133,13 @@ export class CollectionsService {
         imageUrl: product.images?.[0]?.path
           ? `${baseUrl}${this.normalizeImagePath(product.images[0].path)}`
           : '',
-        category: product.category,  // Add category field to the DTO
+        category: product.category, // Add category field to the DTO
         collections: product.collectionProducts.map((cp) => ({
           id: cp.collection.id, // Correct access to the collection relation
           name: cp.collection.name,
           description: cp.collection.description,
         })),
-      })
+      }),
     );
   }
 
@@ -151,7 +150,8 @@ export class CollectionsService {
         id: 'desc', // Sorting collections by ID (or another relevant field)
       },
       include: {
-        collectionProducts: { // Join table between products and collections
+        collectionProducts: {
+          // Join table between products and collections
           include: {
             product: {
               include: {
@@ -184,7 +184,7 @@ export class CollectionsService {
             : '', // Handle image URL (fallback to empty string if no image)
           category: collectionProduct.product.category, // Add category field to products
         })),
-      })
+      }),
     );
   }
 
@@ -194,6 +194,3 @@ export class CollectionsService {
     return imagePath.replace(/\\/g, '/').replace(/^uploads\//, '');
   }
 }
-
-
-
