@@ -6,7 +6,8 @@ export class AddToCart {
 
   @ApiProperty({
     example: 1,
-    description: 'The ID of the product that has been added to the cart', // Fixed typo
+    description: 'The ID of the product that has been added to the cart', // Fixed typo 
   })
-  productId: string; // Assuming productId should remain a string
-}
+  productId: string; // Assuming productId should remain a string 
+
+  }

@@ -21,7 +21,10 @@ import { PopularAnalyticsModule } from './modules/popularanalytics/popularaanaly
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { SupportModule } from './modules/support/support.module';
 import { OfferModule } from './modules/offer/offer.module';
-import { AdminAnalyticsModule } from './modules/admin-analytics/admin-analytics.modules';
+import { PincodeModule } from './modules/pincode/pincode.module';
+import { CollectionsModule } from './modules/collections/collections.module';
+import { TopRatedModule } from './modules/top-rated/top-rated.module';
+
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { AdminAnalyticsModule } from './modules/admin-analytics/admin-analytics.
     ReviewsModule,
     SupportModule,
     OfferModule,
+    PincodeModule,
+    CollectionsModule,
+    TopRatedModule
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],

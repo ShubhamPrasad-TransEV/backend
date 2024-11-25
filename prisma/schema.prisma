@@ -74,28 +74,57 @@ model Role {
 }
 
 model Product {
-  id                 String             @id @default(uuid())
-  name               String?            @db.VarChar(255)
+  id                 String              @id @default(uuid())
+  name               String?             @db.VarChar(255)
   price              Float?
   sellerId           Int
-  seller             Seller             @relation(fields: [sellerId], references: [id]) // Product is associated with a Seller
+  seller             Seller              @relation(fields: [sellerId], references: [id])
   images             Image[]
   cartItems          CartItem[]
-  categories         Category[]         @relation("ProductCategories")
+  categories         Category[]          @relation("ProductCategories")
+  category           String?
   productDetails     Json
-  description        String             @db.VarChar(255)
+  description        String              @db.VarChar(255)
   Wishlist           Wishlist[]
-  quantity           Int?               @default(1)
+  quantity           Int?                @default(1)
   Unit               Unit[]
   cart               Cart[]
   mostlysearched     MostlySearched[]
   mostlyViewed       mostlyViewed?
   mostwishlisted     mostlyWishlisted[]
   Reviews            Reviews[]
-  offersAsBuyProduct Offer[]            @relation("BuyProductRelation")
-  offersAsGetProduct Offer[]            @relation("GetProductRelation") // Relation for offers providing this product as free
+  offersAsBuyProduct Offer[]             @relation("BuyProductRelation")
+  offersAsGetProduct Offer[]             @relation("GetProductRelation")
+  collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
+  uploadDate         DateTime            @default(now()) @map("uploadAt")
+  topRated           TopRated[]          @relation("ProductTopRated") // One-to-many relation to TopRated
 
   @@index([sellerId])
+}
+
+model TopRated {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  product Product @relation("ProductTopRated", fields: [productId], references: [id]) // Many-to-one relation to Product
+}
+
+model Collection {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  description        String?
+  collectionProducts CollectionProduct[] // Correct relation to CollectionProduct
+}
+
+model CollectionProduct {
+  id           String     @id @default(uuid())
+  collectionId Int
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  createdAt    DateTime   @default(now()) // Timestamp when the product was added to the collection
 }
 
 model quantitymanagement {
@@ -300,8 +329,6 @@ model MostlySearched {
 //   orderdetails Order @relation(fields: [orderid],references: [id],onDelete: Cascade)
 // }
 
-// }
-
 model mostlyViewed {
   productId String  @id @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -322,8 +349,8 @@ model Reviews {
   product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   review          String? @db.VarChar(5000)
   ratings         Float
-  deliveryRatings Float
-  dispatchRatings Float
+  deliveryRatings Float?
+  dispatchRatings Float?
 }
 
 model SupportTicket {
