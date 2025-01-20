@@ -8,6 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { RoleEnum } from '../role/role.enum';
 import * as bcrypt from 'bcrypt';
+import * as fs from 'fs';
 
 @Injectable()
 export class AdminService {
@@ -56,6 +57,7 @@ export class AdminService {
         companyName: createAdminDto.companyName,
         contactPerson: createAdminDto.contactPerson,
         phoneNumber: createAdminDto.phoneNumber,
+        profileImage: createAdminDto.profileImage,
       },
     });
 
@@ -91,6 +93,15 @@ export class AdminService {
       throw new NotFoundException(`Admin with ID ${id} not found`);
     }
 
+    let base64Image = null;
+    if (admin.admin.profileImage && fs.existsSync(admin.admin.profileImage)) {
+      const imageBuffer = fs.readFileSync(admin.admin.profileImage);
+      const mimeType = admin.admin.profileImage.endsWith('.png')
+        ? 'image/png'
+        : 'image/jpeg';
+      base64Image = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+    }
+
     const result = {
       id: admin.admin.id,
       username: admin.admin.username,
@@ -102,6 +113,7 @@ export class AdminService {
       phoneNumber: admin.admin.phoneNumber,
       companyName: admin.admin.companyName,
       contactPerson: admin.admin.contactPerson,
+      profileImage: base64Image,
       role: {
         id: admin.admin.role.id,
         name: admin.admin.role.name,

@@ -50,4 +50,8 @@ export class CreateAdminDto {
   @IsInt()
   @IsNotEmpty()
   id: number; // ID must be an integer and cannot be empty
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string; // Optional since a profile image can be null
 }

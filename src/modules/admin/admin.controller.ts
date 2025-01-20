@@ -6,10 +6,18 @@ import {
   Post,
   ParseIntPipe,
   NotFoundException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
-import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const uploadDir = './profile-images';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -17,33 +25,42 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Post()
-  @ApiBody({
-    description: 'Payload for ADMIN creation',
-    type: CreateAdminDto,
-    examples: {
-      example1: {
-        summary: 'Admin user example',
-        value: {
-          username: 'adminuser',
-          password: 'securepassword',
-          email: 'adminuser@gmail.com',
-          name: 'Puja Das',
-          role: 'Admin',
-          companyName: 'Tech Corp',
-          description: 'A leading tech company',
-          contactPerson: 'Jane Doe',
-          phoneNumber: '1234567890',
-          address: '123 Tech Lane',
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          // Ensure the directory exists
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          cb(null, uploadDir);
         },
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${file.originalname}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
       },
-    },
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Admin user successfully created',
-    type: CreateAdminDto,
-  })
-  async createAdmin(@Body() createAdminDto: CreateAdminDto) {
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only JPEG, PNG images are allowed'), false);
+        }
+      },
+    }),
+  )
+  async createAdmin(
+    @Body() createAdminDto: CreateAdminDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    if (profileImage) {
+      createAdminDto.profileImage = `${uploadDir}/${profileImage.filename}`;
+    }
     return this.adminService.createAdmin(createAdminDto);
   }
 
