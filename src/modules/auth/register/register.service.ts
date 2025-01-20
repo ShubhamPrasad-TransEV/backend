@@ -11,6 +11,7 @@ import { EmailService } from 'src/email/email.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { AddressDto } from './dto/address.dto';
 import { Address } from '@prisma/client';
+import * as fs from 'fs';
 
 @Injectable()
 export class RegisterService {
@@ -59,7 +60,13 @@ export class RegisterService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return user;
+    let base64Image = null;
+    if (user.profileImage && fs.existsSync(user.profileImage)) {
+      const imageBuffer = fs.readFileSync(user.profileImage);
+      const mimeType = user.profileImage.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      base64Image = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+    }
+    return { ...user, profileImage: base64Image || null,}
   }
 
   // Add a new address for a user
@@ -316,6 +323,7 @@ export class RegisterService {
     const dataToUpdate = {
       aboutUs: aboutUs ?? undefined,
       logo: logo ?? undefined,
+
     };
 
     return await this.prisma.seller.update({
