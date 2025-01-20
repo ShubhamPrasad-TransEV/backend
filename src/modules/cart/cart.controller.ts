@@ -94,10 +94,10 @@ export class CartController {
 
   @Patch('/updatecart')
   async updateCartItemQuantity(
-    @Body() body: { userId: number; productId: string; quantity: number },
+    @Body() body: { userId: number; productId: string; type: string },
   ) {
-    const { userId, productId, quantity } = body;
-    return this.cartService.updateCartItemQuantity(userId, productId, quantity);
+    const { userId, productId, type } = body;
+    return this.cartService.updateCartItemQuantity(userId, productId, type);
   }
 
   @Delete('/clearcart')
