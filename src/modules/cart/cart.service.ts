@@ -184,13 +184,13 @@ export class CartService {
   async updateCartItemQuantity(
     userId: number,
     productId: string,
-    quantity: number,
+    type: string,
   ) {
     const userIdInt = Number(userId);
 
     // Validate user ID and quantity
-    if (isNaN(userIdInt) || isNaN(quantity) || quantity < 0) {
-      throw new NotFoundException('Invalid user ID or quantity');
+    if (isNaN(userIdInt)) {
+      throw new NotFoundException('Invalid user ID');
     }
 
     // Fetch product details
@@ -198,43 +198,83 @@ export class CartService {
       where: { id: productId },
     });
 
+    const cartItem = await this.prisma.cart.findUnique({
+      where: {
+        userId_productId: {
+          userId: userId,
+          productId: productId,
+        },
+      },
+      select: {
+        quantity: true,
+      },
+    });
+
     if (!product) {
       throw new NotFoundException('Product not found');
     }
 
-    // Ensure quantity is treated as a number
-    const requestedQuantity = Number(quantity);
-
     // Check if there's enough stock available for the requested change
-    if (requestedQuantity > product.quantity) {
+    if (cartItem.quantity > product.quantity) {
       throw new BadRequestException('Not enough stock available');
     }
 
     // Update cart item quantity directly with the requested quantity
-    await this.prisma.cart.upsert({
-      where: {
-        userId_productId: {
-          userId: userIdInt,
-          productId,
+    if (type === 'Increment') {
+      const newQuantity = cartItem.quantity + 1;
+      await this.prisma.cart.upsert({
+        where: {
+          userId_productId: {
+            userId: userIdInt,
+            productId,
+          },
         },
-      },
-      update: { quantity: requestedQuantity }, // Update to requested quantity
-      create: { userId: userIdInt, productId, quantity: requestedQuantity }, // Create if not exists
-    });
+        update: { quantity: newQuantity }, // Update to requested quantity
+        create: { userId: userIdInt, productId, quantity: newQuantity }, // Create if not exists
+      });
 
-    // Update Product quantity after updating the cart
-    await this.prisma.product.update({
-      where: { id: product.id },
-      data: { quantity: product.quantity - requestedQuantity },
-    });
+      // Update Product quantity after updating the cart
+      await this.prisma.product.update({
+        where: { id: product.id },
+        data: { quantity: product.quantity - newQuantity },
+      });
 
-    // Log to quantity management
-    await this.prisma.quantitymanagement.create({
-      data: {
-        currentquantity: product.quantity,
-        afterupdatequantity: product.quantity - requestedQuantity,
-      },
-    });
+      // Log to quantity management
+      await this.prisma.quantitymanagement.create({
+        data: {
+          currentquantity: product.quantity,
+          afterupdatequantity: product.quantity - newQuantity,
+        },
+      });
+    }
+
+    if (type === 'Decrement') {
+      const newQuantity = cartItem.quantity - 1;
+      await this.prisma.cart.upsert({
+        where: {
+          userId_productId: {
+            userId: userIdInt,
+            productId,
+          },
+        },
+        update: { quantity: newQuantity }, // Update to requested quantity
+        create: { userId: userIdInt, productId, quantity: newQuantity }, // Create if not exists
+      });
+
+      // Update Product quantity after updating the cart
+      await this.prisma.product.update({
+        where: { id: product.id },
+        data: { quantity: product.quantity - newQuantity },
+      });
+
+      // Log to quantity management
+      await this.prisma.quantitymanagement.create({
+        data: {
+          currentquantity: product.quantity,
+          afterupdatequantity: product.quantity - newQuantity,
+        },
+      });
+    }
 
     return { message: 'Item quantity updated successfully' };
   }

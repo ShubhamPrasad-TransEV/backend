@@ -63,10 +63,12 @@ export class RegisterService {
     let base64Image = null;
     if (user.profileImage && fs.existsSync(user.profileImage)) {
       const imageBuffer = fs.readFileSync(user.profileImage);
-      const mimeType = user.profileImage.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      const mimeType = user.profileImage.endsWith('.png')
+        ? 'image/png'
+        : 'image/jpeg';
       base64Image = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
     }
-    return { ...user, profileImage: base64Image || null,}
+    return { ...user, profileImage: base64Image || null };
   }
 
   // Add a new address for a user
@@ -323,7 +325,6 @@ export class RegisterService {
     const dataToUpdate = {
       aboutUs: aboutUs ?? undefined,
       logo: logo ?? undefined,
-
     };
 
     return await this.prisma.seller.update({
