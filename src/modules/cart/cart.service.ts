@@ -286,4 +286,42 @@ export class CartService {
 
     return { message: 'Cart cleared successfully' };
   }
+
+  async getCartTotalPrice(userId: number) {
+    const userIdInt = Number(userId);
+
+    // Fetch cart items for the user with product details
+    const cartItems = await this.prisma.cart.findMany({
+      where: { userId: userIdInt },
+      include: { product: true },
+    });
+
+    if (cartItems.length === 0) {
+      throw new NotFoundException('No items found in the cart');
+    }
+
+    let totalPrice = 0;
+
+    for (const cartItem of cartItems) {
+      const { product, quantity } = cartItem;
+      let finalUnitPrice = product.price;
+
+      // Apply discount: 10% for every 10 units purchased
+      if (quantity >= 10) {
+        const discountMultiplier = Math.floor(quantity / 10) * 0.1; // 10% discount per 10 units
+        finalUnitPrice = product.price * (1 - discountMultiplier);
+      }
+
+      totalPrice += finalUnitPrice * quantity;
+
+      console.log(
+        `Product ID: ${product.id}, Quantity: ${quantity}, Unit Price: ${finalUnitPrice}, Subtotal: ${finalUnitPrice * quantity}`,
+      );
+    }
+
+    return {
+      message: 'Total cart price calculated successfully',
+      totalCartPrice: totalPrice,
+    };
+  }
 }

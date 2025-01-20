@@ -86,8 +86,16 @@ export class OrderService {
         throw new BadRequestException(`Product with ID ${productId} not found`);
       }
 
-      // Use `priceAfterDiscount` if provided; otherwise, calculate it
-      const itemCost = priceAfterDiscount ?? product.price * quantity;
+      let finalUnitPrice = product.price;
+
+      // Apply a 10% discount for every 10 units purchased
+      if (quantity >= 10) {
+        const discountMultiplier = Math.floor(quantity / 10) * 0.1; // 10% discount for every 10 units
+        finalUnitPrice = product.price * (1 - discountMultiplier);
+      }
+
+      // Use `priceAfterDiscount` if provided; otherwise, calculate discounted price
+      const itemCost = priceAfterDiscount ?? finalUnitPrice * quantity;
       totalItemCost += itemCost;
 
       // Fetch available units for the product

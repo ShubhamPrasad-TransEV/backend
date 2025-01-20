@@ -105,4 +105,12 @@ export class CartController {
     const { userId } = body;
     return this.cartService.clearCart(userId);
   }
+
+  @Get('/totalprice')
+  async getCartTotalPrice(@Query('userId') userId: number) {
+    if (!userId) {
+      throw new Error('UserId is required');
+    }
+    return this.cartService.getCartTotalPrice(userId);
+  }
 }
