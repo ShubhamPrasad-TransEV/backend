@@ -95,4 +95,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   isSeller?: boolean;
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string; // Optional since a profile image can be null
 }

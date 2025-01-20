@@ -11,6 +11,8 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -18,12 +20,19 @@ import {
   ApiTags,
   ApiOperation,
   ApiParam,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { RegisterService } from './register.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { AddressDto } from './dto/address.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const uploadDir = './profile-images';
 
 @ApiTags('Users')
 @Controller('user')
@@ -98,6 +107,34 @@ export class RegisterController {
 
   // Register a new user
   @Post('register')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${file.originalname}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // Max size 5MB
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only JPEG, PNG images are allowed'), false);
+        }
+      },
+    }),
+  )
   @ApiBody({
     description: 'User registration payload',
     type: CreateUserDto,
@@ -107,12 +144,46 @@ export class RegisterController {
     description: 'User registered successfully',
     type: CreateUserDto,
   })
-  async register(@Body() createUserDto: CreateUserDto) {
+  async register(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    if (profileImage) {
+      createUserDto.profileImage = `${uploadDir}/${profileImage.filename}`;
+    }
     return this.registerService.register(createUserDto);
   }
 
   // Update user details
   @Patch('update')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+          }
+          cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}-${file.originalname}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // Max size 5MB
+      },
+      fileFilter: (req, file, cb) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Only JPEG, PNG images are allowed'), false);
+        }
+      },
+    }),
+  )
   @ApiBody({
     description: 'User update payload',
     type: UpdateUserDto,
@@ -125,7 +196,14 @@ export class RegisterController {
     status: 404,
     description: 'User not found',
   })
-  async updateUser(@Body() updateUserDto: UpdateUserDto) {
+  async updateUser(
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    if (profileImage) {
+      updateUserDto.profileImage = `${uploadDir}/${profileImage.filename}`;
+    }
+
     const user = await this.registerService.updateUser(updateUserDto);
     if (!user) {
       throw new NotFoundException('User not found');

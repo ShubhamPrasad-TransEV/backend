@@ -21,7 +21,8 @@ export class RegisterService {
 
   // Register a new user
   async register(createUserDto: CreateUserDto) {
-    const { name, username, password, email, phoneNumber } = createUserDto;
+    const { name, username, password, email, phoneNumber, profileImage } =
+      createUserDto;
 
     const existingUser = await this.prisma.user.findUnique({
       where: { username },
@@ -33,7 +34,14 @@ export class RegisterService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
-      data: { name, username, email, password: hashedPassword, phoneNumber },
+      data: {
+        name,
+        username,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        profileImage,
+      },
     });
 
     await this.emailService.sendMail(
@@ -203,6 +211,7 @@ export class RegisterService {
       phoneNumber,
       email,
       description,
+      profileImage,
     } = updateUserDto;
 
     const userId = parseInt(id.toString(), 10);
@@ -219,6 +228,7 @@ export class RegisterService {
       contactPerson: contactPerson ?? undefined,
       phoneNumber: phoneNumber ?? undefined,
       description: description ?? undefined,
+      profileImage: profileImage ?? undefined,
     };
 
     if (roleId) {

@@ -59,4 +59,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsString()
+  @IsOptional()
+  profileImage?: string; // Optional since a profile image can be null
 }
